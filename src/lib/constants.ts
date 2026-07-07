@@ -1,5 +1,11 @@
-export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
-export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+// The anon key is a public, RLS-protected key and is safe to ship in the client
+// bundle. Fallback defaults ensure the app never white-screens if a build-time
+// environment variable is missing (e.g. a GitHub Actions secret is not set).
+export const SUPABASE_URL =
+  (import.meta.env.VITE_SUPABASE_URL as string) || 'https://pwcootcdrbnadsbwduxi.supabase.co'
+export const SUPABASE_ANON_KEY =
+  (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3Y29vdGNkcmJuYWRzYndkdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MjY5MDAsImV4cCI6MjA5OTAwMjkwMH0.wT1W3gC5Pfktjb875Rn2gxQWO_jahzdMZkP-GdHf5xw'
 export const WHATSAPP_NUMBER = (import.meta.env.VITE_WHATSAPP_NUMBER as string) || '26773467206'
 
 export const COMPANY = {
