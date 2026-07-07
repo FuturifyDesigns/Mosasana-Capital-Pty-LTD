@@ -1,0 +1,28 @@
+name: Supabase Keepalive
+
+# Keeps the free-tier Supabase project active by making an external REST request
+# on a schedule. Free projects pause after ~7 days without activity; an external
+# request (unlike an internal cron job) reliably counts as activity.
+
+on:
+  schedule:
+    # Every 3 days at 06:00 UTC
+    - cron: '0 6 */3 * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3Y29vdGNkcmJuYWRzYndkdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MjY5MDAsImV4cCI6MjA5OTAwMjkwMH0.wT1W3gC5Pfktjb875Rn2gxQWO_jahzdMZkP-GdHf5xw"
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" \
+            "https://pwcootcdrbnadsbwduxi.supabase.co/rest/v1/site_content?select=key&limit=1" \
+            -H "apikey: $ANON_KEY" \
+            -H "Authorization: Bearer $ANON_KEY")
+          echo "Supabase responded with HTTP $STATUS"
+          if [ "$STATUS" -lt 200 ] || [ "$STATUS" -ge 400 ]; then
+            echo "Keepalive request failed"
+            exit 1
+          fi
