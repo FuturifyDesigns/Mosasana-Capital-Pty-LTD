@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Shield, Clock, HeartHandshake, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { FlagStrands } from '@/components/FlagStrands'
 import { COMPANY } from '@/lib/constants'
 
 const features = [
@@ -33,6 +34,7 @@ export function HomePage() {
     <>
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-brand-100" />
+        <FlagStrands variant="light" />
         <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-brand-200/40 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-gold-400/10 blur-3xl" />
 

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
+import { FlagStrands } from '@/components/FlagStrands'
 
 interface PageHeroProps {
   title: string
@@ -9,7 +10,8 @@ interface PageHeroProps {
 
 export function PageHero({ title, subtitle, children }: PageHeroProps) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500 py-20 text-white">
+    <section className="relative overflow-hidden bg-gradient-to-br from-brand-800 via-brand-700 to-brand-500 py-20 text-white">
+      <FlagStrands variant="dark" />
       <div className="absolute inset-0 opacity-10">
         <div className="absolute -left-20 top-10 h-64 w-64 rounded-full bg-white blur-3xl" />
         <div className="absolute -right-10 bottom-0 h-80 w-80 rounded-full bg-gold-400 blur-3xl" />
