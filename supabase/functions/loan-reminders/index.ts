@@ -14,6 +14,8 @@
 // Optional:
 //   BREVO_SMTP_HOST     - defaults to smtp-relay.brevo.com
 //   BREVO_SMTP_PORT     - defaults to 587
+//   CRON_SECRET         - shared secret; callers must send it as the
+//                         x-cron-secret header (protects this endpoint)
 //
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided automatically.
 
@@ -86,7 +88,19 @@ function messageFor(
   return { subject, html }
 }
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
+  // Protect the endpoint: only callers presenting the shared secret may run it.
+  const cronSecret = Deno.env.get('CRON_SECRET')
+  if (cronSecret) {
+    const provided = req.headers.get('x-cron-secret')
+    if (provided !== cronSecret) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+  }
+
   const smtpLogin = Deno.env.get('BREVO_SMTP_LOGIN')
   const smtpKey = Deno.env.get('BREVO_SMTP_KEY')
   const senderEmail = Deno.env.get('BREVO_SENDER_EMAIL')

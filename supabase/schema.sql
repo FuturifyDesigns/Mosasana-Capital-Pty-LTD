@@ -117,9 +117,11 @@ CREATE POLICY "Users can update own profile"
   WITH CHECK (auth.uid() = id AND role = (SELECT role FROM public.profiles WHERE id = auth.uid()));
 
 -- Loan requests policies
-CREATE POLICY "Anyone can submit loan request"
+-- Applying requires a signed-in account, and the row must belong to that user.
+CREATE POLICY "Users can submit own loan request"
   ON public.loan_requests FOR INSERT
-  WITH CHECK (true);
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can view own loan requests"
   ON public.loan_requests FOR SELECT
@@ -153,9 +155,9 @@ VALUES (
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Storage policies
-CREATE POLICY "Anyone can upload ID documents"
+CREATE POLICY "Authenticated can upload ID documents"
   ON storage.objects FOR INSERT
-  TO anon, authenticated
+  TO authenticated
   WITH CHECK (bucket_id = 'id-documents');
 
 CREATE POLICY "Admins can read ID documents"
@@ -430,12 +432,16 @@ CREATE POLICY "Admins can view reminder log"
 
 -- ------------------------------------------------------------
 -- Schedule the reminder Edge Function to run once a day (08:00 UTC).
--- Requires the pg_cron and pg_net extensions (enable them in
--- Dashboard → Database → Extensions), then replace <PROJECT_REF> and
--- <SERVICE_ROLE_KEY> below and run this block ONCE.
+-- The endpoint is protected by a shared secret (CRON_SECRET) which we store in
+-- Supabase Vault (encrypted at rest) rather than inline in the job definition.
+-- Enable the pg_cron and pg_net extensions first, then run this ONCE.
 -- ------------------------------------------------------------
 -- CREATE EXTENSION IF NOT EXISTS pg_cron;
 -- CREATE EXTENSION IF NOT EXISTS pg_net;
+--
+-- -- Store the cron secret in Vault (use the same value you set as the
+-- -- CRON_SECRET function secret). Run once:
+-- SELECT vault.create_secret('<CRON_SECRET>', 'reminders_cron_secret');
 --
 -- SELECT cron.schedule(
 --   'loan-reminders-daily',
@@ -445,7 +451,7 @@ CREATE POLICY "Admins can view reminder log"
 --     url := 'https://<PROJECT_REF>.supabase.co/functions/v1/loan-reminders',
 --     headers := jsonb_build_object(
 --       'Content-Type', 'application/json',
---       'Authorization', 'Bearer <SERVICE_ROLE_KEY>'
+--       'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'reminders_cron_secret')
 --     ),
 --     body := '{}'::jsonb
 --   );
