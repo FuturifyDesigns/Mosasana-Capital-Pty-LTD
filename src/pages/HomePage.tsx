@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { FlagStrands } from '@/components/FlagStrands'
 import { ChatAnimation } from '@/components/ChatAnimation'
+import { WebsiteFormAnimation } from '@/components/WebsiteFormAnimation'
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal'
 import { COMPANY } from '@/lib/constants'
 import { useAuth } from '@/context/AuthContext'
@@ -151,44 +152,38 @@ export function HomePage() {
 
       {/* Alternating: Two ways to apply */}
       <section className="bg-white/60">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
-          <Reveal direction="right">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+          <Reveal className="mx-auto max-w-2xl text-center">
             <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
               Two ways to apply
             </span>
             <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
               Apply your way — website or WhatsApp
             </h2>
-            <p className="mt-4 max-w-md leading-relaxed text-brand-600">
+            <p className="mt-4 leading-relaxed text-brand-600">
               Prefer a guided online form? Apply securely on our website. Prefer to chat? Send your
               application straight to us on WhatsApp. Both channels run in parallel, so you choose
-              what feels easiest.
+              whatever feels easiest.
             </p>
-            <div className="mt-8 space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
-                  <Globe className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-semibold text-brand-900">Secure website form</p>
-                  <p className="text-sm text-brand-600">Guided steps with instant validation and ID upload.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-100 text-[#25D366]">
-                  <MessageCircle className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-semibold text-brand-900">WhatsApp application</p>
-                  <p className="text-sm text-brand-600">Chat with our team and apply from your conversations.</p>
-                </div>
-              </div>
-            </div>
           </Reveal>
 
-          <Reveal direction="left" className="flex justify-center">
-            <ChatAnimation />
-          </Reveal>
+          <div className="mt-16 grid items-center gap-16 lg:grid-cols-2 lg:gap-10">
+            <Reveal direction="right" className="flex flex-col items-center gap-5">
+              <WebsiteFormAnimation />
+              <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm">
+                <Globe className="h-4 w-4 text-brand-600" />
+                Apply on the website
+              </div>
+            </Reveal>
+
+            <Reveal direction="left" delay={0.1} className="flex flex-col items-center gap-5">
+              <ChatAnimation />
+              <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm">
+                <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                Apply on WhatsApp
+              </div>
+            </Reveal>
+          </div>
         </div>
       </section>
 
