@@ -30,6 +30,20 @@ import { useToast } from '@/context/ToastContext'
 
 type Tab = 'loans' | 'enquiries' | 'users'
 
+interface ReminderLogRow {
+  loan_id: string
+  kind: string
+  created_at: string
+}
+
+const reminderKindLabel: Record<string, string> = {
+  'd-7': '7 days before',
+  'd-3': '3 days before',
+  'd-1': '1 day before',
+  'd-0': 'due date',
+  overdue: 'overdue',
+}
+
 const loanBadge: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   reviewing: 'bg-blue-100 text-blue-800',
@@ -54,20 +68,23 @@ export function AdminPage() {
   const [loans, setLoans] = useState<LoanRequest[]>([])
   const [enquiries, setEnquiries] = useState<ContactEnquiry[]>([])
   const [users, setUsers] = useState<AdminUser[]>([])
+  const [reminderLog, setReminderLog] = useState<ReminderLogRow[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
   const fetchData = useCallback(async () => {
     setLoading(true)
-    const [loansRes, enquiriesRes, usersRes] = await Promise.all([
+    const [loansRes, enquiriesRes, usersRes, remindersRes] = await Promise.all([
       supabase.from('loan_requests').select('*').order('created_at', { ascending: false }),
       supabase.from('contact_enquiries').select('*').order('created_at', { ascending: false }),
       supabase.rpc('admin_list_users'),
+      supabase.from('loan_reminder_log').select('loan_id, kind, created_at'),
     ])
     setLoans((loansRes.data as LoanRequest[]) || [])
     setEnquiries((enquiriesRes.data as ContactEnquiry[]) || [])
     setUsers((usersRes.data as AdminUser[]) || [])
+    setReminderLog((remindersRes.data as ReminderLogRow[]) || [])
     setLoading(false)
   }, [])
 
@@ -86,6 +103,9 @@ export function AdminPage() {
         fetchData(),
       )
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_reminder_log' }, () =>
+        fetchData(),
+      )
       .subscribe()
 
     return () => {
@@ -195,6 +215,16 @@ export function AdminPage() {
       return matchesStatus && matchesQuery
     })
   }, [enquiries, query, statusFilter])
+
+  const remindersByLoan = useMemo(() => {
+    const map = new Map<string, ReminderLogRow[]>()
+    for (const r of reminderLog) {
+      const list = map.get(r.loan_id) ?? []
+      list.push(r)
+      map.set(r.loan_id, list)
+    }
+    return map
+  }, [reminderLog])
 
   const filteredUsers = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -370,6 +400,22 @@ export function AdminPage() {
                               >
                                 <CalendarClock className="h-3.5 w-3.5" />
                                 {reminder.message}
+                              </span>
+                            )
+                          })()}
+                          {(() => {
+                            const sent = remindersByLoan.get(loan.id) ?? []
+                            if (sent.length === 0) return null
+                            const kinds = sent
+                              .map((r) => reminderKindLabel[r.kind] ?? r.kind)
+                              .join(', ')
+                            return (
+                              <span
+                                className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-600"
+                                title={`Reminder emails sent: ${kinds}`}
+                              >
+                                <Mail className="h-3.5 w-3.5 text-brand-400" />
+                                {sent.length} reminder{sent.length === 1 ? '' : 's'} sent
                               </span>
                             )
                           })()}
