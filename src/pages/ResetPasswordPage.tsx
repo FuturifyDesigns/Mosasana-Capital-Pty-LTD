@@ -44,11 +44,11 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <section className="mx-auto max-w-md px-4 py-16 sm:px-6">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-brand-50 via-white to-white px-4 py-16">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-3xl border border-brand-100 bg-white p-8 shadow-2xl"
+        className="w-full max-w-md rounded-3xl border border-brand-100 bg-white p-8 shadow-2xl"
       >
         <div className="flex justify-center">
           <Logo className="h-12" />
@@ -115,6 +115,6 @@ export function ResetPasswordPage() {
           </>
         )}
       </motion.div>
-    </section>
+    </main>
   )
 }
