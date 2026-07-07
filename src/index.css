@@ -2,7 +2,7 @@
 
 @theme {
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Sora", "Manrope", ui-sans-serif, sans-serif;
+  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --color-brand-50: #f0f7fc;
   --color-brand-100: #dceef8;
   --color-brand-200: #b8ddf0;

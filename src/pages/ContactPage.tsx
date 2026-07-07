@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
-import { CheckCircle, AlertCircle, Mail, Phone, MapPin, MessageCircle } from 'lucide-react'
+import { CheckCircle, AlertCircle, Mail, Phone, MapPin } from 'lucide-react'
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon'
 import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -116,7 +117,7 @@ export function ContactPage() {
                     className="mt-3 inline-block"
                   >
                     <Button variant="whatsapp" size="sm">
-                      <MessageCircle className="h-4 w-4" /> Chat on WhatsApp
+                      <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
                     </Button>
                   </a>
                 </div>

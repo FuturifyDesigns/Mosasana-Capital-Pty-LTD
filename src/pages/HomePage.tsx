@@ -10,18 +10,21 @@ import {
   FileText,
   Wallet,
   Globe,
-  MessageCircle,
   CheckCircle2,
   BarChart3,
+  Quote,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { FlagStrands } from '@/components/FlagStrands'
 import { ChatAnimation } from '@/components/ChatAnimation'
 import { WebsiteFormAnimation } from '@/components/WebsiteFormAnimation'
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon'
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal'
 import { COMPANY } from '@/lib/constants'
 import { useAuth } from '@/context/AuthContext'
+
+const BASE = import.meta.env.BASE_URL
 
 const steps = [
   {
@@ -114,8 +117,28 @@ export function HomePage() {
             initial={{ opacity: 0, scale: 0.92, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            className="relative"
           >
-            <ChatAnimation />
+            <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/30 to-gold-400/20 blur-2xl" />
+            <img
+              src={`${BASE}hero-money.png`}
+              alt="Happy Mosasana Capital client with cash"
+              className="relative w-full rounded-3xl border border-white/60 shadow-2xl"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="absolute -bottom-5 -left-3 flex items-center gap-3 rounded-2xl border border-brand-100 bg-white/95 px-4 py-3 shadow-xl backdrop-blur-sm sm:-left-5"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-growth-500/10 text-growth-500">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <div className="leading-tight">
+                <p className="text-sm font-bold text-brand-900">Loan approved</p>
+                <p className="text-xs text-brand-500">Funds on the way</p>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -150,8 +173,44 @@ export function HomePage() {
         </RevealGroup>
       </section>
 
-      {/* Alternating: Two ways to apply */}
+      {/* Tailored solutions */}
       <section className="bg-white/60">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
+          <Reveal direction="right" className="relative">
+            <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
+            <img
+              src={`${BASE}consultation.png`}
+              alt="Mosasana Capital loan officer assisting a client"
+              className="relative w-full rounded-3xl border border-white/60 shadow-2xl"
+            />
+          </Reveal>
+          <Reveal direction="left">
+            <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
+              Loan solutions tailored for you
+            </span>
+            <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+              Real people, real support
+            </h2>
+            <p className="mt-4 max-w-md leading-relaxed text-brand-600">
+              We take the time to understand your needs and offer short-term loan solutions that fit
+              your situation. Our team guides you through every step with honesty and care.
+            </p>
+            <ul className="mt-6 space-y-3">
+              {['Competitive, transparent terms', 'Flexible repayment options', 'Friendly, professional service'].map(
+                (item) => (
+                  <li key={item} className="flex items-center gap-2 text-brand-700">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-growth-500" />
+                    {item}
+                  </li>
+                ),
+              )}
+            </ul>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Alternating: Two ways to apply */}
+      <section>
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <Reveal className="mx-auto max-w-2xl text-center">
             <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
@@ -179,7 +238,7 @@ export function HomePage() {
             <Reveal direction="left" delay={0.1} className="flex flex-col items-center gap-5">
               <ChatAnimation />
               <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm">
-                <MessageCircle className="h-4 w-4 text-[#25D366]" />
+                <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
                 Apply on WhatsApp
               </div>
             </Reveal>
@@ -250,6 +309,29 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* Testimonial */}
+      <section>
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
+          <Reveal direction="right" className="relative order-2 lg:order-1">
+            <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-gold-400/20 to-brand-300/25 blur-2xl" />
+            <img
+              src={`${BASE}customer.png`}
+              alt="Satisfied Mosasana Capital customer"
+              className="relative w-full rounded-3xl border border-white/60 shadow-2xl"
+            />
+          </Reveal>
+          <Reveal direction="left" className="order-1 lg:order-2">
+            <Quote className="h-12 w-12 text-brand-200" />
+            <blockquote className="mt-4 font-display text-2xl font-semibold leading-snug text-brand-900 sm:text-3xl">
+              “Mosasana Capital gave me quick, reliable support exactly when I needed it. The process
+              was simple and the team truly cared.”
+            </blockquote>
+            <p className="mt-6 font-semibold text-brand-800">A valued client</p>
+            <p className="text-sm text-brand-500">Gaborone, Botswana</p>
+          </Reveal>
+        </div>
+      </section>
+
       {/* Vision & mission */}
       <section className="bg-gradient-to-r from-brand-700 to-brand-600 py-20 text-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -267,40 +349,51 @@ export function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
-        <Reveal>
-          <h2 className="font-display text-3xl font-bold text-brand-900">Ready to get started?</h2>
-          <p className="mx-auto mt-4 max-w-xl text-brand-600">
-            {user
-              ? 'Submit a new loan request or track your existing applications from your dashboard.'
-              : 'Create an account to apply for a loan and track your applications. You can also reach us on WhatsApp.'}
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
-            {user ? (
-              <>
-                <Link to="/apply">
-                  <Button size="lg">Apply for a Loan</Button>
-                </Link>
-                <Link to="/dashboard">
-                  <Button variant="gold" size="lg">
-                    Go to Dashboard
-                  </Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link to="/register">
-                  <Button size="lg">Create Account</Button>
-                </Link>
-                <Link to="/login">
-                  <Button variant="gold" size="lg">
-                    Sign In
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </Reveal>
+      <section className="relative overflow-hidden">
+        <img
+          src={`${BASE}money-band.png`}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-brand-900/80" />
+        <div className="relative mx-auto max-w-6xl px-4 py-24 text-center sm:px-6">
+          <Reveal>
+            <h2 className="font-display text-3xl font-bold text-white sm:text-4xl">
+              Ready to get started?
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-brand-100">
+              {user
+                ? 'Submit a new loan request or track your existing applications from your dashboard.'
+                : 'Create an account to apply for a loan and track your applications. You can also reach us on WhatsApp.'}
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
+              {user ? (
+                <>
+                  <Link to="/apply">
+                    <Button size="lg">Apply for a Loan</Button>
+                  </Link>
+                  <Link to="/dashboard">
+                    <Button variant="gold" size="lg">
+                      Go to Dashboard
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/register">
+                    <Button size="lg">Create Account</Button>
+                  </Link>
+                  <Link to="/login">
+                    <Button variant="gold" size="lg">
+                      Sign In
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
+          </Reveal>
+        </div>
       </section>
     </>
   )

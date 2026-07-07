@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
-import { MessageCircle, Globe, Upload, CheckCircle, AlertCircle } from 'lucide-react'
+import { Globe, Upload, CheckCircle, AlertCircle } from 'lucide-react'
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon'
 import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -179,7 +180,7 @@ export function ApplyPage() {
               mode === 'whatsapp' ? 'bg-white text-brand-800 shadow-sm' : 'text-brand-600'
             }`}
           >
-            <MessageCircle className="h-4 w-4" /> Apply via WhatsApp
+            <WhatsAppIcon className="h-4 w-4" /> Apply via WhatsApp
           </button>
         </div>
 
@@ -229,7 +230,7 @@ export function ApplyPage() {
                 className="block"
               >
                 <Button variant="whatsapp" className="w-full" type="button">
-                  <MessageCircle className="h-5 w-5" />
+                  <WhatsAppIcon className="h-5 w-5" />
                   Continue on WhatsApp
                 </Button>
               </a>
