@@ -24,17 +24,16 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Zoom the whole UI out a little on tablets/desktops so pages feel less
-   cramped (scales text, images and layout together, like the browser's
-   zoom-out). Phones stay at 100% so content remains readable. */
+/* Zoom out only specific pages (e.g. sign-up) that otherwise feel too large.
+   Applied via the .page-zoom-out class. Phones stay at 100% for readability. */
 @media (min-width: 768px) {
-  body {
+  .page-zoom-out {
     zoom: 0.9;
   }
 }
 
 @media (min-width: 1536px) {
-  body {
+  .page-zoom-out {
     zoom: 0.85;
   }
 }

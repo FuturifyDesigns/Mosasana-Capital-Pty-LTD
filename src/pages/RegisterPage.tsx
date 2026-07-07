@@ -75,7 +75,7 @@ export function RegisterPage() {
 
   if (success) {
     return (
-      <section className="mx-auto max-w-md px-4 py-16 text-center sm:px-6">
+      <section className="page-zoom-out mx-auto max-w-md px-4 py-16 text-center sm:px-6">
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -100,6 +100,7 @@ export function RegisterPage() {
 
   return (
     <AuthLayout
+      className="page-zoom-out"
       title="Create your account"
       subtitle="Register to apply for loans and track your applications."
       image={`${BASE}auth-signup.png`}

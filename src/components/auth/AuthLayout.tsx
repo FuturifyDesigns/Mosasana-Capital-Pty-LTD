@@ -13,6 +13,7 @@ interface AuthLayoutProps {
   points: string[]
   children: ReactNode
   footer: ReactNode
+  className?: string
 }
 
 export function AuthLayout({
@@ -24,9 +25,10 @@ export function AuthLayout({
   points,
   children,
   footer,
+  className = '',
 }: AuthLayoutProps) {
   return (
-    <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:py-16">
+    <section className={`mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:py-16 ${className}`}>
       <Link
         to="/account"
         className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-brand-600 transition hover:text-brand-900"
