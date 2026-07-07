@@ -408,7 +408,7 @@ BEGIN
 END $$;
 
 -- ============================================================
--- Repayment reminders (email + WhatsApp) — see supabase/functions/loan-reminders
+-- Repayment reminders (email via Brevo) — see supabase/functions/loan-reminders
 -- ============================================================
 
 -- Logs each reminder we send so the scheduled job never sends the same
@@ -417,7 +417,7 @@ CREATE TABLE IF NOT EXISTS public.loan_reminder_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   loan_id UUID REFERENCES public.loan_requests(id) ON DELETE CASCADE,
   kind TEXT NOT NULL,      -- e.g. d-7, d-3, d-1, d-0, overdue
-  channel TEXT NOT NULL,   -- email | whatsapp
+  channel TEXT NOT NULL,   -- email
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (loan_id, kind, channel)
 );

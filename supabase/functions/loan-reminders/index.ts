@@ -1,8 +1,7 @@
 // Supabase Edge Function: loan-reminders
 //
-// Sends repayment reminders to clients by email (Brevo) and, optionally,
-// WhatsApp (Meta WhatsApp Cloud API). Intended to be invoked once a day by a
-// pg_cron schedule (see supabase/schema.sql).
+// Sends repayment reminder emails to clients via Brevo. Intended to be invoked
+// once a day by a pg_cron schedule (see supabase/schema.sql).
 //
 // Deploy:
 //   supabase functions deploy loan-reminders --no-verify-jwt
@@ -11,11 +10,6 @@
 //   BREVO_API_KEY          - Brevo (Sendinblue) transactional API key
 //   BREVO_SENDER_EMAIL     - verified sender, e.g. noreply@mosasanacapital.com
 //   BREVO_SENDER_NAME      - e.g. "Mosasana Capital"
-// Optional (enable WhatsApp reminders):
-//   WHATSAPP_TOKEN             - Meta WhatsApp Cloud API access token
-//   WHATSAPP_PHONE_NUMBER_ID   - the WhatsApp business phone number ID
-//   WHATSAPP_TEMPLATE          - approved template name (default: loan_reminder)
-//   WHATSAPP_TEMPLATE_LANG     - template language code (default: en)
 //
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided automatically.
 
@@ -28,7 +22,6 @@ interface LoanRow {
   id: string
   full_name: string
   email: string
-  phone: string
   loan_amount: number
   total_repayable: number | null
   amount_paid: number | null
@@ -60,26 +53,32 @@ function milestoneFor(daysLeft: number): string | null {
   return null
 }
 
-function messageFor(loan: LoanRow, daysLeft: number, balanceLabel: string): { subject: string; body: string } {
+function messageFor(
+  loan: LoanRow,
+  daysLeft: number,
+  balanceLabel: string,
+  dueDate: Date,
+): { subject: string; body: string } {
+  const dueStr = dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   if (daysLeft < 0) {
     return {
       subject: 'Your Mosasana Capital loan repayment is overdue',
-      body: `Hi ${loan.full_name}, your loan repayment of ${balanceLabel} is overdue by ${Math.abs(daysLeft)} day(s). Please make your payment as soon as possible to avoid additional charges. Thank you — Mosasana Capital.`,
+      body: `Hi ${loan.full_name},<br><br>Your loan repayment of <strong>${balanceLabel}</strong> was due on ${dueStr} and is now overdue by ${Math.abs(daysLeft)} day(s). Please make your payment as soon as possible to avoid additional charges.<br><br>Thank you,<br>Mosasana Capital`,
     }
   }
   if (daysLeft === 0) {
     return {
       subject: 'Your Mosasana Capital loan repayment is due today',
-      body: `Hi ${loan.full_name}, this is a reminder that your loan repayment of ${balanceLabel} is due today. Thank you — Mosasana Capital.`,
+      body: `Hi ${loan.full_name},<br><br>This is a friendly reminder that your loan repayment of <strong>${balanceLabel}</strong> is due today (${dueStr}).<br><br>Thank you,<br>Mosasana Capital`,
     }
   }
   return {
     subject: `Reminder: loan repayment due in ${daysLeft} day(s)`,
-    body: `Hi ${loan.full_name}, your loan repayment of ${balanceLabel} is due in ${daysLeft} day(s). Please ensure funds are available. Thank you — Mosasana Capital.`,
+    body: `Hi ${loan.full_name},<br><br>Your loan repayment of <strong>${balanceLabel}</strong> is due in ${daysLeft} day(s), on ${dueStr}. Please ensure funds are available.<br><br>Thank you,<br>Mosasana Capital`,
   }
 }
 
-async function sendEmail(to: string, name: string, subject: string, body: string): Promise<boolean> {
+async function sendEmail(to: string, name: string, subject: string, htmlBody: string): Promise<boolean> {
   const apiKey = Deno.env.get('BREVO_API_KEY')
   const senderEmail = Deno.env.get('BREVO_SENDER_EMAIL')
   const senderName = Deno.env.get('BREVO_SENDER_NAME') ?? 'Mosasana Capital'
@@ -92,43 +91,7 @@ async function sendEmail(to: string, name: string, subject: string, body: string
       sender: { email: senderEmail, name: senderName },
       to: [{ email: to, name }],
       subject,
-      htmlContent: `<p>${body.replace(/\n/g, '<br>')}</p>`,
-    }),
-  })
-  return res.ok
-}
-
-function normalizePhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '')
-  // Botswana numbers: prefix country code if an 8-digit local number was given
-  if (digits.length === 8) return `267${digits}`
-  return digits
-}
-
-async function sendWhatsApp(phone: string, params: string[]): Promise<boolean> {
-  const token = Deno.env.get('WHATSAPP_TOKEN')
-  const phoneNumberId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID')
-  const template = Deno.env.get('WHATSAPP_TEMPLATE') ?? 'loan_reminder'
-  const lang = Deno.env.get('WHATSAPP_TEMPLATE_LANG') ?? 'en'
-  if (!token || !phoneNumberId) return false
-
-  const res = await fetch(`https://graph.facebook.com/v20.0/${phoneNumberId}/messages`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      messaging_product: 'whatsapp',
-      to: normalizePhone(phone),
-      type: 'template',
-      template: {
-        name: template,
-        language: { code: lang },
-        components: [
-          {
-            type: 'body',
-            parameters: params.map((text) => ({ type: 'text', text })),
-          },
-        ],
-      },
+      htmlContent: `<div style="font-family:Arial,Helvetica,sans-serif;color:#1f3f57;line-height:1.6">${htmlBody}</div>`,
     }),
   })
   return res.ok
@@ -143,7 +106,7 @@ Deno.serve(async () => {
   const { data: loans, error } = await supabase
     .from('loan_requests')
     .select(
-      'id, full_name, email, phone, loan_amount, total_repayable, amount_paid, due_date, term_months, created_at, status',
+      'id, full_name, email, loan_amount, total_repayable, amount_paid, due_date, term_months, created_at, status',
     )
     .in('status', ACTIVE_STATUSES)
 
@@ -154,9 +117,9 @@ Deno.serve(async () => {
   const now = new Date()
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   let emailsSent = 0
-  let whatsappSent = 0
 
   for (const loan of (loans as LoanRow[]) ?? []) {
+    if (!loan.email) continue
     const dueDate = getDueDate(loan)
     if (!dueDate) continue
 
@@ -165,41 +128,31 @@ Deno.serve(async () => {
     const kind = milestoneFor(daysLeft)
     if (!kind) continue
 
+    // Skip if we already sent this milestone email for this loan.
+    const { data: existing } = await supabase
+      .from('loan_reminder_log')
+      .select('id')
+      .eq('loan_id', loan.id)
+      .eq('kind', kind)
+      .eq('channel', 'email')
+      .maybeSingle()
+    if (existing) continue
+
     const balance =
       loan.total_repayable != null
         ? Math.max(loan.total_repayable - (loan.amount_paid ?? 0), 0)
         : loan.loan_amount
     const balanceLabel = `P${balance.toLocaleString()}`
-    const { subject, body } = messageFor(loan, daysLeft, balanceLabel)
+    const { subject, body } = messageFor(loan, daysLeft, balanceLabel, dueDate)
 
-    // Which channels have we already sent this milestone on?
-    const { data: existing } = await supabase
-      .from('loan_reminder_log')
-      .select('channel')
-      .eq('loan_id', loan.id)
-      .eq('kind', kind)
-    const done = new Set((existing ?? []).map((r: { channel: string }) => r.channel))
-
-    if (loan.email && !done.has('email')) {
-      const ok = await sendEmail(loan.email, loan.full_name, subject, body)
-      if (ok) {
-        await supabase.from('loan_reminder_log').insert({ loan_id: loan.id, kind, channel: 'email' })
-        emailsSent++
-      }
-    }
-
-    if (loan.phone && !done.has('whatsapp')) {
-      const dueText =
-        daysLeft < 0 ? `overdue by ${Math.abs(daysLeft)} day(s)` : daysLeft === 0 ? 'due today' : `due in ${daysLeft} day(s)`
-      const ok = await sendWhatsApp(loan.phone, [loan.full_name, balanceLabel, dueText])
-      if (ok) {
-        await supabase.from('loan_reminder_log').insert({ loan_id: loan.id, kind, channel: 'whatsapp' })
-        whatsappSent++
-      }
+    const ok = await sendEmail(loan.email, loan.full_name, subject, body)
+    if (ok) {
+      await supabase.from('loan_reminder_log').insert({ loan_id: loan.id, kind, channel: 'email' })
+      emailsSent++
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, emailsSent, whatsappSent }), {
+  return new Response(JSON.stringify({ ok: true, emailsSent }), {
     headers: { 'Content-Type': 'application/json' },
   })
 })
