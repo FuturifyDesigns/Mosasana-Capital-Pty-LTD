@@ -52,7 +52,7 @@ export function AuthLayout({
             aria-hidden="true"
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-brand-900/85 via-brand-800/80 to-brand-600/70" />
+          <div className="absolute inset-0 bg-gradient-to-t from-brand-900/95 via-brand-800/65 to-brand-700/45" />
           <div className="relative flex h-full flex-col justify-between p-8 text-white">
             <img
               src={`${BASE}logo-transparent.png`}
@@ -66,7 +66,7 @@ export function AuthLayout({
                 {points.map((point) => (
                   <li key={point} className="flex items-center gap-2.5 text-sm text-white/90">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25">
-                      <Check className="h-3.5 w-3.5 text-gold-300" />
+                      <Check className="h-3.5 w-3.5 text-gold-400" />
                     </span>
                     {point}
                   </li>

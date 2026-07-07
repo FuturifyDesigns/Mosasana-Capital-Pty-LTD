@@ -85,7 +85,7 @@ export function RegisterPage() {
     <AuthLayout
       title="Create your account"
       subtitle="Register to apply for loans and track your applications."
-      image={`${BASE}hero-money.png`}
+      image={`${BASE}auth-signup.png`}
       panelHeading="A loan is just a message away"
       panelText="Join Mosasana Capital and get access to fast, secure short-term cash loans — on the web or WhatsApp."
       points={['Quick, secure sign-up', 'Apply on web or WhatsApp', 'Verified by email']}

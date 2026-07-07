@@ -48,7 +48,7 @@ export function LoginPage() {
     <AuthLayout
       title="Welcome back"
       subtitle="Sign in to submit loan requests and track your applications."
-      image={`${BASE}consultation.png`}
+      image={`${BASE}auth-signin.png`}
       panelHeading="Good to see you again"
       panelText="Pick up right where you left off and manage all your loan applications in one secure place."
       points={['Track application status', 'View your loan history', 'Apply again in a few clicks']}

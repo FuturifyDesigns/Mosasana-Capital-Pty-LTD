@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Mail, Phone, ArrowUpRight } from 'lucide-react'
+import { BotswanaFlag } from './icons/BotswanaFlag'
 import { COMPANY } from '@/lib/constants'
 
 export function Footer() {
@@ -23,6 +24,10 @@ export function Footer() {
               className="mb-3 h-20 w-auto sm:h-24"
             />
             <p className="max-w-xs text-sm leading-relaxed text-brand-300">{COMPANY.tagline}.</p>
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-brand-700/60 bg-brand-800/50 px-3 py-1.5 text-xs font-semibold text-brand-100">
+              <BotswanaFlag className="h-3.5 w-5 rounded-sm ring-1 ring-black/10" />
+              Proudly Botswana
+            </div>
           </div>
 
           {officers.map((officer) => (
