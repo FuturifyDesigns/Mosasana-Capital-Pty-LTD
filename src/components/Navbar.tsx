@@ -14,7 +14,11 @@ const navLinks = [
 
 export function Navbar() {
   const [open, setOpen] = useState(false)
-  const { user, isAdmin, signOut } = useAuth()
+  const { user, profile, isAdmin, signOut } = useAuth()
+
+  const displayName = (profile?.full_name?.trim() || user?.email || '').trim()
+  const firstName = displayName.split(/[\s@]/)[0] || 'there'
+  const initials = (displayName || '?').charAt(0).toUpperCase()
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `rounded-lg px-3 py-2 text-sm font-medium transition ${
@@ -56,6 +60,17 @@ export function Navbar() {
                   </span>
                 </NavLink>
               )}
+              <div
+                className="flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 py-1 pl-1 pr-3"
+                title={`Signed in as ${displayName}`}
+              >
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-500 text-xs font-bold text-white">
+                  {initials}
+                </span>
+                <span className="max-w-[9rem] truncate text-sm font-medium text-brand-800">
+                  Hi, {firstName}
+                </span>
+              </div>
               <Button variant="ghost" size="sm" onClick={() => signOut()}>
                 <LogOut className="h-4 w-4" />
                 Sign Out
@@ -86,6 +101,17 @@ export function Navbar() {
             className="border-t border-brand-100 bg-white md:hidden"
           >
             <div className="flex flex-col gap-1 p-4">
+              {user && (
+                <div className="mb-2 flex items-center gap-2 rounded-xl border border-brand-100 bg-brand-50 p-2.5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-500 text-sm font-bold text-white">
+                    {initials}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-brand-900">Hi, {firstName}</p>
+                    <p className="truncate text-xs text-brand-500">{displayName}</p>
+                  </div>
+                </div>
+              )}
               {navLinks.map((link) => (
                 <NavLink
                   key={link.to}

@@ -1,3 +1,5 @@
+// Must be first: capture email-verification URL params before Supabase strips them.
+import './lib/verifiedFlag'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'

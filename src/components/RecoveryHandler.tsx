@@ -1,20 +1,20 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { isEmailVerification } from '@/lib/verifiedFlag'
 
 /**
- * Listens for Supabase password-recovery events (triggered when a user opens the
- * reset-password email link) and routes them to the reset-password page.
+ * Handles Supabase auth-link arrivals:
+ *  - Email confirmation links (contain `type=signup` / `?verified=1`) → /verified
+ *  - Password-recovery links → /reset-password
  */
 export function RecoveryHandler() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Email confirmation returns to the site root with ?verified=1 — route to the
-    // "email verified" page and clean the query string.
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('verified') === '1') {
+    if (isEmailVerification) {
       navigate('/verified', { replace: true })
+      // Strip any leftover auth query params from the URL.
       window.history.replaceState({}, '', window.location.pathname + window.location.hash)
     }
 

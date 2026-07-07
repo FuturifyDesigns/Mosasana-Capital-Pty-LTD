@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
-import { AlertCircle, CheckCircle, Mail } from 'lucide-react'
+import { AlertCircle, Mail } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
@@ -61,7 +61,7 @@ export function RegisterPage() {
           className="rounded-3xl border border-brand-100 bg-white p-8 shadow-2xl"
         >
           <div className="flex justify-center">
-            <Logo className="h-12" />
+            <Logo className="h-20" />
           </div>
           <Mail className="mx-auto mt-8 h-16 w-16 text-brand-500" />
           <h2 className="mt-6 font-display text-2xl font-bold text-brand-900">Verify Your Email</h2>
@@ -69,10 +69,6 @@ export function RegisterPage() {
             Please check your inbox and click the verification link to activate your account. Once
             verified, you can sign in and submit loan applications.
           </p>
-          <div className="mt-4 flex items-center justify-center gap-2 text-sm text-growth-600">
-            <CheckCircle className="h-4 w-4" />
-            Verification email sent via Brevo
-          </div>
           <Link to="/login" className="mt-8 inline-block">
             <Button>Go to Sign In</Button>
           </Link>
