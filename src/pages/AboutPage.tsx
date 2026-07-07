@@ -13,9 +13,54 @@ import {
   Gauge,
   Target,
   Compass,
+  Sprout,
+  Home,
+  BadgeCheck,
+  MapPin,
+  CalendarClock,
+  type LucideIcon,
 } from 'lucide-react'
 
 const BASE = import.meta.env.BASE_URL
+
+interface TreeNode {
+  icon: LucideIcon
+  title: string
+  description: string
+}
+
+const storyTree: TreeNode[] = [
+  {
+    icon: Sprout,
+    title: 'A place of shelter',
+    description:
+      'Mosasana is a Setswana word for a temporary structure that shields people from harsh weather while they make long-term habitat plans.',
+  },
+  {
+    icon: Home,
+    title: 'Built to relieve',
+    description:
+      'In the same spirit, Mosasana Capital exists to provide relief — albeit short term — for everyday financial shortfalls.',
+  },
+  {
+    icon: BadgeCheck,
+    title: 'Licensed in 2026',
+    description:
+      'Licensed by the Non Bank Financial Institutions Regulatory Authority (NBFIRA) and held to high customer and ethical standards.',
+  },
+  {
+    icon: MapPin,
+    title: 'Grounded in Botswana',
+    description:
+      'Based in Gaborone, we service clients across the breadth and width of Botswana.',
+  },
+  {
+    icon: CalendarClock,
+    title: 'Flexible cash loans',
+    description:
+      'Short-term loans from 1 to 12 months at a reasonable interest rate, tailored to each customer’s needs.',
+  },
+]
 
 const values = [
   {
@@ -45,7 +90,7 @@ export function AboutPage() {
     <>
       <PageHero
         title="About Us"
-        subtitle="Learn more about who we are and the values that guide our work."
+        subtitle="A NBFIRA-licensed Botswana lender providing short-term relief for daily financial shortfalls."
       />
 
       {/* Who we are */}
@@ -60,14 +105,14 @@ export function AboutPage() {
               {COMPANY.name}
             </h2>
             <p className="mt-4 leading-relaxed text-brand-600">
-              {COMPANY.shortName} is a trusted provider of short-term financial relief in Botswana.
-              We understand that life can present unexpected challenges, and we are here to offer
-              accessible, reliable cash loan solutions when you need them most.
+              {COMPANY.name} was licensed by the Non Bank Financial Institutions Regulatory
+              Authority (NBFIRA) in 2026. Based in Gaborone, we service clients across the breadth
+              and width of Botswana.
             </p>
             <p className="mt-4 leading-relaxed text-brand-600">
-              Our team is committed to delivering financial services with integrity, transparency,
-              and genuine care — ensuring every client finds peace of mind and the support they
-              deserve.
+              We offer short-term loans — commonly known as cash loans — ranging from 1 to 12 months
+              at a reasonable interest rate. We pride ourselves in tailoring our offerings to each
+              customer’s needs while upholding high customer and ethical standards.
             </p>
           </Reveal>
 
@@ -79,6 +124,82 @@ export function AboutPage() {
               className="relative w-full rounded-3xl border border-white/60 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25"
             />
           </Reveal>
+        </div>
+      </section>
+
+      {/* Story tree */}
+      <section className="border-y border-brand-100/60 bg-gradient-to-b from-brand-50/60 via-white to-white">
+        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:py-24">
+          <Reveal className="text-center">
+            <span className="text-sm font-semibold uppercase tracking-widest text-growth-600">
+              What&apos;s in a name
+            </span>
+            <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+              Rooted in meaning
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl leading-relaxed text-brand-600">
+              Our story grows from a single Setswana word — follow it from its roots to what we
+              offer today.
+            </p>
+          </Reveal>
+
+          {/* Canopy */}
+          <Reveal className="mt-12 flex flex-col items-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-growth-500 to-growth-600 text-white shadow-xl shadow-growth-500/30">
+              <Sprout className="h-10 w-10" />
+            </div>
+          </Reveal>
+
+          {/* Trunk + branches */}
+          <div className="relative mt-2">
+            {/* central trunk */}
+            <div
+              className="absolute left-7 top-0 h-full w-1 rounded-full bg-gradient-to-b from-growth-500 via-brand-400 to-brand-600 md:left-1/2 md:-translate-x-1/2"
+              aria-hidden="true"
+            />
+
+            <RevealGroup className="space-y-8 pt-8">
+              {storyTree.map((node, i) => {
+                const leftSide = i % 2 === 0
+                return (
+                  <RevealItem key={node.title}>
+                    <div
+                      className={`relative flex items-center pl-16 md:pl-0 ${
+                        leftSide ? 'md:justify-start' : 'md:justify-end'
+                      }`}
+                    >
+                      {/* branch stub + node dot */}
+                      <span
+                        className="absolute left-7 top-1/2 h-1 w-8 -translate-y-1/2 rounded-full bg-brand-300 md:left-1/2 md:w-10"
+                        aria-hidden="true"
+                      />
+                      <span
+                        className="absolute left-7 top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-white bg-growth-500 shadow md:left-1/2"
+                        aria-hidden="true"
+                      />
+
+                      <Card
+                        hover
+                        className="group w-full md:w-[calc(50%-2.5rem)]"
+                      >
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-brand-500 text-white shadow-lg shadow-brand-600/25 transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-110">
+                            <node.icon className="h-6 w-6" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-brand-900">{node.title}</h3>
+                            <p className="mt-1.5 text-sm leading-relaxed text-brand-600">
+                              {node.description}
+                            </p>
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+                  </RevealItem>
+                )
+              })}
+            </RevealGroup>
+          </div>
         </div>
       </section>
 

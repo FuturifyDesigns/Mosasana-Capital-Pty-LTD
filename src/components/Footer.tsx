@@ -80,6 +80,10 @@ export function Footer() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-4 text-center text-sm sm:flex-row sm:px-6 sm:text-left">
           <p className="text-brand-200">
             &copy; {year} {COMPANY.name}. All rights reserved.
+            <span className="mt-0.5 block text-xs text-brand-400">
+              Licensed by {COMPANY.regulatorShort} ({COMPANY.licensedYear}) · {COMPANY.location},
+              Botswana
+            </span>
           </p>
           <a
             href={COMPANY.builtBy.url}

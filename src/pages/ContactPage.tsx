@@ -103,6 +103,18 @@ export function ContactPage() {
               <div className="flex items-start gap-3">
                 <MapPin className="mt-0.5 h-5 w-5 text-brand-500" />
                 <div>
+                  <h3 className="font-semibold text-brand-900">Where we are</h3>
+                  <p className="mt-1 text-sm text-brand-600">
+                    Based in {COMPANY.location}, serving clients across {COMPANY.serviceArea}.
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <div className="flex items-start gap-3">
+                <MapPin className="mt-0.5 h-5 w-5 text-brand-500" />
+                <div>
                   <h3 className="font-semibold text-brand-900">Prefer WhatsApp?</h3>
                   <p className="mt-1 text-sm text-brand-600">
                     Message us directly for faster responses.
