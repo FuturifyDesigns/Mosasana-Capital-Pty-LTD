@@ -34,7 +34,7 @@ export default function App() {
             <Route
               path="apply"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute blockAdmin>
                   <ApplyPage />
                 </ProtectedRoute>
               }

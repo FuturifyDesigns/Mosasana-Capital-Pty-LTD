@@ -76,6 +76,10 @@ export const loanRequestSchema = z
       .min(500, 'Minimum loan amount is P500')
       .max(50000, 'Maximum loan amount is P50,000'),
     loanPurpose: z.string().trim().min(5, 'Describe the purpose of the loan').max(500),
+    termMonths: z
+      .number({ invalid_type_error: 'Select a repayment period' })
+      .int()
+      .refine((v) => [1, 2, 3, 6, 9, 12].includes(v), 'Select a repayment period'),
     employmentStatus: z.enum(['employed', 'self-employed', 'contract', 'other'], {
       errorMap: () => ({ message: 'Select your employment status' }),
     }),

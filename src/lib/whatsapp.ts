@@ -16,6 +16,7 @@ export function buildWhatsAppLoanUrl(data: Partial<LoanRequestFormData>): string
     `${docLabel}: ${data.idNumber || ''}`,
     `Address: ${data.physicalAddress || ''}`,
     `Amount: P${data.loanAmount || ''}`,
+    data.termMonths ? `Repayment period: ${data.termMonths} month(s)` : '',
     `Purpose: ${data.loanPurpose || ''}`,
     `Employment: ${employment}`,
     data.monthlyIncome ? `Monthly Income: P${data.monthlyIncome}` : '',

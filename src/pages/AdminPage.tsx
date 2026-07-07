@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   FileText,
@@ -7,22 +7,28 @@ import {
   Search,
   Clock,
   CheckCircle2,
-  Banknote,
   Inbox,
   Mail,
   Phone,
   MapPin,
   IdCard,
   Wallet,
+  Users,
+  Ban,
+  Trash2,
+  ShieldCheck,
+  CalendarClock,
 } from 'lucide-react'
 import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
-import { supabase, type LoanRequest, type ContactEnquiry } from '@/lib/supabase'
+import { supabase, type LoanRequest, type ContactEnquiry, type AdminUser } from '@/lib/supabase'
 import { LOAN_STATUSES, ENQUIRY_STATUSES } from '@/lib/constants'
+import { getRepaymentReminder } from '@/lib/loans'
+import { useToast } from '@/context/ToastContext'
 
-type Tab = 'loans' | 'enquiries'
+type Tab = 'loans' | 'enquiries' | 'users'
 
 const loanBadge: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -43,27 +49,78 @@ const enquiryBadge: Record<string, string> = {
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export function AdminPage() {
+  const { showToast } = useToast()
   const [tab, setTab] = useState<Tab>('loans')
   const [loans, setLoans] = useState<LoanRequest[]>([])
   const [enquiries, setEnquiries] = useState<ContactEnquiry[]>([])
+  const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true)
-    const [loansRes, enquiriesRes] = await Promise.all([
+    const [loansRes, enquiriesRes, usersRes] = await Promise.all([
       supabase.from('loan_requests').select('*').order('created_at', { ascending: false }),
       supabase.from('contact_enquiries').select('*').order('created_at', { ascending: false }),
+      supabase.rpc('admin_list_users'),
     ])
     setLoans((loansRes.data as LoanRequest[]) || [])
     setEnquiries((enquiriesRes.data as ContactEnquiry[]) || [])
+    setUsers((usersRes.data as AdminUser[]) || [])
     setLoading(false)
-  }
+  }, [])
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [fetchData])
+
+  // Live updates: refetch whenever loans, enquiries or profiles change.
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_requests' }, () =>
+        fetchData(),
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contact_enquiries' }, () =>
+        fetchData(),
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchData())
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [fetchData])
+
+  const banUser = async (u: AdminUser) => {
+    const next = !u.banned
+    if (next && !window.confirm(`Ban ${u.full_name || u.email}? They won't be able to sign in.`)) return
+    setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, banned: next } : x)))
+    const { error } = await supabase.rpc('admin_set_ban', { target: u.id, ban: next })
+    if (error) {
+      setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, banned: !next } : x)))
+      showToast(error.message || 'Could not update user.', 'error')
+    } else {
+      showToast(next ? 'User banned.' : 'User unbanned.', 'success')
+    }
+  }
+
+  const deleteUser = async (u: AdminUser) => {
+    if (
+      !window.confirm(
+        `Permanently delete ${u.full_name || u.email}? This removes their account and cannot be undone.`,
+      )
+    )
+      return
+    const { error } = await supabase.rpc('admin_delete_user', { target: u.id })
+    if (error) {
+      showToast(error.message || 'Could not delete user.', 'error')
+    } else {
+      setUsers((prev) => prev.filter((x) => x.id !== u.id))
+      showToast('User deleted.', 'success')
+    }
+  }
 
   const updateLoanStatus = async (id: string, status: string) => {
     setLoans((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)))
@@ -107,8 +164,9 @@ export function AdminPage() {
       disbursed: loans.filter((l) => l.status === 'disbursed').length,
       paid: loans.filter((l) => l.status === 'paid').length,
       newEnquiries: enquiries.filter((e) => e.status === 'new').length,
+      totalUsers: users.length,
     }),
-    [loans, enquiries],
+    [loans, enquiries, users],
   )
 
   const filteredLoans = useMemo(() => {
@@ -138,6 +196,17 @@ export function AdminPage() {
     })
   }, [enquiries, query, statusFilter])
 
+  const filteredUsers = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return users.filter(
+      (u) =>
+        !q ||
+        (u.full_name || '').toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        (u.phone || '').includes(q),
+    )
+  }, [users, query])
+
   const statusOptions =
     tab === 'loans'
       ? [{ value: 'all', label: 'All statuses' }, ...LOAN_STATUSES.map((s) => ({ value: s, label: cap(s) }))]
@@ -159,8 +228,8 @@ export function AdminPage() {
           <StatCard icon={FileText} label="Total loans" value={stats.totalLoans} tone="brand" />
           <StatCard icon={Clock} label="Pending" value={stats.pending} tone="yellow" />
           <StatCard icon={CheckCircle2} label="Approved" value={stats.approved} tone="green" />
-          <StatCard icon={Banknote} label="Disbursed" value={stats.disbursed} tone="brand" />
           <StatCard icon={Wallet} label="Settled" value={stats.paid} tone="emerald" />
+          <StatCard icon={Users} label="Users" value={stats.totalUsers} tone="brand" />
           <StatCard icon={Inbox} label="New enquiries" value={stats.newEnquiries} tone="blue" />
         </div>
 
@@ -191,6 +260,15 @@ export function AdminPage() {
                 <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">{stats.newEnquiries}</span>
               )}
             </button>
+            <button
+              onClick={() => switchTab('users')}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                tab === 'users' ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20' : 'bg-brand-50 text-brand-700 hover:bg-brand-100'
+              }`}
+            >
+              <Users className="h-4 w-4" />
+              Users
+            </button>
           </div>
 
           <div className="flex flex-1 flex-col gap-3 sm:flex-row lg:max-w-lg lg:justify-end">
@@ -199,19 +277,27 @@ export function AdminPage() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={tab === 'loans' ? 'Search name, email, ID…' : 'Search name, email, subject…'}
+                placeholder={
+                  tab === 'loans'
+                    ? 'Search name, email, ID…'
+                    : tab === 'users'
+                      ? 'Search name, email, phone…'
+                      : 'Search name, email, subject…'
+                }
                 className="w-full rounded-xl border border-brand-200 bg-white py-2.5 pl-9 pr-3 text-sm text-brand-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               />
             </div>
-            <div className="w-full sm:w-44">
-              <Select
-                options={statusOptions}
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                hidePlaceholder
-                aria-label="Filter by status"
-              />
-            </div>
+            {tab !== 'users' && (
+              <div className="w-full sm:w-44">
+                <Select
+                  options={statusOptions}
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  hidePlaceholder
+                  aria-label="Filter by status"
+                />
+              </div>
+            )}
             <Button variant="outline" size="sm" onClick={fetchData} className="shrink-0">
               <RefreshCw className="h-4 w-4" /> Refresh
             </Button>
@@ -265,10 +351,28 @@ export function AdminPage() {
                           </p>
                           <p className="text-xs text-brand-500">
                             {cap(loan.employment_status)}
+                            {loan.term_months ? ` · Term: ${loan.term_months} month(s)` : ''}
                             {loan.monthly_income ? ` · Income: P${loan.monthly_income.toLocaleString()}` : ''}
                             {' · '}
                             {new Date(loan.created_at).toLocaleString()}
                           </p>
+                          {(() => {
+                            const reminder = getRepaymentReminder(loan)
+                            if (!reminder || reminder.level === 'ok') return null
+                            const tones: Record<string, string> = {
+                              soon: 'bg-yellow-50 text-yellow-800',
+                              due: 'bg-orange-50 text-orange-800',
+                              overdue: 'bg-red-50 text-red-700',
+                            }
+                            return (
+                              <span
+                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${tones[reminder.level]}`}
+                              >
+                                <CalendarClock className="h-3.5 w-3.5" />
+                                {reminder.message}
+                              </span>
+                            )
+                          })()}
                           {loan.id_photo_path && (
                             <button
                               type="button"
@@ -295,7 +399,7 @@ export function AdminPage() {
                 ))
               )}
             </div>
-          ) : (
+          ) : tab === 'enquiries' ? (
             <div className="space-y-4">
               {filteredEnquiries.length === 0 ? (
                 <EmptyState label="No enquiries match your filters." />
@@ -344,6 +448,74 @@ export function AdminPage() {
                             onChange={(e) => updateEnquiryStatus(enquiry.id, e.target.value)}
                           />
                         </div>
+                      </div>
+                    </Card>
+                  </motion.div>
+                ))
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredUsers.length === 0 ? (
+                <EmptyState label="No users found." />
+              ) : (
+                filteredUsers.map((u, i) => (
+                  <motion.div
+                    key={u.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: Math.min(i * 0.03, 0.3) }}
+                  >
+                    <Card>
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="min-w-0 space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-lg font-semibold text-brand-900">
+                              {u.full_name || '(no name)'}
+                            </p>
+                            {u.role === 'admin' && (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-semibold text-brand-700">
+                                <ShieldCheck className="h-3.5 w-3.5" /> Admin
+                              </span>
+                            )}
+                            {u.banned && (
+                              <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">
+                                Banned
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-brand-600">
+                            <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 text-brand-400" />{u.email}</span>
+                            {u.phone && (
+                              <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-brand-400" />{u.phone}</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-brand-500">
+                            {u.loan_count} loan{u.loan_count === 1 ? '' : 's'}
+                            {u.active_loan_count > 0 ? ` · ${u.active_loan_count} active` : ''}
+                            {' · Joined '}
+                            {new Date(u.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        {u.role !== 'admin' && (
+                          <div className="flex shrink-0 flex-wrap gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => banUser(u)}
+                            >
+                              <Ban className="h-4 w-4" /> {u.banned ? 'Unban' : 'Ban'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => deleteUser(u)}
+                              className="border-red-200 text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" /> Delete
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </Card>
                   </motion.div>

@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
 import { supabase, type LoanRequest } from '@/lib/supabase'
-import { ACTIVE_LOAN_STATUSES } from '@/lib/constants'
+import { ACTIVE_LOAN_STATUSES, LOAN_TERMS } from '@/lib/constants'
 import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import {
   loanRequestSchema,
@@ -36,6 +36,8 @@ const idTypeOptions = [
   { value: 'national_id', label: 'Omang / National ID' },
   { value: 'passport', label: 'Passport (non-citizens)' },
 ]
+
+const termOptions = LOAN_TERMS.map((t) => ({ value: String(t.value), label: t.label }))
 
 export function ApplyPage() {
   const { user, profile } = useAuth()
@@ -152,6 +154,7 @@ export function ApplyPage() {
         physical_address: sanitizeText(data.physicalAddress),
         loan_amount: data.loanAmount,
         loan_purpose: sanitizeText(data.loanPurpose),
+        term_months: data.termMonths,
         employment_status:
           data.employmentStatus === 'other' && data.employmentOther
             ? sanitizeText(data.employmentOther)
@@ -393,6 +396,14 @@ export function ApplyPage() {
                 {...register('loanAmount', { valueAsNumber: true })}
                 error={errors.loanAmount?.message}
               />
+              <Select
+                label="Repayment Period"
+                options={termOptions}
+                required
+                hint="How long you'd like to repay the loan (1–12 months)."
+                {...register('termMonths', { valueAsNumber: true })}
+                error={errors.termMonths?.message}
+              />
               <Textarea
                 label="Purpose of Loan"
                 rows={3}
@@ -540,6 +551,14 @@ export function ApplyPage() {
                 hint="Numbers only, between P500 and P50,000."
                 {...register('loanAmount', { valueAsNumber: true })}
                 error={errors.loanAmount?.message}
+              />
+              <Select
+                label="Repayment Period"
+                options={termOptions}
+                required
+                hint="How long you'd like to repay the loan (1–12 months)."
+                {...register('termMonths', { valueAsNumber: true })}
+                error={errors.termMonths?.message}
               />
               <Textarea
                 label="Purpose of Loan"

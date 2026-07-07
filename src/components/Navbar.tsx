@@ -36,7 +36,7 @@ export function Navbar() {
               {link.label}
             </NavLink>
           ))}
-          {user && (
+          {user && !isAdmin && (
             <NavLink to="/apply" className={linkClass}>
               Apply for Loan
             </NavLink>
@@ -122,7 +122,7 @@ export function Navbar() {
                   {link.label}
                 </NavLink>
               ))}
-              {user && (
+              {user && !isAdmin && (
                 <NavLink to="/apply" className={linkClass} onClick={() => setOpen(false)}>
                   Apply for Loan
                 </NavLink>

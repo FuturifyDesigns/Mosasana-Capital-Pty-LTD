@@ -9,8 +9,21 @@ export interface Profile {
   phone: string | null
   physical_address: string | null
   role: UserRole
+  banned: boolean
   created_at: string
   updated_at: string
+}
+
+export interface AdminUser {
+  id: string
+  full_name: string
+  phone: string | null
+  role: UserRole
+  banned: boolean
+  created_at: string
+  email: string
+  loan_count: number
+  active_loan_count: number
 }
 
 export interface LoanRequest {
@@ -25,6 +38,7 @@ export interface LoanRequest {
   physical_address: string
   loan_amount: number
   loan_purpose: string
+  term_months: number | null
   employment_status: string
   monthly_income: number | null
   status: string

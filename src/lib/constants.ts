@@ -57,3 +57,13 @@ export type LoanStatus = (typeof LOAN_STATUSES)[number]
 
 export const ENQUIRY_STATUSES = ['new', 'read', 'responded', 'closed'] as const
 export type EnquiryStatus = (typeof ENQUIRY_STATUSES)[number]
+
+// Repayment periods clients can choose (in months)
+export const LOAN_TERMS = [
+  { value: 1, label: '1 month' },
+  { value: 2, label: '2 months' },
+  { value: 3, label: '3 months' },
+  { value: 6, label: '6 months' },
+  { value: 9, label: '9 months' },
+  { value: 12, label: '12 months' },
+] as const

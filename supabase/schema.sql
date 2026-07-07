@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   phone TEXT,
   physical_address TEXT,
   role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+  banned BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS public.loan_requests (
   physical_address TEXT NOT NULL,
   loan_amount NUMERIC(12,2) NOT NULL CHECK (loan_amount >= 500 AND loan_amount <= 50000),
   loan_purpose TEXT NOT NULL,
+  term_months INTEGER CHECK (term_months BETWEEN 1 AND 12),
   employment_status TEXT NOT NULL,
   monthly_income NUMERIC(12,2),
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'reviewing', 'approved', 'rejected', 'disbursed', 'paid')),
@@ -313,6 +315,97 @@ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public AS $$
 $$;
 
 GRANT EXECUTE ON FUNCTION public.phone_taken(TEXT) TO anon, authenticated;
+
+-- ============================================================
+-- Admin user management + loan term + realtime
+-- ============================================================
+
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS banned BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE public.loan_requests ADD COLUMN IF NOT EXISTS term_months INTEGER;
+ALTER TABLE public.loan_requests DROP CONSTRAINT IF EXISTS loan_requests_term_months_check;
+ALTER TABLE public.loan_requests
+  ADD CONSTRAINT loan_requests_term_months_check CHECK (term_months IS NULL OR term_months BETWEEN 1 AND 12);
+
+-- List every user (admins only) with email + loan counts. Uses the auth schema,
+-- so it must run as a definer with access to auth.users.
+CREATE OR REPLACE FUNCTION public.admin_list_users()
+RETURNS TABLE (
+  id UUID,
+  full_name TEXT,
+  phone TEXT,
+  role TEXT,
+  banned BOOLEAN,
+  created_at TIMESTAMPTZ,
+  email TEXT,
+  loan_count BIGINT,
+  active_loan_count BIGINT
+)
+LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public AS $$
+  SELECT
+    p.id,
+    p.full_name,
+    p.phone,
+    p.role,
+    p.banned,
+    p.created_at,
+    u.email::text,
+    (SELECT count(*) FROM public.loan_requests l WHERE l.user_id = p.id),
+    (SELECT count(*) FROM public.loan_requests l WHERE l.user_id = p.id AND l.status NOT IN ('rejected', 'paid'))
+  FROM public.profiles p
+  JOIN auth.users u ON u.id = p.id
+  WHERE public.is_admin()
+  ORDER BY p.created_at DESC
+$$;
+GRANT EXECUTE ON FUNCTION public.admin_list_users() TO authenticated;
+
+-- Ban / unban a user (blocks their ability to sign in).
+CREATE OR REPLACE FUNCTION public.admin_set_ban(target UUID, ban BOOLEAN)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+  IF target = auth.uid() THEN
+    RAISE EXCEPTION 'You cannot ban your own account';
+  END IF;
+  UPDATE public.profiles SET banned = ban WHERE id = target;
+  UPDATE auth.users
+    SET banned_until = CASE WHEN ban THEN 'infinity'::timestamptz ELSE NULL END
+    WHERE id = target;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.admin_set_ban(UUID, BOOLEAN) TO authenticated;
+
+-- Permanently delete a user account (cascades to their profile).
+CREATE OR REPLACE FUNCTION public.admin_delete_user(target UUID)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+  IF target = auth.uid() THEN
+    RAISE EXCEPTION 'You cannot delete your own account';
+  END IF;
+  DELETE FROM auth.users WHERE id = target;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.admin_delete_user(UUID) TO authenticated;
+
+-- Enable realtime so the admin portal & dashboards update live.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'loan_requests') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.loan_requests;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'contact_enquiries') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.contact_enquiries;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'profiles') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
+  END IF;
+END $$;
 
 -- To promote users to admin, run AFTER they have registered (so the account exists):
 UPDATE public.profiles

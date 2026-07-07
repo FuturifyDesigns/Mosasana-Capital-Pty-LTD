@@ -5,9 +5,10 @@ import type { ReactNode } from 'react'
 interface ProtectedRouteProps {
   children: ReactNode
   adminOnly?: boolean
+  blockAdmin?: boolean
 }
 
-export function ProtectedRoute({ children, adminOnly = false }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, adminOnly = false, blockAdmin = false }: ProtectedRouteProps) {
   const { user, isAdmin, loading } = useAuth()
   const location = useLocation()
 
@@ -25,6 +26,11 @@ export function ProtectedRoute({ children, adminOnly = false }: ProtectedRoutePr
 
   if (adminOnly && !isAdmin) {
     return <Navigate to="/dashboard" replace />
+  }
+
+  // Admins manage loans; they should not apply for them.
+  if (blockAdmin && isAdmin) {
+    return <Navigate to="/admin" replace />
   }
 
   return <>{children}</>
