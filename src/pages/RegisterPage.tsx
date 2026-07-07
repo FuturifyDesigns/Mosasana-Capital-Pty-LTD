@@ -38,7 +38,7 @@ export function RegisterPage() {
           full_name: sanitizeText(data.fullName),
           phone: sanitizeText(data.phone),
         },
-        emailRedirectTo: `${window.location.origin}${import.meta.env.BASE_URL}`,
+        emailRedirectTo: `${window.location.origin}${import.meta.env.BASE_URL}?verified=1`,
       },
     })
 

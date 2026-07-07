@@ -31,38 +31,22 @@ const panels = {
 export function AuthPage() {
   const navigate = useNavigate()
   const [hovered, setHovered] = useState<Side | null>(null)
-  const [clicked, setClicked] = useState<Side | null>(null)
-
-  // Percentage of the background covered in blue (from the left).
-  const blueWidth =
-    clicked === 'in' ? 100 : clicked === 'up' ? 0 : hovered === 'in' ? 78 : hovered === 'up' ? 22 : 50
 
   const flexGrow = (side: Side) => {
-    if (clicked) return clicked === side ? 4 : 0.2
     if (hovered === null) return 1
     return hovered === side ? 1.9 : 0.75
   }
 
   const handleSelect = (side: Side) => {
-    setClicked(side)
-    setHovered(null)
-    setTimeout(() => navigate(panels[side].to), 560)
+    navigate(panels[side].to)
   }
 
   return (
     <section className="relative isolate overflow-hidden px-4 py-12 sm:px-6 lg:py-16">
-      {/* dynamic blue / white background */}
-      <div className="absolute inset-0 -z-10 bg-white" aria-hidden="true" />
-      <motion.div
-        className="absolute inset-y-0 left-0 -z-10 bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500"
-        aria-hidden="true"
-        animate={{ width: `${blueWidth}%` }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      />
-      {/* soft glow accents */}
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute left-10 top-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute bottom-10 right-10 h-64 w-64 rounded-full bg-brand-200/40 blur-3xl" />
+      {/* soft static background */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden bg-gradient-to-b from-brand-50 via-white to-brand-50/60">
+        <div className="absolute left-10 top-10 h-64 w-64 rounded-full bg-brand-200/40 blur-3xl" />
+        <div className="absolute bottom-10 right-10 h-64 w-64 rounded-full bg-brand-100/60 blur-3xl" />
       </div>
 
       <div className="mx-auto max-w-6xl">
@@ -94,10 +78,10 @@ export function AuthPage() {
                 key={side}
                 type="button"
                 onClick={() => handleSelect(side)}
-                onMouseEnter={() => !clicked && setHovered(side)}
-                onMouseLeave={() => !clicked && setHovered(null)}
-                onFocus={() => !clicked && setHovered(side)}
-                onBlur={() => !clicked && setHovered(null)}
+                onMouseEnter={() => setHovered(side)}
+                onMouseLeave={() => setHovered(null)}
+                onFocus={() => setHovered(side)}
+                onBlur={() => setHovered(null)}
                 style={{ flexGrow: flexGrow(side) }}
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}

@@ -163,5 +163,10 @@ CREATE INDEX IF NOT EXISTS idx_loan_requests_status ON public.loan_requests(stat
 CREATE INDEX IF NOT EXISTS idx_loan_requests_created_at ON public.loan_requests(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_contact_enquiries_status ON public.contact_enquiries(status);
 
--- To promote a user to admin, run after they register:
--- UPDATE public.profiles SET role = 'admin' WHERE id = (SELECT id FROM auth.users WHERE email = 'tnkile@mosasanacapital.com');
+-- To promote users to admin, run AFTER they have registered (so the account exists):
+UPDATE public.profiles
+SET role = 'admin'
+WHERE id IN (
+  SELECT id FROM auth.users
+  WHERE email IN ('tnkile@mosasanacapital.com', 'ondiweni@mosasanacapital.com')
+);

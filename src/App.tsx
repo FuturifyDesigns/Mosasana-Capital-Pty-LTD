@@ -11,6 +11,7 @@ import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
+import { VerifiedPage } from '@/pages/VerifiedPage'
 import { RecoveryHandler } from '@/components/RecoveryHandler'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { AdminPage } from '@/pages/AdminPage'
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="register" element={<RegisterPage />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
+            <Route path="verified" element={<VerifiedPage />} />
             <Route
               path="dashboard"
               element={

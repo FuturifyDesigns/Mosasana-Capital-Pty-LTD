@@ -7,8 +7,6 @@ import {
   CheckCircle2,
   BarChart3,
   Quote,
-  Wallet,
-  ShieldCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { ChatAnimation } from '@/components/ChatAnimation'
@@ -292,8 +290,8 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <h1 className="font-display text-4xl font-bold leading-[1.1] text-brand-900 sm:text-5xl lg:text-6xl">
-            A loan is just a<br />
-            <span className="text-brand-600">message away</span>
+            Cash when life<br />
+            <span className="text-brand-600">can&apos;t wait</span>
           </h1>
           <p className="mt-6 max-w-md text-lg leading-relaxed text-brand-600">
             {COMPANY.shortName} makes short-term cash loans simple. Apply on our secure website or
@@ -310,17 +308,6 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
                 Learn More
               </Button>
             </Link>
-          </div>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white/80 px-4 py-2 text-sm font-medium text-brand-700 shadow-sm backdrop-blur-sm">
-              <Wallet className="h-4 w-4 text-brand-500" />
-              P500 – P50,000
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white/80 px-4 py-2 text-sm font-medium text-brand-700 shadow-sm backdrop-blur-sm">
-              <ShieldCheck className="h-4 w-4 text-growth-500" />
-              Secure & confidential
-            </span>
           </div>
         </motion.div>
 

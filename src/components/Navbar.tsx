@@ -62,16 +62,9 @@ export function Navbar() {
               </Button>
             </>
           ) : (
-            <>
-              <Link to="/account">
-                <Button variant="ghost" size="sm">
-                  Sign In
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button size="sm">Register</Button>
-              </Link>
-            </>
+            <Link to="/account">
+              <Button size="sm">Get Started</Button>
+            </Link>
           )}
         </div>
 
@@ -123,18 +116,11 @@ export function Navbar() {
                   </Button>
                 </>
               ) : (
-                <>
-                  <Link to="/account" onClick={() => setOpen(false)}>
-                    <Button variant="ghost" size="sm" className="w-full">
-                      Sign In
-                    </Button>
-                  </Link>
-                  <Link to="/register" onClick={() => setOpen(false)}>
-                    <Button size="sm" className="w-full">
-                      Register
-                    </Button>
-                  </Link>
-                </>
+                <Link to="/account" onClick={() => setOpen(false)}>
+                  <Button size="sm" className="w-full">
+                    Get Started
+                  </Button>
+                </Link>
               )}
             </div>
           </motion.div>
