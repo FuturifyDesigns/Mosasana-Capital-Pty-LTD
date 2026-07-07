@@ -57,11 +57,12 @@ export function LoginPage() {
               </div>
             )}
 
-            <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-              <Input label="Email" type="email" autoComplete="email" {...register('email')} error={errors.email?.message} />
+            <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+              <Input label="Email" type="email" required autoComplete="email" {...register('email')} error={errors.email?.message} />
               <Input
                 label="Password"
                 type="password"
+                required
                 autoComplete="current-password"
                 {...register('password')}
                 error={errors.password?.message}

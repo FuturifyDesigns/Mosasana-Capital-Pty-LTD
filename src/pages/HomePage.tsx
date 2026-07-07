@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
+import { useRef } from 'react'
 import { ArrowRight, Shield, Clock, HeartHandshake, TrendingUp } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { FlagStrands } from '@/components/FlagStrands'
+import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal'
 import { COMPANY } from '@/lib/constants'
+import { useAuth } from '@/context/AuthContext'
 
 const features = [
   {
@@ -30,48 +33,60 @@ const features = [
 ]
 
 export function HomePage() {
+  const { user } = useAuth()
+  const applyTarget = user ? '/apply' : '/register'
+
+  const heroRef = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
+  const logoY = useTransform(scrollYProgress, [0, 1], [0, 120])
+  const logoScale = useTransform(scrollYProgress, [0, 1], [1, 0.85])
+  const heroTextY = useTransform(scrollYProgress, [0, 1], [0, 60])
+
   return (
     <>
-      <section className="relative overflow-hidden">
+      <section ref={heroRef} className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-brand-100" />
         <FlagStrands variant="light" />
         <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-brand-200/40 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-gold-400/10 blur-3xl" />
 
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:py-28">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <span className="inline-block rounded-full bg-brand-100 px-4 py-1.5 text-sm font-medium text-brand-700">
-              Short-Term Financial Relief
-            </span>
-            <h1 className="mt-6 font-display text-4xl font-bold leading-tight text-brand-900 sm:text-5xl lg:text-6xl">
-              Stability &amp; Confidence When You Need It
-            </h1>
-            <p className="mt-6 text-lg leading-relaxed text-brand-600">
-              {COMPANY.shortName} provides accessible, reliable cash loan solutions with integrity and care.
-              Apply online or via WhatsApp — whichever works best for you.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Link to="/apply">
-                <Button size="lg">
-                  Apply for a Loan <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/about">
-                <Button variant="outline" size="lg">
-                  Learn More
-                </Button>
-              </Link>
-            </div>
+          <motion.div style={{ y: heroTextY }}>
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <span className="inline-block rounded-full bg-brand-100 px-4 py-1.5 text-sm font-medium text-brand-700">
+                Short-Term Financial Relief
+              </span>
+              <h1 className="mt-6 font-display text-4xl font-bold leading-tight text-brand-900 sm:text-5xl lg:text-6xl">
+                Stability &amp; Confidence When You Need It
+              </h1>
+              <p className="mt-6 text-lg leading-relaxed text-brand-600">
+                {COMPANY.shortName} provides accessible, reliable cash loan solutions with integrity and care.
+                Apply online or via WhatsApp — whichever works best for you.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Link to={applyTarget}>
+                  <Button size="lg">
+                    Apply for a Loan <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/about">
+                  <Button variant="outline" size="lg">
+                    Learn More
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
           </motion.div>
 
           <motion.div
+            style={{ y: logoY, scale: logoScale }}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
             className="flex justify-center"
           >
             <img
@@ -84,77 +99,76 @@ export function HomePage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <div className="mb-12 text-center">
+        <Reveal className="mb-12 text-center">
           <h2 className="font-display text-3xl font-bold text-brand-900 sm:text-4xl">Why Choose Us</h2>
           <p className="mx-auto mt-4 max-w-2xl text-brand-600">
             Professional lending services designed around your needs.
           </p>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map((feature, i) => (
-            <Card key={feature.title} hover className="text-center">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
+        </Reveal>
+        <RevealGroup className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {features.map((feature) => (
+            <RevealItem key={feature.title}>
+              <Card hover className="h-full text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
                   <feature.icon className="h-7 w-7" />
                 </div>
                 <h3 className="text-lg font-semibold text-brand-900">{feature.title}</h3>
                 <p className="mt-2 text-sm text-brand-600">{feature.description}</p>
-              </motion.div>
-            </Card>
+              </Card>
+            </RevealItem>
           ))}
-        </div>
+        </RevealGroup>
       </section>
 
       <section className="bg-gradient-to-r from-brand-700 to-brand-600 py-20 text-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid gap-10 md:grid-cols-2">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
+            <Reveal direction="right">
               <h2 className="font-display text-2xl font-bold sm:text-3xl">Our Vision</h2>
               <p className="mt-4 leading-relaxed text-brand-100">{COMPANY.vision}</p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.15 }}
-            >
+            </Reveal>
+            <Reveal direction="left" delay={0.1}>
               <h2 className="font-display text-2xl font-bold sm:text-3xl">Our Mission</h2>
               <p className="mt-4 leading-relaxed text-brand-100">{COMPANY.mission}</p>
-            </motion.div>
+            </Reveal>
           </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
+        <Reveal>
           <h2 className="font-display text-3xl font-bold text-brand-900">Ready to Get Started?</h2>
           <p className="mx-auto mt-4 max-w-xl text-brand-600">
-            Create an account to track your applications, or apply directly. You can also reach us on WhatsApp.
+            {user
+              ? 'Submit a new loan request or track your existing applications from your dashboard.'
+              : 'Create an account to apply for a loan and track your applications. You can also reach us on WhatsApp.'}
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Link to="/register">
-              <Button size="lg">Create Account</Button>
-            </Link>
-            <Link to="/apply">
-              <Button variant="gold" size="lg">
-                Apply Now
-              </Button>
-            </Link>
+            {user ? (
+              <>
+                <Link to="/apply">
+                  <Button size="lg">Apply for a Loan</Button>
+                </Link>
+                <Link to="/dashboard">
+                  <Button variant="gold" size="lg">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link to="/register">
+                  <Button size="lg">Create Account</Button>
+                </Link>
+                <Link to="/login">
+                  <Button variant="gold" size="lg">
+                    Sign In
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
-        </motion.div>
+        </Reveal>
       </section>
     </>
   )

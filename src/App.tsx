@@ -19,7 +19,14 @@ export default function App() {
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
             <Route path="about" element={<AboutPage />} />
-            <Route path="apply" element={<ApplyPage />} />
+            <Route
+              path="apply"
+              element={
+                <ProtectedRoute>
+                  <ApplyPage />
+                </ProtectedRoute>
+              }
+            />
             <Route path="contact" element={<ContactPage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />

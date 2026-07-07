@@ -3,10 +3,12 @@ import { Navbar } from './Navbar'
 import { Footer } from './Footer'
 import { WhatsAppButton } from './WhatsAppButton'
 import { FlagStrands } from './FlagStrands'
+import { ScrollProgress } from './ScrollProgress'
 
 export function Layout() {
   return (
     <div className="relative flex min-h-screen flex-col">
+      <ScrollProgress />
       <div className="fixed inset-0 -z-10 opacity-60">
         <FlagStrands variant="light" />
       </div>

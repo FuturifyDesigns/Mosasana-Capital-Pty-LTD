@@ -88,13 +88,14 @@ export function RegisterPage() {
               </div>
             )}
 
-            <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-              <Input label="Full Name" {...register('fullName')} error={errors.fullName?.message} />
-              <Input label="Email" type="email" autoComplete="email" {...register('email')} error={errors.email?.message} />
-              <Input label="Phone" {...register('phone')} error={errors.phone?.message} />
+            <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+              <Input label="Full Name" required {...register('fullName')} error={errors.fullName?.message} />
+              <Input label="Email" type="email" required autoComplete="email" {...register('email')} error={errors.email?.message} />
+              <Input label="Phone" required {...register('phone')} error={errors.phone?.message} />
               <Input
                 label="Password"
                 type="password"
+                required
                 autoComplete="new-password"
                 {...register('password')}
                 error={errors.password?.message}
@@ -102,6 +103,7 @@ export function RegisterPage() {
               <Input
                 label="Confirm Password"
                 type="password"
+                required
                 autoComplete="new-password"
                 {...register('confirmPassword')}
                 error={errors.confirmPassword?.message}

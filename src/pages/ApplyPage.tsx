@@ -189,32 +189,36 @@ export function ApplyPage() {
             <p className="mt-2 text-brand-600">
               Fill in your details below, then continue on WhatsApp to send your application and attach your ID photo.
             </p>
-            <form className="mt-6 space-y-4" onSubmit={(e) => e.preventDefault()}>
-              <Input label="Full Name" {...register('fullName')} error={errors.fullName?.message} />
-              <Input label="Email" type="email" {...register('email')} error={errors.email?.message} />
-              <Input label="Phone" {...register('phone')} error={errors.phone?.message} />
-              <Input label="ID Number" {...register('idNumber')} error={errors.idNumber?.message} />
+            <form className="mt-6 space-y-4" onSubmit={(e) => e.preventDefault()} noValidate>
+              <Input label="Full Name" required {...register('fullName')} error={errors.fullName?.message} />
+              <Input label="Email" type="email" required {...register('email')} error={errors.email?.message} />
+              <Input label="Phone" required {...register('phone')} error={errors.phone?.message} />
+              <Input label="ID Number" required {...register('idNumber')} error={errors.idNumber?.message} />
               <Textarea
                 label="Physical Address"
                 rows={3}
+                required
                 {...register('physicalAddress')}
                 error={errors.physicalAddress?.message}
               />
               <Input
                 label="Loan Amount (Pula)"
                 type="number"
+                required
                 {...register('loanAmount', { valueAsNumber: true })}
                 error={errors.loanAmount?.message}
               />
               <Textarea
                 label="Purpose of Loan"
                 rows={3}
+                required
                 {...register('loanPurpose')}
                 error={errors.loanPurpose?.message}
               />
               <Select
                 label="Employment Status"
                 options={employmentOptions}
+                required
                 {...register('employmentStatus')}
                 error={errors.employmentStatus?.message}
               />
@@ -245,11 +249,11 @@ export function ApplyPage() {
               </div>
             )}
 
-            <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmitWebsite)}>
-              <Input label="Full Name" {...register('fullName')} error={errors.fullName?.message} />
-              <Input label="Email" type="email" {...register('email')} error={errors.email?.message} />
-              <Input label="Phone" {...register('phone')} error={errors.phone?.message} />
-              <Input label="ID Number" {...register('idNumber')} error={errors.idNumber?.message} />
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmitWebsite)} noValidate>
+              <Input label="Full Name" required {...register('fullName')} error={errors.fullName?.message} />
+              <Input label="Email" type="email" required {...register('email')} error={errors.email?.message} />
+              <Input label="Phone" required {...register('phone')} error={errors.phone?.message} />
+              <Input label="ID Number" required {...register('idNumber')} error={errors.idNumber?.message} />
 
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-brand-800">
@@ -284,12 +288,14 @@ export function ApplyPage() {
               <Textarea
                 label="Physical Address"
                 rows={3}
+                required
                 {...register('physicalAddress')}
                 error={errors.physicalAddress?.message}
               />
               <Input
                 label="Loan Amount (Pula)"
                 type="number"
+                required
                 min={500}
                 max={50000}
                 {...register('loanAmount', { valueAsNumber: true })}
@@ -298,12 +304,14 @@ export function ApplyPage() {
               <Textarea
                 label="Purpose of Loan"
                 rows={3}
+                required
                 {...register('loanPurpose')}
                 error={errors.loanPurpose?.message}
               />
               <Select
                 label="Employment Status"
                 options={employmentOptions}
+                required
                 {...register('employmentStatus')}
                 error={errors.employmentStatus?.message}
               />

@@ -146,14 +146,15 @@ export function ContactPage() {
                 </div>
               )}
 
-              <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)}>
-                <Input label="Full Name" {...register('fullName')} error={errors.fullName?.message} />
-                <Input label="Email" type="email" {...register('email')} error={errors.email?.message} />
+              <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+                <Input label="Full Name" required {...register('fullName')} error={errors.fullName?.message} />
+                <Input label="Email" type="email" required {...register('email')} error={errors.email?.message} />
                 <Input label="Phone (optional)" {...register('phone')} error={errors.phone?.message} />
-                <Input label="Subject" {...register('subject')} error={errors.subject?.message} />
+                <Input label="Subject" required {...register('subject')} error={errors.subject?.message} />
                 <Textarea
                   label="Message"
                   rows={5}
+                  required
                   {...register('message')}
                   error={errors.message?.message}
                 />

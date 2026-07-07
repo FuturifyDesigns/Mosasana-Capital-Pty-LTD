@@ -9,7 +9,6 @@ import { useAuth } from '@/context/AuthContext'
 const navLinks = [
   { to: '/', label: 'Home' },
   { to: '/about', label: 'About' },
-  { to: '/apply', label: 'Apply for Loan' },
   { to: '/contact', label: 'Contact' },
 ]
 
@@ -33,6 +32,11 @@ export function Navbar() {
               {link.label}
             </NavLink>
           ))}
+          {user && (
+            <NavLink to="/apply" className={linkClass}>
+              Apply for Loan
+            </NavLink>
+          )}
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
@@ -99,6 +103,11 @@ export function Navbar() {
                   {link.label}
                 </NavLink>
               ))}
+              {user && (
+                <NavLink to="/apply" className={linkClass} onClick={() => setOpen(false)}>
+                  Apply for Loan
+                </NavLink>
+              )}
               {user ? (
                 <>
                   <NavLink to="/dashboard" className={linkClass} onClick={() => setOpen(false)}>
