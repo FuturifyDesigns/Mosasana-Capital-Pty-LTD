@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
-import { Globe, Upload, CheckCircle, AlertCircle } from 'lucide-react'
+import { Globe, Upload, CheckCircle, AlertCircle, Clock, Wallet } from 'lucide-react'
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon'
 import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
@@ -11,7 +12,8 @@ import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
-import { supabase } from '@/lib/supabase'
+import { supabase, type LoanRequest } from '@/lib/supabase'
+import { ACTIVE_LOAN_STATUSES } from '@/lib/constants'
 import {
   loanRequestSchema,
   validateIdFile,
@@ -38,6 +40,31 @@ export function ApplyPage() {
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [activeLoan, setActiveLoan] = useState<LoanRequest | null>(null)
+  const [checkingActive, setCheckingActive] = useState(true)
+
+  useEffect(() => {
+    if (!user) {
+      setCheckingActive(false)
+      return
+    }
+    let cancelled = false
+    supabase
+      .from('loan_requests')
+      .select('*')
+      .eq('user_id', user.id)
+      .in('status', ACTIVE_LOAN_STATUSES as unknown as string[])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .then(({ data }) => {
+        if (cancelled) return
+        setActiveLoan((data?.[0] as LoanRequest) ?? null)
+        setCheckingActive(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   const {
     register,
@@ -149,6 +176,99 @@ export function ApplyPage() {
                 </a>
               )}
             </div>
+          </motion.div>
+        </div>
+      </>
+    )
+  }
+
+  if (checkingActive) {
+    return (
+      <>
+        <PageHero title="Apply for a Loan" subtitle="Checking your account…" />
+        <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
+          <div className="skeleton h-40 rounded-2xl" />
+        </div>
+      </>
+    )
+  }
+
+  if (activeLoan) {
+    const balance =
+      activeLoan.total_repayable != null
+        ? Math.max(activeLoan.total_repayable - (activeLoan.amount_paid ?? 0), 0)
+        : null
+
+    return (
+      <>
+        <PageHero
+          title="You already have an active loan"
+          subtitle="You can apply for a new loan once your current one is fully repaid."
+        />
+        <div className="mx-auto max-w-lg px-4 py-16 sm:px-6">
+          <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+            <Card>
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-700">
+                  <Wallet className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-brand-900">
+                    P{activeLoan.loan_amount.toLocaleString()}
+                  </p>
+                  <p className="text-sm text-brand-600">{activeLoan.loan_purpose}</p>
+                </div>
+                <span className="ml-auto rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold capitalize text-yellow-800">
+                  {activeLoan.status}
+                </span>
+              </div>
+
+              <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
+                {activeLoan.total_repayable != null && (
+                  <div className="rounded-xl bg-brand-50 p-3">
+                    <dt className="text-brand-500">Total repayable</dt>
+                    <dd className="font-semibold text-brand-900">
+                      P{activeLoan.total_repayable.toLocaleString()}
+                    </dd>
+                  </div>
+                )}
+                {balance != null && (
+                  <div className="rounded-xl bg-brand-50 p-3">
+                    <dt className="text-brand-500">Outstanding balance</dt>
+                    <dd className="font-semibold text-brand-900">P{balance.toLocaleString()}</dd>
+                  </div>
+                )}
+                {activeLoan.due_date && (
+                  <div className="rounded-xl bg-brand-50 p-3">
+                    <dt className="flex items-center gap-1 text-brand-500">
+                      <Clock className="h-3.5 w-3.5" /> Due date
+                    </dt>
+                    <dd className="font-semibold text-brand-900">
+                      {new Date(activeLoan.due_date).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+
+              <p className="mt-5 rounded-xl bg-brand-50/70 p-3 text-sm text-brand-600">
+                Once your current loan is marked as fully paid, you&apos;ll be able to submit a new
+                application here. If you&apos;ve already settled it, please contact us so we can update
+                your record.
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link to="/dashboard">
+                  <Button>View my dashboard</Button>
+                </Link>
+                <Link to="/contact">
+                  <Button variant="outline">Contact us</Button>
+                </Link>
+              </div>
+            </Card>
           </motion.div>
         </div>
       </>

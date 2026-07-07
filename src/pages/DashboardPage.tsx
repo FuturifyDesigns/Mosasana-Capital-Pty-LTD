@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Plus, FileText, Clock } from 'lucide-react'
+import { Plus, FileText, Clock, Info } from 'lucide-react'
 import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
 import { supabase, type LoanRequest } from '@/lib/supabase'
+import { ACTIVE_LOAN_STATUSES } from '@/lib/constants'
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -14,6 +15,7 @@ const statusColors: Record<string, string> = {
   approved: 'bg-green-100 text-green-800',
   rejected: 'bg-red-100 text-red-800',
   disbursed: 'bg-brand-100 text-brand-800',
+  paid: 'bg-emerald-100 text-emerald-800',
 }
 
 export function DashboardPage() {
@@ -38,6 +40,11 @@ export function DashboardPage() {
     fetchLoans()
   }, [user])
 
+  const hasActiveLoan = useMemo(
+    () => loans.some((l) => (ACTIVE_LOAN_STATUSES as unknown as string[]).includes(l.status)),
+    [loans],
+  )
+
   return (
     <>
       <PageHero
@@ -46,14 +53,30 @@ export function DashboardPage() {
       />
 
       <section className="mx-auto max-w-4xl px-4 py-12 sm:px-6">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-xl font-semibold text-brand-900">Your Loan Applications</h2>
-          <Link to="/apply">
-            <Button size="sm">
+          {hasActiveLoan ? (
+            <Button size="sm" disabled title="Finish repaying your current loan to apply again">
               <Plus className="h-4 w-4" /> New Application
             </Button>
-          </Link>
+          ) : (
+            <Link to="/apply">
+              <Button size="sm">
+                <Plus className="h-4 w-4" /> New Application
+              </Button>
+            </Link>
+          )}
         </div>
+
+        {hasActiveLoan && (
+          <div className="mb-8 flex items-start gap-2 rounded-xl border border-brand-100 bg-brand-50/70 p-3 text-sm text-brand-700">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
+            <p>
+              You have an active loan. You&apos;ll be able to apply for a new one once your current
+              loan is fully repaid.
+            </p>
+          </div>
+        )}
 
         {loading ? (
           <div className="space-y-4">
@@ -103,6 +126,9 @@ export function DashboardPage() {
                       {loan.status}
                     </span>
                   </div>
+                  {loan.total_repayable != null && loan.status !== 'rejected' && (
+                    <RepaymentProgress loan={loan} />
+                  )}
                   {loan.admin_notes && (
                     <p className="mt-3 rounded-lg bg-brand-50 p-3 text-sm text-brand-700">
                       <span className="font-medium">Note:</span> {loan.admin_notes}
@@ -115,5 +141,39 @@ export function DashboardPage() {
         )}
       </section>
     </>
+  )
+}
+
+function RepaymentProgress({ loan }: { loan: LoanRequest }) {
+  const total = loan.total_repayable ?? 0
+  const paid = loan.amount_paid ?? 0
+  const balance = Math.max(total - paid, 0)
+  const pct = total > 0 ? Math.min(Math.round((paid / total) * 100), 100) : 0
+
+  return (
+    <div className="mt-3 rounded-lg bg-brand-50 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
+        <span className="text-brand-600">
+          Repaid <strong className="text-brand-900">P{paid.toLocaleString()}</strong> of{' '}
+          P{total.toLocaleString()}
+        </span>
+        <span className="text-brand-600">
+          Balance: <strong className="text-brand-900">P{balance.toLocaleString()}</strong>
+        </span>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-brand-100">
+        <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${pct}%` }} />
+      </div>
+      {loan.due_date && (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-brand-500">
+          <Clock className="h-3.5 w-3.5" /> Due{' '}
+          {new Date(loan.due_date).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          })}
+        </p>
+      )}
+    </div>
   )
 }

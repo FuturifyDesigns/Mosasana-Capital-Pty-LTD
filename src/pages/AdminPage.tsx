@@ -13,6 +13,7 @@ import {
   Phone,
   MapPin,
   IdCard,
+  Wallet,
 } from 'lucide-react'
 import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
@@ -29,6 +30,7 @@ const loanBadge: Record<string, string> = {
   approved: 'bg-green-100 text-green-800',
   rejected: 'bg-red-100 text-red-700',
   disbursed: 'bg-brand-100 text-brand-800',
+  paid: 'bg-emerald-100 text-emerald-800',
 }
 
 const enquiryBadge: Record<string, string> = {
@@ -65,7 +67,26 @@ export function AdminPage() {
 
   const updateLoanStatus = async (id: string, status: string) => {
     setLoans((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)))
-    await supabase.from('loan_requests').update({ status }).eq('id', id)
+    const { data } = await supabase
+      .from('loan_requests')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single()
+    if (data) setLoans((prev) => prev.map((l) => (l.id === id ? (data as LoanRequest) : l)))
+  }
+
+  const saveRepayment = async (
+    id: string,
+    fields: { total_repayable: number | null; amount_paid: number | null; due_date: string | null },
+  ) => {
+    const { data } = await supabase
+      .from('loan_requests')
+      .update(fields)
+      .eq('id', id)
+      .select()
+      .single()
+    if (data) setLoans((prev) => prev.map((l) => (l.id === id ? (data as LoanRequest) : l)))
   }
 
   const updateEnquiryStatus = async (id: string, status: string) => {
@@ -84,6 +105,7 @@ export function AdminPage() {
       pending: loans.filter((l) => l.status === 'pending').length,
       approved: loans.filter((l) => l.status === 'approved').length,
       disbursed: loans.filter((l) => l.status === 'disbursed').length,
+      paid: loans.filter((l) => l.status === 'paid').length,
       newEnquiries: enquiries.filter((e) => e.status === 'new').length,
     }),
     [loans, enquiries],
@@ -133,11 +155,12 @@ export function AdminPage() {
 
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
           <StatCard icon={FileText} label="Total loans" value={stats.totalLoans} tone="brand" />
           <StatCard icon={Clock} label="Pending" value={stats.pending} tone="yellow" />
           <StatCard icon={CheckCircle2} label="Approved" value={stats.approved} tone="green" />
           <StatCard icon={Banknote} label="Disbursed" value={stats.disbursed} tone="brand" />
+          <StatCard icon={Wallet} label="Settled" value={stats.paid} tone="emerald" />
           <StatCard icon={Inbox} label="New enquiries" value={stats.newEnquiries} tone="blue" />
         </div>
 
@@ -266,6 +289,7 @@ export function AdminPage() {
                           />
                         </div>
                       </div>
+                      <RepaymentEditor loan={loan} onSave={saveRepayment} />
                     </Card>
                   </motion.div>
                 ))
@@ -338,6 +362,7 @@ const toneClasses: Record<string, string> = {
   yellow: 'bg-yellow-100 text-yellow-700',
   green: 'bg-green-100 text-green-700',
   blue: 'bg-blue-100 text-blue-700',
+  emerald: 'bg-emerald-100 text-emerald-700',
 }
 
 function StatCard({
@@ -358,6 +383,119 @@ function StatCard({
       </div>
       <p className="text-2xl font-bold text-brand-900">{value}</p>
       <p className="text-xs font-medium text-brand-500">{label}</p>
+    </div>
+  )
+}
+
+function RepaymentEditor({
+  loan,
+  onSave,
+}: {
+  loan: LoanRequest
+  onSave: (
+    id: string,
+    fields: { total_repayable: number | null; amount_paid: number | null; due_date: string | null },
+  ) => Promise<void>
+}) {
+  const [total, setTotal] = useState(loan.total_repayable != null ? String(loan.total_repayable) : '')
+  const [paid, setPaid] = useState(loan.amount_paid != null ? String(loan.amount_paid) : '')
+  const [due, setDue] = useState(loan.due_date ?? '')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setTotal(loan.total_repayable != null ? String(loan.total_repayable) : '')
+    setPaid(loan.amount_paid != null ? String(loan.amount_paid) : '')
+    setDue(loan.due_date ?? '')
+  }, [loan.total_repayable, loan.amount_paid, loan.due_date])
+
+  const totalNum = total === '' ? null : Number(total)
+  const paidNum = paid === '' ? 0 : Number(paid)
+  const balance = totalNum != null ? Math.max(totalNum - paidNum, 0) : null
+
+  const dirty =
+    total !== (loan.total_repayable != null ? String(loan.total_repayable) : '') ||
+    paid !== (loan.amount_paid != null ? String(loan.amount_paid) : '') ||
+    due !== (loan.due_date ?? '')
+
+  const handleSave = async () => {
+    setSaving(true)
+    await onSave(loan.id, {
+      total_repayable: total === '' ? null : totalNum,
+      amount_paid: paid === '' ? 0 : paidNum,
+      due_date: due === '' ? null : due,
+    })
+    setSaving(false)
+  }
+
+  const pct =
+    totalNum && totalNum > 0 ? Math.min(Math.round((paidNum / totalNum) * 100), 100) : 0
+
+  return (
+    <div className="mt-4 rounded-xl border border-brand-100 bg-brand-50/50 p-4">
+      <p className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-brand-800">
+        <Wallet className="h-4 w-4 text-brand-500" /> Repayment tracking
+      </p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <label className="text-xs font-medium text-brand-600">
+          Total repayable (P)
+          <input
+            type="number"
+            inputMode="decimal"
+            min="0"
+            value={total}
+            onChange={(e) => setTotal(e.target.value)}
+            placeholder="e.g. 6000"
+            className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm text-brand-900 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+          />
+        </label>
+        <label className="text-xs font-medium text-brand-600">
+          Amount paid so far (P)
+          <input
+            type="number"
+            inputMode="decimal"
+            min="0"
+            value={paid}
+            onChange={(e) => setPaid(e.target.value)}
+            placeholder="e.g. 2000"
+            className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm text-brand-900 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+          />
+        </label>
+        <label className="text-xs font-medium text-brand-600">
+          Due date
+          <input
+            type="date"
+            value={due}
+            onChange={(e) => setDue(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm text-brand-900 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+          />
+        </label>
+      </div>
+
+      {balance != null && (
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-xs text-brand-600">
+            <span>Balance: <strong className="text-brand-900">P{balance.toLocaleString()}</strong></span>
+            <span>{pct}% repaid</span>
+          </div>
+          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-brand-100">
+            <div
+              className="h-full rounded-full bg-emerald-500 transition-all"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          {balance === 0 && totalNum ? (
+            <p className="mt-2 text-xs font-medium text-emerald-700">
+              Fully repaid — saving will mark this loan as “paid”, freeing the client to apply again.
+            </p>
+          ) : null}
+        </div>
+      )}
+
+      <div className="mt-3 flex justify-end">
+        <Button size="sm" onClick={handleSave} disabled={!dirty || saving}>
+          {saving ? 'Saving…' : 'Save repayment'}
+        </Button>
+      </div>
     </div>
   )
 }

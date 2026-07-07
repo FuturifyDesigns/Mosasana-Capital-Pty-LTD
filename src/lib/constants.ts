@@ -41,7 +41,18 @@ export const COMPANY = {
   },
 } as const
 
-export const LOAN_STATUSES = ['pending', 'reviewing', 'approved', 'rejected', 'disbursed'] as const
+export const LOAN_STATUSES = [
+  'pending',
+  'reviewing',
+  'approved',
+  'disbursed',
+  'paid',
+  'rejected',
+] as const
+
+// Statuses that mean the loan is still open — the client cannot apply for another
+// loan while any of their loans are in one of these states.
+export const ACTIVE_LOAN_STATUSES = ['pending', 'reviewing', 'approved', 'disbursed'] as const
 export type LoanStatus = (typeof LOAN_STATUSES)[number]
 
 export const ENQUIRY_STATUSES = ['new', 'read', 'responded', 'closed'] as const

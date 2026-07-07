@@ -26,7 +26,10 @@ CREATE TABLE IF NOT EXISTS public.loan_requests (
   loan_purpose TEXT NOT NULL,
   employment_status TEXT NOT NULL,
   monthly_income NUMERIC(12,2),
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'reviewing', 'approved', 'rejected', 'disbursed')),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'reviewing', 'approved', 'rejected', 'disbursed', 'paid')),
+  total_repayable NUMERIC(12,2),
+  amount_paid NUMERIC(12,2) NOT NULL DEFAULT 0,
+  due_date DATE,
   admin_notes TEXT,
   source TEXT NOT NULL DEFAULT 'website' CHECK (source IN ('website', 'whatsapp')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -217,6 +220,64 @@ CREATE INDEX IF NOT EXISTS idx_loan_requests_user_id ON public.loan_requests(use
 CREATE INDEX IF NOT EXISTS idx_loan_requests_status ON public.loan_requests(status);
 CREATE INDEX IF NOT EXISTS idx_loan_requests_created_at ON public.loan_requests(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_contact_enquiries_status ON public.contact_enquiries(status);
+
+-- ============================================================
+-- Loan repayment tracking + one-active-loan-at-a-time rule
+-- ============================================================
+
+-- Auto-mark a loan as fully paid once the amount paid covers the total repayable.
+CREATE OR REPLACE FUNCTION public.loan_auto_mark_paid()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.total_repayable IS NOT NULL
+     AND NEW.total_repayable > 0
+     AND COALESCE(NEW.amount_paid, 0) >= NEW.total_repayable THEN
+    NEW.status := 'paid';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS loan_requests_auto_paid ON public.loan_requests;
+CREATE TRIGGER loan_requests_auto_paid
+  BEFORE INSERT OR UPDATE ON public.loan_requests
+  FOR EACH ROW EXECUTE FUNCTION public.loan_auto_mark_paid();
+
+-- Block a new loan while the same user still has an unsettled (active) loan.
+-- Active = any status that is not fully paid and not rejected.
+CREATE OR REPLACE FUNCTION public.prevent_multiple_active_loans()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.user_id IS NOT NULL AND EXISTS (
+    SELECT 1 FROM public.loan_requests
+    WHERE user_id = NEW.user_id
+      AND status NOT IN ('rejected', 'paid')
+  ) THEN
+    RAISE EXCEPTION 'You already have an active loan. Please finish repaying it before applying again.'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS loan_requests_single_active ON public.loan_requests;
+CREATE TRIGGER loan_requests_single_active
+  BEFORE INSERT ON public.loan_requests
+  FOR EACH ROW EXECUTE FUNCTION public.prevent_multiple_active_loans();
+
+-- ------------------------------------------------------------
+-- MIGRATION for databases created before repayment tracking.
+-- Safe to run repeatedly.
+-- ------------------------------------------------------------
+ALTER TABLE public.loan_requests
+  ADD COLUMN IF NOT EXISTS total_repayable NUMERIC(12,2),
+  ADD COLUMN IF NOT EXISTS amount_paid NUMERIC(12,2) NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS due_date DATE;
+
+ALTER TABLE public.loan_requests DROP CONSTRAINT IF EXISTS loan_requests_status_check;
+ALTER TABLE public.loan_requests
+  ADD CONSTRAINT loan_requests_status_check
+  CHECK (status IN ('pending', 'reviewing', 'approved', 'rejected', 'disbursed', 'paid'));
 
 -- To promote users to admin, run AFTER they have registered (so the account exists):
 UPDATE public.profiles

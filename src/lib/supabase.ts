@@ -27,6 +27,9 @@ export interface LoanRequest {
   employment_status: string
   monthly_income: number | null
   status: string
+  total_repayable: number | null
+  amount_paid: number | null
+  due_date: string | null
   admin_notes: string | null
   source: 'website' | 'whatsapp'
   created_at: string
