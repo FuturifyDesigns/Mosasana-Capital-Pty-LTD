@@ -115,12 +115,7 @@ export function WebsiteFormAnimation() {
         {/* Browser chrome */}
         <div className="border-b border-brand-100 bg-brand-50 px-3 py-2.5">
           <div className="flex items-center gap-2.5">
-            <div className="flex gap-1.5">
-              <span className="h-3 w-3 rounded-full bg-red-400" />
-              <span className="h-3 w-3 rounded-full bg-yellow-400" />
-              <span className="h-3 w-3 rounded-full bg-green-400" />
-            </div>
-            <div className="ml-1 hidden items-center gap-1.5 text-brand-300 sm:flex">
+            <div className="flex items-center gap-1.5 text-brand-400">
               <ChevronLeft className="h-4 w-4" />
               <ChevronRight className="h-4 w-4" />
               <RotateCw className="h-3.5 w-3.5" />
