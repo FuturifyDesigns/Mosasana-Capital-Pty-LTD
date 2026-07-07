@@ -1,34 +1,65 @@
 import { Link } from 'react-router-dom'
-import { motion, useScroll, useTransform } from 'framer-motion'
-import { useRef } from 'react'
-import { ArrowRight, Shield, Clock, HeartHandshake, TrendingUp } from 'lucide-react'
+import { motion } from 'framer-motion'
+import {
+  ArrowRight,
+  Shield,
+  Clock,
+  HeartHandshake,
+  TrendingUp,
+  UserPlus,
+  FileText,
+  Wallet,
+  Globe,
+  MessageCircle,
+  CheckCircle2,
+  BarChart3,
+} from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { FlagStrands } from '@/components/FlagStrands'
+import { ChatAnimation } from '@/components/ChatAnimation'
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal'
 import { COMPANY } from '@/lib/constants'
 import { useAuth } from '@/context/AuthContext'
+
+const steps = [
+  {
+    icon: UserPlus,
+    title: 'Create your account',
+    description: 'Sign up in minutes and verify your email to get started securely.',
+  },
+  {
+    icon: FileText,
+    title: 'Submit your request',
+    description: 'Fill in the loan form, upload your ID, and tell us how much you need.',
+  },
+  {
+    icon: Wallet,
+    title: 'Get your funds',
+    description: 'Our team reviews your request and disburses your approved loan quickly.',
+  },
+]
 
 const features = [
   {
     icon: Clock,
     title: 'Fast Processing',
-    description: 'Quick review and turnaround on your loan application so you get relief when you need it.',
+    description: 'Quick review and turnaround so you get relief when you need it most.',
   },
   {
     icon: Shield,
     title: 'Secure & Trusted',
-    description: 'Your data is protected with industry-standard security and transparent lending practices.',
+    description: 'Bank-grade security and transparent, responsible lending practices.',
   },
   {
     icon: HeartHandshake,
     title: 'Client-Focused',
-    description: 'We deliver financial solutions with integrity, transparency, and genuine care.',
+    description: 'Financial solutions delivered with integrity, transparency, and care.',
   },
   {
     icon: TrendingUp,
     title: 'Flexible Solutions',
-    description: 'Short-term cash loans tailored to help you regain stability and confidence.',
+    description: 'Short-term cash loans tailored to help you regain stability.',
   },
 ]
 
@@ -36,90 +67,195 @@ export function HomePage() {
   const { user } = useAuth()
   const applyTarget = user ? '/apply' : '/register'
 
-  const heroRef = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
-  const logoY = useTransform(scrollYProgress, [0, 1], [0, 120])
-  const logoScale = useTransform(scrollYProgress, [0, 1], [1, 0.85])
-  const heroTextY = useTransform(scrollYProgress, [0, 1], [0, 60])
-
   return (
     <>
-      <section ref={heroRef} className="relative overflow-hidden">
+      {/* Hero */}
+      <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-brand-100" />
         <FlagStrands variant="light" />
         <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-brand-200/40 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-gold-400/10 blur-3xl" />
 
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:py-28">
-          <motion.div style={{ y: heroTextY }}>
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <span className="inline-block rounded-full bg-brand-100 px-4 py-1.5 text-sm font-medium text-brand-700">
-                Short-Term Financial Relief
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <span className="inline-block rounded-full bg-brand-100 px-4 py-1.5 text-sm font-medium text-brand-700">
+              Short-Term Financial Relief
+            </span>
+            <h1 className="mt-6 font-display text-4xl font-bold leading-[1.1] text-brand-900 sm:text-5xl lg:text-6xl">
+              A loan is just a<br />
+              <span className="bg-gradient-to-r from-brand-600 to-brand-400 bg-clip-text text-transparent">
+                message away
               </span>
-              <h1 className="mt-6 font-display text-4xl font-bold leading-tight text-brand-900 sm:text-5xl lg:text-6xl">
-                Stability &amp; Confidence When You Need It
-              </h1>
-              <p className="mt-6 text-lg leading-relaxed text-brand-600">
-                {COMPANY.shortName} provides accessible, reliable cash loan solutions with integrity and care.
-                Apply online or via WhatsApp — whichever works best for you.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-4">
-                <Link to={applyTarget}>
-                  <Button size="lg">
-                    Apply for a Loan <ArrowRight className="h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link to="/about">
-                  <Button variant="outline" size="lg">
-                    Learn More
-                  </Button>
-                </Link>
-              </div>
-            </motion.div>
+            </h1>
+            <p className="mt-6 max-w-md text-lg leading-relaxed text-brand-600">
+              {COMPANY.shortName} makes short-term cash loans simple. Apply on our secure website or
+              chat with us on WhatsApp — whichever works best for you.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link to={applyTarget}>
+                <Button size="lg">
+                  Apply for a Loan <ArrowRight className="h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/about">
+                <Button variant="outline" size="lg">
+                  Learn More
+                </Button>
+              </Link>
+            </div>
           </motion.div>
 
           <motion.div
-            style={{ y: logoY, scale: logoScale }}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-            className="flex justify-center"
+            initial={{ opacity: 0, scale: 0.92, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
           >
-            <img
-              src={`${import.meta.env.BASE_URL}logo-transparent.png`}
-              alt={COMPANY.name}
-              className="animate-float h-64 w-auto drop-shadow-xl sm:h-80 lg:h-96"
-            />
+            <ChatAnimation />
           </motion.div>
         </div>
       </section>
 
+      {/* How it works */}
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <Reveal className="mb-12 text-center">
-          <h2 className="font-display text-3xl font-bold text-brand-900 sm:text-4xl">Why Choose Us</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-brand-600">
-            Professional lending services designed around your needs.
-          </p>
+        <Reveal className="mb-14 text-center">
+          <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
+            How it works
+          </span>
+          <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+            Three simple steps to funding
+          </h2>
         </Reveal>
-        <RevealGroup className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map((feature) => (
-            <RevealItem key={feature.title}>
-              <Card hover className="h-full text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
-                  <feature.icon className="h-7 w-7" />
+
+        <RevealGroup className="relative grid gap-8 md:grid-cols-3">
+          <div className="absolute left-0 right-0 top-8 hidden h-px bg-gradient-to-r from-transparent via-brand-200 to-transparent md:block" />
+          {steps.map((step, i) => (
+            <RevealItem key={step.title}>
+              <div className="relative text-center">
+                <div className="relative mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-brand-500 text-white shadow-lg shadow-brand-600/25">
+                  <step.icon className="h-8 w-8" />
+                  <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-gold-500 text-xs font-bold text-white">
+                    {i + 1}
+                  </span>
                 </div>
-                <h3 className="text-lg font-semibold text-brand-900">{feature.title}</h3>
-                <p className="mt-2 text-sm text-brand-600">{feature.description}</p>
-              </Card>
+                <h3 className="text-lg font-semibold text-brand-900">{step.title}</h3>
+                <p className="mx-auto mt-2 max-w-xs text-sm text-brand-600">{step.description}</p>
+              </div>
             </RevealItem>
           ))}
         </RevealGroup>
       </section>
 
+      {/* Alternating: Two ways to apply */}
+      <section className="bg-white/60">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
+          <Reveal direction="right">
+            <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
+              Two ways to apply
+            </span>
+            <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+              Apply your way — website or WhatsApp
+            </h2>
+            <p className="mt-4 max-w-md leading-relaxed text-brand-600">
+              Prefer a guided online form? Apply securely on our website. Prefer to chat? Send your
+              application straight to us on WhatsApp. Both channels run in parallel, so you choose
+              what feels easiest.
+            </p>
+            <div className="mt-8 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
+                  <Globe className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-brand-900">Secure website form</p>
+                  <p className="text-sm text-brand-600">Guided steps with instant validation and ID upload.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-100 text-[#25D366]">
+                  <MessageCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-brand-900">WhatsApp application</p>
+                  <p className="text-sm text-brand-600">Chat with our team and apply from your conversations.</p>
+                </div>
+              </div>
+            </div>
+          </Reveal>
+
+          <Reveal direction="left" className="flex justify-center">
+            <ChatAnimation />
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Alternating: Track your loans */}
+      <section>
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
+          <Reveal direction="right" className="order-2 flex justify-center lg:order-1">
+            <DashboardMock />
+          </Reveal>
+          <Reveal direction="left" className="order-1 lg:order-2">
+            <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
+              Stay in control
+            </span>
+            <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+              Track every loan in your dashboard
+            </h2>
+            <p className="mt-4 max-w-md leading-relaxed text-brand-600">
+              Create an account to submit requests and follow their status in real time — from
+              pending to approved and disbursed. All your applications, in one secure place.
+            </p>
+            <ul className="mt-6 space-y-3">
+              {['Real-time application status', 'Secure ID document handling', 'Full application history'].map(
+                (item) => (
+                  <li key={item} className="flex items-center gap-2 text-brand-700">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-growth-500" />
+                    {item}
+                  </li>
+                ),
+              )}
+            </ul>
+            <div className="mt-8">
+              <Link to={applyTarget}>
+                <Button size="lg">
+                  Get started <ArrowRight className="h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Why choose us */}
+      <section className="bg-white/60">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+          <Reveal className="mb-12 text-center">
+            <h2 className="font-display text-3xl font-bold text-brand-900 sm:text-4xl">Why choose us</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-brand-600">
+              Professional lending services designed around your needs.
+            </p>
+          </Reveal>
+          <RevealGroup className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {features.map((feature) => (
+              <RevealItem key={feature.title}>
+                <Card hover className="h-full text-center">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
+                    <feature.icon className="h-7 w-7" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-brand-900">{feature.title}</h3>
+                  <p className="mt-2 text-sm text-brand-600">{feature.description}</p>
+                </Card>
+              </RevealItem>
+            ))}
+          </RevealGroup>
+        </div>
+      </section>
+
+      {/* Vision & mission */}
       <section className="bg-gradient-to-r from-brand-700 to-brand-600 py-20 text-white">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid gap-10 md:grid-cols-2">
@@ -135,9 +271,10 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* CTA */}
       <section className="mx-auto max-w-6xl px-4 py-20 text-center sm:px-6">
         <Reveal>
-          <h2 className="font-display text-3xl font-bold text-brand-900">Ready to Get Started?</h2>
+          <h2 className="font-display text-3xl font-bold text-brand-900">Ready to get started?</h2>
           <p className="mx-auto mt-4 max-w-xl text-brand-600">
             {user
               ? 'Submit a new loan request or track your existing applications from your dashboard.'
@@ -171,5 +308,76 @@ export function HomePage() {
         </Reveal>
       </section>
     </>
+  )
+}
+
+function DashboardMock() {
+  return (
+    <div className="relative w-full max-w-sm">
+      <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
+      <div className="relative rounded-3xl border border-brand-100 bg-white p-5 shadow-2xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-brand-400">My Dashboard</p>
+            <p className="font-display text-lg font-bold text-brand-900">Loan Applications</p>
+          </div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
+            <BarChart3 className="h-5 w-5" />
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          <motion.div
+            initial={{ opacity: 0, x: -12 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="rounded-2xl border border-brand-100 bg-brand-50/60 p-4"
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-lg font-bold text-brand-900">P3,000</p>
+              <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">
+                Approved
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-brand-500">Rent · submitted 2 days ago</p>
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-brand-100">
+              <motion.div
+                initial={{ width: 0 }}
+                whileInView={{ width: '100%' }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.1, delay: 0.3 }}
+                className="h-full rounded-full bg-gradient-to-r from-brand-500 to-growth-500"
+              />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: -12 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.25 }}
+            className="rounded-2xl border border-brand-100 p-4"
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-lg font-bold text-brand-900">P1,500</p>
+              <span className="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-yellow-800">
+                Reviewing
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-brand-500">Emergency · submitted today</p>
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-brand-100">
+              <motion.div
+                initial={{ width: 0 }}
+                whileInView={{ width: '55%' }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.1, delay: 0.45 }}
+                className="h-full rounded-full bg-gradient-to-r from-brand-400 to-gold-400"
+              />
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </div>
   )
 }
