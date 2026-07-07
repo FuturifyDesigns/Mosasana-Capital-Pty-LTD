@@ -22,14 +22,20 @@
 
 html {
   scroll-behavior: smooth;
-  /* Slightly zoomed-out base so pages feel less cramped. Tailwind spacing
-     and font sizes use rem, so this scales the whole UI down proportionally. */
-  font-size: 15px;
 }
 
-@media (min-width: 1280px) {
-  html {
-    font-size: 15.5px;
+/* Zoom the whole UI out a little on tablets/desktops so pages feel less
+   cramped (scales text, images and layout together, like the browser's
+   zoom-out). Phones stay at 100% so content remains readable. */
+@media (min-width: 768px) {
+  body {
+    zoom: 0.9;
+  }
+}
+
+@media (min-width: 1536px) {
+  body {
+    zoom: 0.85;
   }
 }
 
