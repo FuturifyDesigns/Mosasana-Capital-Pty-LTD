@@ -408,7 +408,7 @@ BEGIN
 END $$;
 
 -- ============================================================
--- Repayment reminders (email via Brevo) — see supabase/functions/loan-reminders
+-- Repayment reminders (email via Brevo SMTP) — see supabase/functions/loan-reminders
 -- ============================================================
 
 -- Logs each reminder we send so the scheduled job never sends the same

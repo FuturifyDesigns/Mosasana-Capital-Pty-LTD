@@ -1,19 +1,24 @@
 // Supabase Edge Function: loan-reminders
 //
-// Sends repayment reminder emails to clients via Brevo. Intended to be invoked
-// once a day by a pg_cron schedule (see supabase/schema.sql).
+// Sends repayment reminder emails to clients via Brevo SMTP. Intended to be
+// invoked once a day by a pg_cron schedule (see supabase/schema.sql).
 //
 // Deploy:
 //   supabase functions deploy loan-reminders --no-verify-jwt
 //
 // Required secrets (supabase secrets set KEY=value):
-//   BREVO_API_KEY          - Brevo (Sendinblue) transactional API key
-//   BREVO_SENDER_EMAIL     - verified sender, e.g. noreply@mosasanacapital.com
-//   BREVO_SENDER_NAME      - e.g. "Mosasana Capital"
+//   BREVO_SMTP_LOGIN    - your Brevo account login email (SMTP username)
+//   BREVO_SMTP_KEY      - your Brevo SMTP key (starts with xsmtpsib-)
+//   BREVO_SENDER_EMAIL  - a verified sender, e.g. noreply@mosasanacapital.com
+//   BREVO_SENDER_NAME   - e.g. "Mosasana Capital"
+// Optional:
+//   BREVO_SMTP_HOST     - defaults to smtp-relay.brevo.com
+//   BREVO_SMTP_PORT     - defaults to 587
 //
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided automatically.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const ACTIVE_STATUSES = ['approved', 'disbursed']
@@ -58,46 +63,44 @@ function messageFor(
   daysLeft: number,
   balanceLabel: string,
   dueDate: Date,
-): { subject: string; body: string } {
+): { subject: string; html: string } {
   const dueStr = dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  let subject: string
+  let line: string
   if (daysLeft < 0) {
-    return {
-      subject: 'Your Mosasana Capital loan repayment is overdue',
-      body: `Hi ${loan.full_name},<br><br>Your loan repayment of <strong>${balanceLabel}</strong> was due on ${dueStr} and is now overdue by ${Math.abs(daysLeft)} day(s). Please make your payment as soon as possible to avoid additional charges.<br><br>Thank you,<br>Mosasana Capital`,
-    }
+    subject = 'Your Mosasana Capital loan repayment is overdue'
+    line = `Your loan repayment of <strong>${balanceLabel}</strong> was due on ${dueStr} and is now overdue by ${Math.abs(daysLeft)} day(s). Please make your payment as soon as possible to avoid additional charges.`
+  } else if (daysLeft === 0) {
+    subject = 'Your Mosasana Capital loan repayment is due today'
+    line = `This is a friendly reminder that your loan repayment of <strong>${balanceLabel}</strong> is due today (${dueStr}).`
+  } else {
+    subject = `Reminder: loan repayment due in ${daysLeft} day(s)`
+    line = `Your loan repayment of <strong>${balanceLabel}</strong> is due in ${daysLeft} day(s), on ${dueStr}. Please ensure funds are available.`
   }
-  if (daysLeft === 0) {
-    return {
-      subject: 'Your Mosasana Capital loan repayment is due today',
-      body: `Hi ${loan.full_name},<br><br>This is a friendly reminder that your loan repayment of <strong>${balanceLabel}</strong> is due today (${dueStr}).<br><br>Thank you,<br>Mosasana Capital`,
-    }
-  }
-  return {
-    subject: `Reminder: loan repayment due in ${daysLeft} day(s)`,
-    body: `Hi ${loan.full_name},<br><br>Your loan repayment of <strong>${balanceLabel}</strong> is due in ${daysLeft} day(s), on ${dueStr}. Please ensure funds are available.<br><br>Thank you,<br>Mosasana Capital`,
-  }
-}
 
-async function sendEmail(to: string, name: string, subject: string, htmlBody: string): Promise<boolean> {
-  const apiKey = Deno.env.get('BREVO_API_KEY')
-  const senderEmail = Deno.env.get('BREVO_SENDER_EMAIL')
-  const senderName = Deno.env.get('BREVO_SENDER_NAME') ?? 'Mosasana Capital'
-  if (!apiKey || !senderEmail) return false
-
-  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: { 'api-key': apiKey, 'Content-Type': 'application/json', accept: 'application/json' },
-    body: JSON.stringify({
-      sender: { email: senderEmail, name: senderName },
-      to: [{ email: to, name }],
-      subject,
-      htmlContent: `<div style="font-family:Arial,Helvetica,sans-serif;color:#1f3f57;line-height:1.6">${htmlBody}</div>`,
-    }),
-  })
-  return res.ok
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#1f3f57;line-height:1.6">
+    <p>Hi ${loan.full_name},</p>
+    <p>${line}</p>
+    <p>Thank you,<br>Mosasana Capital</p>
+  </div>`
+  return { subject, html }
 }
 
 Deno.serve(async () => {
+  const smtpLogin = Deno.env.get('BREVO_SMTP_LOGIN')
+  const smtpKey = Deno.env.get('BREVO_SMTP_KEY')
+  const senderEmail = Deno.env.get('BREVO_SENDER_EMAIL')
+  const senderName = Deno.env.get('BREVO_SENDER_NAME') ?? 'Mosasana Capital'
+  const smtpHost = Deno.env.get('BREVO_SMTP_HOST') ?? 'smtp-relay.brevo.com'
+  const smtpPort = Number(Deno.env.get('BREVO_SMTP_PORT') ?? '587')
+
+  if (!smtpLogin || !smtpKey || !senderEmail) {
+    return new Response(
+      JSON.stringify({ error: 'Missing BREVO_SMTP_LOGIN / BREVO_SMTP_KEY / BREVO_SENDER_EMAIL' }),
+      { status: 500 },
+    )
+  }
+
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -114,42 +117,62 @@ Deno.serve(async () => {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 })
   }
 
+  const client = new SMTPClient({
+    connection: {
+      hostname: smtpHost,
+      port: smtpPort,
+      tls: false, // STARTTLS is negotiated automatically on port 587
+      auth: { username: smtpLogin, password: smtpKey },
+    },
+  })
+
   const now = new Date()
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   let emailsSent = 0
 
-  for (const loan of (loans as LoanRow[]) ?? []) {
-    if (!loan.email) continue
-    const dueDate = getDueDate(loan)
-    if (!dueDate) continue
+  try {
+    for (const loan of (loans as LoanRow[]) ?? []) {
+      if (!loan.email) continue
+      const dueDate = getDueDate(loan)
+      if (!dueDate) continue
 
-    const startOfDue = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate())
-    const daysLeft = Math.round((startOfDue.getTime() - startOfToday.getTime()) / DAY_MS)
-    const kind = milestoneFor(daysLeft)
-    if (!kind) continue
+      const startOfDue = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate())
+      const daysLeft = Math.round((startOfDue.getTime() - startOfToday.getTime()) / DAY_MS)
+      const kind = milestoneFor(daysLeft)
+      if (!kind) continue
 
-    // Skip if we already sent this milestone email for this loan.
-    const { data: existing } = await supabase
-      .from('loan_reminder_log')
-      .select('id')
-      .eq('loan_id', loan.id)
-      .eq('kind', kind)
-      .eq('channel', 'email')
-      .maybeSingle()
-    if (existing) continue
+      // Skip if we already sent this milestone email for this loan.
+      const { data: existing } = await supabase
+        .from('loan_reminder_log')
+        .select('id')
+        .eq('loan_id', loan.id)
+        .eq('kind', kind)
+        .eq('channel', 'email')
+        .maybeSingle()
+      if (existing) continue
 
-    const balance =
-      loan.total_repayable != null
-        ? Math.max(loan.total_repayable - (loan.amount_paid ?? 0), 0)
-        : loan.loan_amount
-    const balanceLabel = `P${balance.toLocaleString()}`
-    const { subject, body } = messageFor(loan, daysLeft, balanceLabel, dueDate)
+      const balance =
+        loan.total_repayable != null
+          ? Math.max(loan.total_repayable - (loan.amount_paid ?? 0), 0)
+          : loan.loan_amount
+      const balanceLabel = `P${balance.toLocaleString()}`
+      const { subject, html } = messageFor(loan, daysLeft, balanceLabel, dueDate)
 
-    const ok = await sendEmail(loan.email, loan.full_name, subject, body)
-    if (ok) {
-      await supabase.from('loan_reminder_log').insert({ loan_id: loan.id, kind, channel: 'email' })
-      emailsSent++
+      try {
+        await client.send({
+          from: `${senderName} <${senderEmail}>`,
+          to: `${loan.full_name} <${loan.email}>`,
+          subject,
+          html,
+        })
+        await supabase.from('loan_reminder_log').insert({ loan_id: loan.id, kind, channel: 'email' })
+        emailsSent++
+      } catch (sendErr) {
+        console.error('Failed to send to', loan.email, sendErr)
+      }
     }
+  } finally {
+    await client.close()
   }
 
   return new Response(JSON.stringify({ ok: true, emailsSent }), {
