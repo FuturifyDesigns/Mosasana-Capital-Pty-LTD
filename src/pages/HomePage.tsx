@@ -16,7 +16,6 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { FlagStrands } from '@/components/FlagStrands'
 import { ChatAnimation } from '@/components/ChatAnimation'
 import { WebsiteFormAnimation } from '@/components/WebsiteFormAnimation'
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon'
@@ -75,8 +74,7 @@ export function HomePage() {
     <>
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-brand-100" />
-        <FlagStrands variant="light" />
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-50 via-white to-brand-100/70" />
         <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-brand-200/40 blur-3xl" />
         <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-gold-400/10 blur-3xl" />
 
@@ -173,44 +171,8 @@ export function HomePage() {
         </RevealGroup>
       </section>
 
-      {/* Tailored solutions */}
-      <section className="bg-white/60">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
-          <Reveal direction="right" className="relative">
-            <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
-            <img
-              src={`${BASE}consultation.png`}
-              alt="Mosasana Capital loan officer assisting a client"
-              className="relative w-full rounded-3xl border border-white/60 shadow-2xl"
-            />
-          </Reveal>
-          <Reveal direction="left">
-            <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
-              Loan solutions tailored for you
-            </span>
-            <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
-              Real people, real support
-            </h2>
-            <p className="mt-4 max-w-md leading-relaxed text-brand-600">
-              We take the time to understand your needs and offer short-term loan solutions that fit
-              your situation. Our team guides you through every step with honesty and care.
-            </p>
-            <ul className="mt-6 space-y-3">
-              {['Competitive, transparent terms', 'Flexible repayment options', 'Friendly, professional service'].map(
-                (item) => (
-                  <li key={item} className="flex items-center gap-2 text-brand-700">
-                    <CheckCircle2 className="h-5 w-5 shrink-0 text-growth-500" />
-                    {item}
-                  </li>
-                ),
-              )}
-            </ul>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* Alternating: Two ways to apply */}
-      <section>
+      {/* Two ways to apply */}
+      <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <Reveal className="mx-auto max-w-2xl text-center">
             <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
@@ -246,13 +208,46 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Alternating: Track your loans */}
+      {/* Tailored solutions — image left */}
       <section>
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
-          <Reveal direction="right" className="order-2 flex justify-center lg:order-1">
-            <DashboardMock />
+          <Reveal direction="right" className="relative">
+            <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
+            <img
+              src={`${BASE}consultation.png`}
+              alt="Mosasana Capital loan officer assisting a client"
+              className="relative w-full rounded-3xl border border-white/60 shadow-2xl"
+            />
           </Reveal>
-          <Reveal direction="left" className="order-1 lg:order-2">
+          <Reveal direction="left">
+            <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
+              Loan solutions tailored for you
+            </span>
+            <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+              Real people, real support
+            </h2>
+            <p className="mt-4 max-w-md leading-relaxed text-brand-600">
+              We take the time to understand your needs and offer short-term loan solutions that fit
+              your situation. Our team guides you through every step with honesty and care.
+            </p>
+            <ul className="mt-6 space-y-3">
+              {['Competitive, transparent terms', 'Flexible repayment options', 'Friendly, professional service'].map(
+                (item) => (
+                  <li key={item} className="flex items-center gap-2 text-brand-700">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-growth-500" />
+                    {item}
+                  </li>
+                ),
+              )}
+            </ul>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Track your loans — image right */}
+      <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
+          <Reveal direction="right" className="order-1">
             <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
               Stay in control
             </span>
@@ -281,11 +276,37 @@ export function HomePage() {
               </Link>
             </div>
           </Reveal>
+          <Reveal direction="left" className="order-2 flex justify-center">
+            <DashboardMock />
+          </Reveal>
+        </div>
+      </section>
+
+      {/* Testimonial — image left */}
+      <section>
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
+          <Reveal direction="right" className="relative order-2 lg:order-1">
+            <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-gold-400/20 to-brand-300/25 blur-2xl" />
+            <img
+              src={`${BASE}customer.png`}
+              alt="Satisfied Mosasana Capital customer"
+              className="relative w-full rounded-3xl border border-white/60 shadow-2xl"
+            />
+          </Reveal>
+          <Reveal direction="left" className="order-1 lg:order-2">
+            <Quote className="h-12 w-12 text-brand-200" />
+            <blockquote className="mt-4 font-display text-2xl font-semibold leading-snug text-brand-900 sm:text-3xl">
+              “Mosasana Capital gave me quick, reliable support exactly when I needed it. The process
+              was simple and the team truly cared.”
+            </blockquote>
+            <p className="mt-6 font-semibold text-brand-800">A valued client</p>
+            <p className="text-sm text-brand-500">Gaborone, Botswana</p>
+          </Reveal>
         </div>
       </section>
 
       {/* Why choose us */}
-      <section className="bg-white/60">
+      <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <Reveal className="mb-12 text-center">
             <h2 className="font-display text-3xl font-bold text-brand-900 sm:text-4xl">Why choose us</h2>
@@ -306,29 +327,6 @@ export function HomePage() {
               </RevealItem>
             ))}
           </RevealGroup>
-        </div>
-      </section>
-
-      {/* Testimonial */}
-      <section>
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
-          <Reveal direction="right" className="relative order-2 lg:order-1">
-            <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-gold-400/20 to-brand-300/25 blur-2xl" />
-            <img
-              src={`${BASE}customer.png`}
-              alt="Satisfied Mosasana Capital customer"
-              className="relative w-full rounded-3xl border border-white/60 shadow-2xl"
-            />
-          </Reveal>
-          <Reveal direction="left" className="order-1 lg:order-2">
-            <Quote className="h-12 w-12 text-brand-200" />
-            <blockquote className="mt-4 font-display text-2xl font-semibold leading-snug text-brand-900 sm:text-3xl">
-              “Mosasana Capital gave me quick, reliable support exactly when I needed it. The process
-              was simple and the team truly cared.”
-            </blockquote>
-            <p className="mt-6 font-semibold text-brand-800">A valued client</p>
-            <p className="text-sm text-brand-500">Gaborone, Botswana</p>
-          </Reveal>
         </div>
       </section>
 
