@@ -20,23 +20,26 @@ export function Footer() {
             <img
               src={`${import.meta.env.BASE_URL}logo-transparent.png`}
               alt={COMPANY.name}
-              className="mb-3 h-12 w-auto"
+              className="mb-3 h-20 w-auto sm:h-24"
             />
             <p className="max-w-xs text-sm leading-relaxed text-brand-300">{COMPANY.tagline}.</p>
           </div>
 
           {officers.map((officer) => (
-            <div key={officer.email} className="min-w-0">
+            <div
+              key={officer.email}
+              className="min-w-0 rounded-xl border border-brand-700/50 bg-brand-800/40 p-4"
+            >
               <h3 className="text-[11px] font-semibold uppercase tracking-widest text-gold-400">
                 {officer.role}
               </h3>
               <p className="mt-1.5 font-semibold text-white">{officer.name}</p>
               <a
                 href={`tel:${officer.cell.replace(/\s/g, '')}`}
-                className="mt-1.5 flex items-center gap-2 text-sm text-brand-300 transition hover:text-white"
+                className="mt-2 flex items-center gap-2 text-sm text-brand-300 transition hover:text-white"
               >
                 <Phone className="h-3.5 w-3.5 shrink-0 text-brand-400" />
-                {officer.cell}
+                <span className="truncate">{officer.cell}</span>
               </a>
               <a
                 href={`mailto:${officer.email}`}
@@ -69,21 +72,18 @@ export function Footer() {
       </div>
 
       <div className="border-t border-brand-700/60">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-4 text-center text-sm text-brand-400 sm:flex-row sm:px-6 sm:text-left">
-          <p>
-            &copy; {year} <span className="text-brand-200">{COMPANY.name}</span>. All rights reserved.
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-4 text-center text-sm sm:flex-row sm:px-6 sm:text-left">
+          <p className="text-brand-200">
+            &copy; {year} {COMPANY.name}. All rights reserved.
           </p>
           <a
             href={COMPANY.builtBy.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="group inline-flex items-center gap-1.5 transition hover:text-white"
+            className="group inline-flex items-center gap-1.5 text-brand-200 transition hover:text-white"
           >
-            Built by
-            <span className="bg-gradient-to-r from-gold-400 to-gold-500 bg-clip-text font-medium text-transparent">
-              {COMPANY.builtBy.name}
-            </span>
-            <ArrowUpRight className="h-3.5 w-3.5 text-gold-400 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            Built by {COMPANY.builtBy.name}
+            <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </a>
         </div>
       </div>
