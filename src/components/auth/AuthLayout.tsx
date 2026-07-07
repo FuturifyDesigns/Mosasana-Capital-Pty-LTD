@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Check, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 
 interface AuthLayoutProps {
@@ -64,10 +64,6 @@ export function AuthLayout({
                   </li>
                 ))}
               </ul>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-white/70">
-              <ShieldCheck className="h-4 w-4" />
-              Bank-grade security · your data stays private
             </div>
           </div>
         </div>

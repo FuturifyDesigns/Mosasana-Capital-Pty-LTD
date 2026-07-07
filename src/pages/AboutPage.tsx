@@ -168,11 +168,14 @@ export function AboutPage() {
                         leftSide ? 'md:justify-start' : 'md:justify-end'
                       }`}
                     >
-                      {/* branch stub + node dot */}
+                      {/* branch stub — points from the trunk toward the card */}
                       <span
-                        className="absolute left-7 top-1/2 h-1 w-8 -translate-y-1/2 rounded-full bg-brand-300 md:left-1/2 md:w-10"
+                        className={`absolute left-7 top-1/2 h-1 w-8 -translate-y-1/2 rounded-full bg-brand-300 md:w-10 ${
+                          leftSide ? 'md:left-auto md:right-1/2' : 'md:left-1/2'
+                        }`}
                         aria-hidden="true"
                       />
+                      {/* node dot sits on the trunk */}
                       <span
                         className="absolute left-7 top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-white bg-growth-500 shadow md:left-1/2"
                         aria-hidden="true"
