@@ -60,6 +60,8 @@ export function ContactPage() {
       <PageHero
         title="Contact Us"
         subtitle="Have a question? Reach out to our team — we're here to help."
+        titleKey="contact.hero.title"
+        subtitleKey="contact.hero.subtitle"
       />
 
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">

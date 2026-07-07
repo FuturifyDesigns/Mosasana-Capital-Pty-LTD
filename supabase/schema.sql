@@ -157,6 +157,61 @@ CREATE POLICY "Admins can read ID documents"
   TO authenticated
   USING (bucket_id = 'id-documents' AND public.is_admin());
 
+-- ============================================================
+-- Editable site content (CMS) — lets admins edit text & images
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.site_content (
+  key TEXT PRIMARY KEY,
+  type TEXT NOT NULL DEFAULT 'text' CHECK (type IN ('text', 'image')),
+  value TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TRIGGER site_content_updated_at
+  BEFORE UPDATE ON public.site_content
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+ALTER TABLE public.site_content ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can read published site content
+CREATE POLICY "Anyone can read site content"
+  ON public.site_content FOR SELECT
+  USING (true);
+
+-- Only admins can create / edit content
+CREATE POLICY "Admins can insert site content"
+  ON public.site_content FOR INSERT
+  WITH CHECK (public.is_admin());
+
+CREATE POLICY "Admins can update site content"
+  ON public.site_content FOR UPDATE
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
+
+-- Public storage bucket for editable site images
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'site-images',
+  'site-images',
+  true,
+  5242880,
+  ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+) ON CONFLICT (id) DO NOTHING;
+
+CREATE POLICY "Anyone can view site images"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'site-images');
+
+CREATE POLICY "Admins can upload site images"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'site-images' AND public.is_admin());
+
+CREATE POLICY "Admins can update site images"
+  ON storage.objects FOR UPDATE
+  TO authenticated
+  USING (bucket_id = 'site-images' AND public.is_admin());
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_loan_requests_user_id ON public.loan_requests(user_id);
 CREATE INDEX IF NOT EXISTS idx_loan_requests_status ON public.loan_requests(status);

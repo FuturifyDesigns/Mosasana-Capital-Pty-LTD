@@ -1,13 +1,17 @@
 import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
+import { EditableText } from '@/components/editable/EditableText'
 
 interface PageHeroProps {
   title: string
   subtitle?: string
   children?: ReactNode
+  /** Content keys make the title/subtitle editable by admins */
+  titleKey?: string
+  subtitleKey?: string
 }
 
-export function PageHero({ title, subtitle, children }: PageHeroProps) {
+export function PageHero({ title, subtitle, children, titleKey, subtitleKey }: PageHeroProps) {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-brand-800 via-brand-700 to-brand-500 py-14 text-white sm:py-20">
       <div className="absolute inset-0 opacity-20">
@@ -21,8 +25,30 @@ export function PageHero({ title, subtitle, children }: PageHeroProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">{title}</h1>
-          {subtitle && <p className="mt-4 max-w-2xl text-lg text-brand-100">{subtitle}</p>}
+          {titleKey ? (
+            <EditableText
+              as="h1"
+              contentKey={titleKey}
+              className="font-display text-4xl font-bold tracking-tight sm:text-5xl"
+            >
+              {title}
+            </EditableText>
+          ) : (
+            <h1 className="font-display text-4xl font-bold tracking-tight sm:text-5xl">{title}</h1>
+          )}
+          {subtitle &&
+            (subtitleKey ? (
+              <EditableText
+                as="p"
+                multiline
+                contentKey={subtitleKey}
+                className="mt-4 max-w-2xl text-lg text-brand-100"
+              >
+                {subtitle}
+              </EditableText>
+            ) : (
+              <p className="mt-4 max-w-2xl text-lg text-brand-100">{subtitle}</p>
+            ))}
           {children}
         </motion.div>
       </div>

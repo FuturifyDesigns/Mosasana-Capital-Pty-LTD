@@ -2,6 +2,8 @@ import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal'
 import { BotswanaFlag } from '@/components/icons/BotswanaFlag'
+import { EditableText } from '@/components/editable/EditableText'
+import { EditableImage } from '@/components/editable/EditableImage'
 import { COMPANY } from '@/lib/constants'
 import {
   Mail,
@@ -91,6 +93,8 @@ export function AboutPage() {
       <PageHero
         title="About Us"
         subtitle="A NBFIRA-licensed Botswana lender providing short-term relief for daily financial shortfalls."
+        titleKey="about.hero.title"
+        subtitleKey="about.hero.subtitle"
       />
 
       {/* Who we are */}
@@ -101,28 +105,40 @@ export function AboutPage() {
               <BotswanaFlag className="h-3.5 w-5 rounded-sm ring-1 ring-black/5" />
               Proudly Botswana
             </span>
-            <h2 className="mt-5 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+            <EditableText
+              as="h2"
+              contentKey="about.who.title"
+              className="mt-5 font-display text-3xl font-bold text-brand-900 sm:text-4xl"
+            >
               {COMPANY.name}
-            </h2>
-            <p className="mt-4 leading-relaxed text-brand-600">
-              {COMPANY.name} was licensed by the Non Bank Financial Institutions Regulatory
-              Authority (NBFIRA) in 2026. Based in Gaborone, we service clients across the breadth
-              and width of Botswana.
-            </p>
-            <p className="mt-4 leading-relaxed text-brand-600">
-              We offer short-term loans — commonly known as cash loans — ranging from 1 to 12 months
-              at a reasonable interest rate. We pride ourselves in tailoring our offerings to each
-              customer’s needs while upholding high customer and ethical standards.
-            </p>
+            </EditableText>
+            <EditableText
+              as="p"
+              multiline
+              contentKey="about.who.p1"
+              className="mt-4 leading-relaxed text-brand-600"
+            >
+              {`${COMPANY.name} was licensed by the Non Bank Financial Institutions Regulatory Authority (NBFIRA) in 2026. Based in Gaborone, we service clients across the breadth and width of Botswana.`}
+            </EditableText>
+            <EditableText
+              as="p"
+              multiline
+              contentKey="about.who.p2"
+              className="mt-4 leading-relaxed text-brand-600"
+            >
+              {'We offer short-term loans — commonly known as cash loans — ranging from 1 to 12 months at a reasonable interest rate. We pride ourselves in tailoring our offerings to each customer’s needs while upholding high customer and ethical standards.'}
+            </EditableText>
           </Reveal>
 
           <Reveal direction="left" className="relative">
             <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
             <div className="relative flex items-center justify-center rounded-3xl border border-white/60 bg-gradient-to-br from-brand-50 to-white p-10 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:shadow-brand-500/25 sm:p-14">
-              <img
+              <EditableImage
+                contentKey="about.who.image"
                 src={`${BASE}logo-transparent.png`}
                 alt={COMPANY.name}
                 className="w-full max-w-xs transition-transform duration-500 ease-out hover:scale-[1.03]"
+                wrapperClassName="max-w-xs"
               />
             </div>
           </Reveal>
@@ -133,16 +149,29 @@ export function AboutPage() {
       <section className="border-y border-brand-100/60 bg-gradient-to-b from-brand-50/60 via-white to-white">
         <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16 lg:py-24">
           <Reveal className="text-center">
-            <span className="text-sm font-semibold uppercase tracking-widest text-growth-600">
+            <EditableText
+              as="span"
+              contentKey="about.tree.eyebrow"
+              className="text-sm font-semibold uppercase tracking-widest text-growth-600"
+            >
               What&apos;s in a name
-            </span>
-            <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+            </EditableText>
+            <EditableText
+              as="h2"
+              contentKey="about.tree.title"
+              className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl"
+            >
               Rooted in meaning
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl leading-relaxed text-brand-600">
+            </EditableText>
+            <EditableText
+              as="p"
+              multiline
+              contentKey="about.tree.text"
+              className="mx-auto mt-4 max-w-2xl leading-relaxed text-brand-600"
+            >
               Our story grows from a single Setswana word — follow it from its roots to what we
               offer today.
-            </p>
+            </EditableText>
           </Reveal>
 
           {/* Canopy */}
@@ -192,10 +221,21 @@ export function AboutPage() {
                             <node.icon className="h-6 w-6" />
                           </div>
                           <div>
-                            <h3 className="text-lg font-semibold text-brand-900">{node.title}</h3>
-                            <p className="mt-1.5 text-sm leading-relaxed text-brand-600">
+                            <EditableText
+                              as="h3"
+                              contentKey={`about.tree.${i}.title`}
+                              className="text-lg font-semibold text-brand-900"
+                            >
+                              {node.title}
+                            </EditableText>
+                            <EditableText
+                              as="p"
+                              multiline
+                              contentKey={`about.tree.${i}.desc`}
+                              className="mt-1.5 text-sm leading-relaxed text-brand-600"
+                            >
                               {node.description}
-                            </p>
+                            </EditableText>
                           </div>
                         </div>
                       </Card>
@@ -212,22 +252,43 @@ export function AboutPage() {
       <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
           <Reveal className="mb-12 text-center">
-            <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
+            <EditableText
+              as="span"
+              contentKey="about.values.eyebrow"
+              className="text-sm font-semibold uppercase tracking-widest text-brand-500"
+            >
               What we stand for
-            </span>
-            <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+            </EditableText>
+            <EditableText
+              as="h2"
+              contentKey="about.values.title"
+              className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl"
+            >
               Our core values
-            </h2>
+            </EditableText>
           </Reveal>
           <RevealGroup className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {values.map((value) => (
-              <RevealItem key={value.title}>
+            {values.map((value, i) => (
+              <RevealItem key={i}>
                 <Card hover className="group h-full text-center">
                   <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-brand-500 text-white shadow-lg shadow-brand-600/25 transition-transform duration-500 group-hover:-translate-y-1 group-hover:scale-110">
                     <value.icon className="h-7 w-7" />
                   </div>
-                  <h3 className="text-lg font-semibold text-brand-900">{value.title}</h3>
-                  <p className="mt-2 text-sm text-brand-600">{value.description}</p>
+                  <EditableText
+                    as="h3"
+                    contentKey={`about.value.${i}.title`}
+                    className="text-lg font-semibold text-brand-900"
+                  >
+                    {value.title}
+                  </EditableText>
+                  <EditableText
+                    as="p"
+                    multiline
+                    contentKey={`about.value.${i}.desc`}
+                    className="mt-2 text-sm text-brand-600"
+                  >
+                    {value.description}
+                  </EditableText>
                 </Card>
               </RevealItem>
             ))}
@@ -243,8 +304,21 @@ export function AboutPage() {
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100 text-brand-600 transition-transform duration-500 group-hover:scale-110">
                 <Target className="h-6 w-6" />
               </div>
-              <h3 className="font-display text-xl font-bold text-brand-900">Our Vision</h3>
-              <p className="mt-3 leading-relaxed text-brand-600">{COMPANY.vision}</p>
+              <EditableText
+                as="h3"
+                contentKey="about.vision.title"
+                className="font-display text-xl font-bold text-brand-900"
+              >
+                Our Vision
+              </EditableText>
+              <EditableText
+                as="p"
+                multiline
+                contentKey="about.vision.text"
+                className="mt-3 leading-relaxed text-brand-600"
+              >
+                {COMPANY.vision}
+              </EditableText>
             </Card>
           </RevealItem>
           <RevealItem>
@@ -252,8 +326,21 @@ export function AboutPage() {
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gold-500/15 text-gold-600 transition-transform duration-500 group-hover:scale-110">
                 <Compass className="h-6 w-6" />
               </div>
-              <h3 className="font-display text-xl font-bold text-brand-900">Our Mission</h3>
-              <p className="mt-3 leading-relaxed text-brand-600">{COMPANY.mission}</p>
+              <EditableText
+                as="h3"
+                contentKey="about.mission.title"
+                className="font-display text-xl font-bold text-brand-900"
+              >
+                Our Mission
+              </EditableText>
+              <EditableText
+                as="p"
+                multiline
+                contentKey="about.mission.text"
+                className="mt-3 leading-relaxed text-brand-600"
+              >
+                {COMPANY.mission}
+              </EditableText>
             </Card>
           </RevealItem>
         </RevealGroup>
@@ -263,12 +350,20 @@ export function AboutPage() {
       <section className="border-t border-brand-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
           <Reveal className="mb-10 text-center">
-            <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
+            <EditableText
+              as="span"
+              contentKey="about.team.eyebrow"
+              className="text-sm font-semibold uppercase tracking-widest text-brand-500"
+            >
               The people behind Mosasana
-            </span>
-            <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+            </EditableText>
+            <EditableText
+              as="h2"
+              contentKey="about.team.title"
+              className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl"
+            >
               Leadership Team
-            </h2>
+            </EditableText>
           </Reveal>
           <RevealGroup className="grid gap-6 md:grid-cols-2">
             {[
@@ -314,11 +409,21 @@ export function AboutPage() {
         <div className="absolute -bottom-12 left-1/4 h-56 w-56 rounded-full bg-gold-400/15 blur-3xl" />
         <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-5 px-4 text-center sm:px-6">
           <BotswanaFlag className="h-14 w-20 rounded-lg shadow-xl ring-2 ring-white/40 transition-transform duration-500 hover:scale-105" />
-          <h2 className="font-display text-2xl font-bold sm:text-3xl">Proudly Botswana</h2>
-          <p className="max-w-2xl leading-relaxed text-brand-100">
-            {COMPANY.shortName} is a Botswana business built to serve Batswana — providing accessible,
-            responsible financial support to the communities we call home.
-          </p>
+          <EditableText
+            as="h2"
+            contentKey="about.banner.title"
+            className="font-display text-2xl font-bold sm:text-3xl"
+          >
+            Proudly Botswana
+          </EditableText>
+          <EditableText
+            as="p"
+            multiline
+            contentKey="about.banner.text"
+            className="max-w-2xl leading-relaxed text-brand-100"
+          >
+            {`${COMPANY.shortName} is a Botswana business built to serve Batswana — providing accessible, responsible financial support to the communities we call home.`}
+          </EditableText>
         </div>
       </section>
     </>

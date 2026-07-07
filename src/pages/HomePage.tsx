@@ -15,6 +15,8 @@ import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon'
 import { HowItWorksCycle } from '@/components/HowItWorksCycle'
 import { WhyChooseSlideshow } from '@/components/WhyChooseSlideshow'
 import { Reveal } from '@/components/Reveal'
+import { EditableText } from '@/components/editable/EditableText'
+import { EditableImage } from '@/components/editable/EditableImage'
 import { COMPANY } from '@/lib/constants'
 import { useAuth } from '@/context/AuthContext'
 
@@ -31,12 +33,20 @@ export function HomePage() {
       {/* How it works */}
       <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
         <Reveal className="mb-10 text-center sm:mb-16">
-          <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
+          <EditableText
+            as="span"
+            contentKey="home.how.eyebrow"
+            className="text-sm font-semibold uppercase tracking-widest text-brand-500"
+          >
             How it works
-          </span>
-          <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+          </EditableText>
+          <EditableText
+            as="h2"
+            contentKey="home.how.title"
+            className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl"
+          >
             Three simple steps to funding
-          </h2>
+          </EditableText>
         </Reveal>
         <Reveal>
           <HowItWorksCycle />
@@ -47,17 +57,30 @@ export function HomePage() {
       <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
           <Reveal className="mx-auto max-w-2xl text-center">
-            <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
+            <EditableText
+              as="span"
+              contentKey="home.apply.eyebrow"
+              className="text-sm font-semibold uppercase tracking-widest text-brand-500"
+            >
               Two ways to apply
-            </span>
-            <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+            </EditableText>
+            <EditableText
+              as="h2"
+              contentKey="home.apply.title"
+              className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl"
+            >
               Apply your way — website or WhatsApp
-            </h2>
-            <p className="mt-4 leading-relaxed text-brand-600">
+            </EditableText>
+            <EditableText
+              as="p"
+              multiline
+              contentKey="home.apply.text"
+              className="mt-4 leading-relaxed text-brand-600"
+            >
               Prefer a guided online form? Apply securely on our website. Prefer to chat? Send your
               application straight to us on WhatsApp. Both channels run in parallel, so you choose
               whatever feels easiest.
-            </p>
+            </EditableText>
           </Reveal>
 
           <div className="mt-10 grid items-center gap-10 sm:mt-16 lg:grid-cols-2 lg:gap-10">
@@ -85,29 +108,45 @@ export function HomePage() {
         <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
           <Reveal direction="right" className="relative">
             <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
-            <img
+            <EditableImage
+              contentKey="home.tailored.image"
               src={`${BASE}consultation.png`}
               alt="Mosasana Capital loan officer assisting a client"
               className="relative w-full rounded-3xl border border-white/60 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25"
             />
           </Reveal>
           <Reveal direction="left">
-            <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
+            <EditableText
+              as="span"
+              contentKey="home.tailored.eyebrow"
+              className="text-sm font-semibold uppercase tracking-widest text-brand-500"
+            >
               Loan solutions tailored for you
-            </span>
-            <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+            </EditableText>
+            <EditableText
+              as="h2"
+              contentKey="home.tailored.title"
+              className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl"
+            >
               Real people, real support
-            </h2>
-            <p className="mt-4 max-w-md leading-relaxed text-brand-600">
+            </EditableText>
+            <EditableText
+              as="p"
+              multiline
+              contentKey="home.tailored.text"
+              className="mt-4 max-w-md leading-relaxed text-brand-600"
+            >
               We take the time to understand your needs and offer short-term loan solutions that fit
               your situation. Our team guides you through every step with honesty and care.
-            </p>
+            </EditableText>
             <ul className="mt-6 space-y-3">
               {['Competitive, transparent terms', 'Flexible repayment options', 'Friendly, professional service'].map(
-                (item) => (
-                  <li key={item} className="flex items-center gap-2 text-brand-700">
+                (item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-brand-700">
                     <CheckCircle2 className="h-5 w-5 shrink-0 text-growth-500" />
-                    {item}
+                    <EditableText as="span" contentKey={`home.tailored.point.${i}`}>
+                      {item}
+                    </EditableText>
                   </li>
                 ),
               )}
@@ -120,22 +159,37 @@ export function HomePage() {
       <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
           <Reveal direction="right" className="order-1">
-            <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
+            <EditableText
+              as="span"
+              contentKey="home.track.eyebrow"
+              className="text-sm font-semibold uppercase tracking-widest text-brand-500"
+            >
               Stay in control
-            </span>
-            <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+            </EditableText>
+            <EditableText
+              as="h2"
+              contentKey="home.track.title"
+              className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl"
+            >
               Track every loan in your dashboard
-            </h2>
-            <p className="mt-4 max-w-md leading-relaxed text-brand-600">
+            </EditableText>
+            <EditableText
+              as="p"
+              multiline
+              contentKey="home.track.text"
+              className="mt-4 max-w-md leading-relaxed text-brand-600"
+            >
               Create an account to submit requests and follow their status in real time — from
               pending to approved and disbursed. All your applications, in one secure place.
-            </p>
+            </EditableText>
             <ul className="mt-6 space-y-3">
               {['Real-time application status', 'Secure ID document handling', 'Full application history'].map(
-                (item) => (
-                  <li key={item} className="flex items-center gap-2 text-brand-700">
+                (item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-brand-700">
                     <CheckCircle2 className="h-5 w-5 shrink-0 text-growth-500" />
-                    {item}
+                    <EditableText as="span" contentKey={`home.track.point.${i}`}>
+                      {item}
+                    </EditableText>
                   </li>
                 ),
               )}
@@ -159,7 +213,8 @@ export function HomePage() {
         <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
           <Reveal direction="right" className="relative order-2 lg:order-1">
             <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-gold-400/20 to-brand-300/25 blur-2xl" />
-            <img
+            <EditableImage
+              contentKey="home.testimonial.image"
               src={`${BASE}testimonial-client.png`}
               alt="Satisfied Mosasana Capital customer"
               className="relative w-full rounded-3xl border border-white/60 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25"
@@ -167,12 +222,28 @@ export function HomePage() {
           </Reveal>
           <Reveal direction="left" className="order-1 lg:order-2">
             <Quote className="h-12 w-12 text-brand-200" />
-            <blockquote className="mt-4 font-display text-2xl font-semibold leading-snug text-brand-900 sm:text-3xl">
-              “Mosasana Capital gave me quick, reliable support exactly when I needed it. The process
-              was simple and the team truly cared.”
-            </blockquote>
-            <p className="mt-6 font-semibold text-brand-800">A valued client</p>
-            <p className="text-sm text-brand-500">Gaborone, Botswana</p>
+            <EditableText
+              as="blockquote"
+              multiline
+              contentKey="home.testimonial.quote"
+              className="mt-4 font-display text-2xl font-semibold leading-snug text-brand-900 sm:text-3xl"
+            >
+              {'“Mosasana Capital gave me quick, reliable support exactly when I needed it. The process was simple and the team truly cared.”'}
+            </EditableText>
+            <EditableText
+              as="p"
+              contentKey="home.testimonial.name"
+              className="mt-6 font-semibold text-brand-800"
+            >
+              A valued client
+            </EditableText>
+            <EditableText
+              as="p"
+              contentKey="home.testimonial.location"
+              className="text-sm text-brand-500"
+            >
+              Gaborone, Botswana
+            </EditableText>
           </Reveal>
         </div>
       </section>
@@ -181,12 +252,20 @@ export function HomePage() {
       <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
           <Reveal className="mb-12 text-center">
-            <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
+            <EditableText
+              as="span"
+              contentKey="home.why.eyebrow"
+              className="text-sm font-semibold uppercase tracking-widest text-brand-500"
+            >
               Why choose us
-            </span>
-            <h2 className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+            </EditableText>
+            <EditableText
+              as="h2"
+              contentKey="home.why.title"
+              className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl"
+            >
               Built around what matters to you
-            </h2>
+            </EditableText>
           </Reveal>
           <Reveal>
             <WhyChooseSlideshow />
@@ -199,12 +278,38 @@ export function HomePage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid gap-10 md:grid-cols-2">
             <Reveal direction="right">
-              <h2 className="font-display text-2xl font-bold sm:text-3xl">Our Vision</h2>
-              <p className="mt-4 leading-relaxed text-brand-100">{COMPANY.vision}</p>
+              <EditableText
+                as="h2"
+                contentKey="home.vision.title"
+                className="font-display text-2xl font-bold sm:text-3xl"
+              >
+                Our Vision
+              </EditableText>
+              <EditableText
+                as="p"
+                multiline
+                contentKey="home.vision.text"
+                className="mt-4 leading-relaxed text-brand-100"
+              >
+                {COMPANY.vision}
+              </EditableText>
             </Reveal>
             <Reveal direction="left" delay={0.1}>
-              <h2 className="font-display text-2xl font-bold sm:text-3xl">Our Mission</h2>
-              <p className="mt-4 leading-relaxed text-brand-100">{COMPANY.mission}</p>
+              <EditableText
+                as="h2"
+                contentKey="home.mission.title"
+                className="font-display text-2xl font-bold sm:text-3xl"
+              >
+                Our Mission
+              </EditableText>
+              <EditableText
+                as="p"
+                multiline
+                contentKey="home.mission.text"
+                className="mt-4 leading-relaxed text-brand-100"
+              >
+                {COMPANY.mission}
+              </EditableText>
             </Reveal>
           </div>
         </div>
@@ -221,9 +326,13 @@ export function HomePage() {
         <div className="absolute inset-0 bg-brand-900/80" />
         <div className="relative mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-24">
           <Reveal>
-            <h2 className="font-display text-3xl font-bold text-white sm:text-4xl">
+            <EditableText
+              as="h2"
+              contentKey="home.cta.title"
+              className="font-display text-3xl font-bold text-white sm:text-4xl"
+            >
               Ready to get started?
-            </h2>
+            </EditableText>
             <p className="mx-auto mt-4 max-w-xl text-brand-100">
               {user
                 ? 'Submit a new loan request or track your existing applications from your dashboard.'
@@ -285,13 +394,22 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <h1 className="font-display text-4xl font-bold leading-[1.1] text-brand-900 sm:text-5xl lg:text-6xl">
-            Cash when life<br />
-            <span className="text-brand-600">can&apos;t wait</span>
+            <EditableText as="span" contentKey="home.hero.title1">
+              Cash when life
+            </EditableText>
+            <br />
+            <EditableText as="span" contentKey="home.hero.title2" className="text-brand-600">
+              {"can't wait"}
+            </EditableText>
           </h1>
-          <p className="mt-6 max-w-md text-lg leading-relaxed text-brand-600">
-            {COMPANY.shortName} makes short-term cash loans simple. Apply on our secure website or
-            chat with us on WhatsApp — whichever works best for you.
-          </p>
+          <EditableText
+            as="p"
+            multiline
+            contentKey="home.hero.subtitle"
+            className="mt-6 max-w-md text-lg leading-relaxed text-brand-600"
+          >
+            {`${COMPANY.shortName} makes short-term cash loans simple. Apply on our secure website or chat with us on WhatsApp — whichever works best for you.`}
+          </EditableText>
           <div className="mt-8 flex flex-wrap gap-4">
             <Link to={applyTarget}>
               <Button size="lg">
@@ -316,7 +434,8 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
         >
           <motion.div style={{ rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}>
             <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/30 to-gold-400/20 blur-2xl" />
-            <img
+            <EditableImage
+              contentKey="home.hero.image"
               src={`${BASE}hero-money.png`}
               alt="Happy Mosasana Capital client with cash"
               className="relative w-full rounded-3xl border border-white/60 shadow-2xl"
@@ -332,8 +451,20 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
                 <CheckCircle2 className="h-6 w-6" />
               </div>
               <div className="leading-tight">
-                <p className="text-sm font-bold text-brand-900">Loan approved</p>
-                <p className="text-xs text-brand-500">Funds on the way</p>
+                <EditableText
+                  as="p"
+                  contentKey="home.hero.badge.title"
+                  className="text-sm font-bold text-brand-900"
+                >
+                  Loan approved
+                </EditableText>
+                <EditableText
+                  as="p"
+                  contentKey="home.hero.badge.subtitle"
+                  className="text-xs text-brand-500"
+                >
+                  Funds on the way
+                </EditableText>
               </div>
             </motion.div>
           </motion.div>

@@ -160,6 +160,8 @@ export function ApplyPage() {
       <PageHero
         title="Apply for a Loan"
         subtitle="Choose to apply through our secure website form or via WhatsApp — both options are available."
+        titleKey="apply.hero.title"
+        subtitleKey="apply.hero.subtitle"
       />
 
       <section className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
