@@ -21,6 +21,8 @@ export function Footer() {
             <img
               src={`${import.meta.env.BASE_URL}logo-transparent.png`}
               alt={COMPANY.name}
+              loading="lazy"
+              decoding="async"
               className="mb-3 h-20 w-auto sm:h-24"
             />
             <p className="max-w-xs text-sm leading-relaxed text-brand-300">{COMPANY.tagline}.</p>

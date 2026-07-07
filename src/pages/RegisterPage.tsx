@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
 import { registerSchema, sanitizeText, type RegisterFormData } from '@/lib/validation'
+import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { Logo } from '@/components/Logo'
 
@@ -27,8 +28,24 @@ export function RegisterPage() {
   })
 
   const onSubmit = async (data: RegisterFormData) => {
+    const limit = checkRateLimit('register', 5, 10 * 60 * 1000)
+    if (!limit.allowed) {
+      setError(rateLimitMessage(limit.retryAfterMs))
+      return
+    }
+
     setLoading(true)
     setError(null)
+
+    // Block duplicate phone numbers (one account per phone number)
+    const { data: phoneTaken, error: phoneErr } = await supabase.rpc('phone_taken', {
+      p_phone: sanitizeText(data.phone),
+    })
+    if (!phoneErr && phoneTaken) {
+      setError('This phone number is already registered. Please sign in or use a different number.')
+      setLoading(false)
+      return
+    }
 
     const { error: authError } = await supabase.auth.signUp({
       email: data.email,
@@ -43,7 +60,11 @@ export function RegisterPage() {
     })
 
     if (authError) {
-      setError(authError.message)
+      const msg = authError.message || ''
+      const friendly = /phone|duplicate|unique/i.test(msg)
+        ? 'This phone number is already registered. Please sign in or use a different number.'
+        : msg
+      setError(friendly)
       setLoading(false)
       return
     }

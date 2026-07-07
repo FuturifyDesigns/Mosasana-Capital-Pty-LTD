@@ -7,6 +7,7 @@ export function Logo({ className = 'h-12' }: { className?: string }) {
       <img
         src={`${import.meta.env.BASE_URL}logo-transparent.png`}
         alt={COMPANY.name}
+        decoding="async"
         className={`${className} w-auto object-contain`}
       />
     </Link>

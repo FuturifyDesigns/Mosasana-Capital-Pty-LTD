@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 const phoneRegex = /^(\+?267)?[0-9]{8}$/
 const idNumberRegex = /^[0-9]{9,12}$/
+const passportRegex = /^[A-Za-z0-9]{6,15}$/
 
 export const loginSchema = z.object({
   email: z.string().trim().email('Enter a valid email address').max(255),
@@ -55,35 +56,60 @@ export const resetPasswordSchema = z
     path: ['confirmPassword'],
   })
 
-export const loanRequestSchema = z.object({
-  fullName: z
-    .string()
-    .trim()
-    .min(2, 'Full name is required')
-    .max(120)
-    .regex(/^[a-zA-Z\s'.-]+$/, 'Name contains invalid characters'),
-  email: z.string().trim().email('Enter a valid email').max(255),
-  phone: z.string().trim().regex(phoneRegex, 'Enter a valid Botswana phone number'),
-  idNumber: z
-    .string()
-    .trim()
-    .regex(idNumberRegex, 'Enter a valid ID number (9–12 digits)'),
-  physicalAddress: z.string().trim().min(10, 'Enter your full physical address').max(500),
-  loanAmount: z
-    .number({ invalid_type_error: 'Enter a valid amount' })
-    .min(500, 'Minimum loan amount is P500')
-    .max(50000, 'Maximum loan amount is P50,000'),
-  loanPurpose: z.string().trim().min(5, 'Describe the purpose of the loan').max(500),
-  employmentStatus: z.enum(['employed', 'self-employed', 'contract', 'other'], {
-    errorMap: () => ({ message: 'Select your employment status' }),
-  }),
-  monthlyIncome: z
-    .number({ invalid_type_error: 'Enter a valid income' })
-    .min(0)
-    .max(1000000)
-    .optional()
-    .nullable(),
-})
+export const loanRequestSchema = z
+  .object({
+    fullName: z
+      .string()
+      .trim()
+      .min(2, 'Full name is required')
+      .max(120)
+      .regex(/^[a-zA-Z\s'.-]+$/, 'Name contains invalid characters'),
+    email: z.string().trim().email('Enter a valid email').max(255),
+    phone: z.string().trim().regex(phoneRegex, 'Enter a valid Botswana phone number'),
+    idType: z.enum(['national_id', 'passport'], {
+      errorMap: () => ({ message: 'Select your document type' }),
+    }),
+    idNumber: z.string().trim().min(5, 'Enter your document number').max(20),
+    physicalAddress: z.string().trim().min(10, 'Enter your full physical address').max(500),
+    loanAmount: z
+      .number({ invalid_type_error: 'Enter a valid amount' })
+      .min(500, 'Minimum loan amount is P500')
+      .max(50000, 'Maximum loan amount is P50,000'),
+    loanPurpose: z.string().trim().min(5, 'Describe the purpose of the loan').max(500),
+    employmentStatus: z.enum(['employed', 'self-employed', 'contract', 'other'], {
+      errorMap: () => ({ message: 'Select your employment status' }),
+    }),
+    employmentOther: z.string().trim().max(100).optional().or(z.literal('')),
+    monthlyIncome: z
+      .number({ invalid_type_error: 'Enter a valid income' })
+      .min(0)
+      .max(1000000)
+      .optional()
+      .nullable(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.idType === 'national_id' && !idNumberRegex.test(data.idNumber)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['idNumber'],
+        message: 'Enter a valid Omang / National ID (9–12 digits)',
+      })
+    }
+    if (data.idType === 'passport' && !passportRegex.test(data.idNumber)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['idNumber'],
+        message: 'Enter a valid passport number (6–15 letters/digits)',
+      })
+    }
+    if (data.employmentStatus === 'other' && (!data.employmentOther || data.employmentOther.trim().length < 2)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['employmentOther'],
+        message: 'Please describe your employment',
+      })
+    }
+  })
 
 export const contactSchema = z.object({
   fullName: z

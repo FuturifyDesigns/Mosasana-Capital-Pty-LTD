@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
 import { supabase, type LoanRequest } from '@/lib/supabase'
 import { ACTIVE_LOAN_STATUSES } from '@/lib/constants'
+import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import {
   loanRequestSchema,
   validateIdFile,
@@ -29,6 +30,11 @@ const employmentOptions = [
   { value: 'self-employed', label: 'Self-Employed' },
   { value: 'contract', label: 'Contract' },
   { value: 'other', label: 'Other' },
+]
+
+const idTypeOptions = [
+  { value: 'national_id', label: 'Omang / National ID' },
+  { value: 'passport', label: 'Passport (non-citizens)' },
 ]
 
 export function ApplyPage() {
@@ -78,10 +84,13 @@ export function ApplyPage() {
       email: user?.email || '',
       phone: profile?.phone || '',
       physicalAddress: profile?.physical_address || '',
+      idType: 'national_id',
     },
   })
 
   const formValues = watch()
+  const isPassport = formValues.idType === 'passport'
+  const isOtherEmployment = formValues.employmentStatus === 'other'
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -105,6 +114,12 @@ export function ApplyPage() {
   const onSubmitWebsite = async (data: LoanRequestFormData) => {
     if (!idFile) {
       setFileError('Please upload a photo of your ID document')
+      return
+    }
+
+    const limit = checkRateLimit('loan-apply', 3, 10 * 60 * 1000)
+    if (!limit.allowed) {
+      setSubmitError(rateLimitMessage(limit.retryAfterMs))
       return
     }
 
@@ -132,11 +147,15 @@ export function ApplyPage() {
         email: sanitizeText(data.email).toLowerCase(),
         phone: sanitizeText(data.phone),
         id_number: sanitizeText(data.idNumber),
+        id_type: data.idType,
         id_photo_path: filePath,
         physical_address: sanitizeText(data.physicalAddress),
         loan_amount: data.loanAmount,
         loan_purpose: sanitizeText(data.loanPurpose),
-        employment_status: data.employmentStatus,
+        employment_status:
+          data.employmentStatus === 'other' && data.employmentOther
+            ? sanitizeText(data.employmentOther)
+            : data.employmentStatus,
         monthly_income: data.monthlyIncome ?? null,
         status: 'pending',
         source: 'website',
@@ -337,11 +356,23 @@ export function ApplyPage() {
                 {...register('phone')}
                 error={errors.phone?.message}
               />
-              <Input
-                label="ID Number"
+              <Select
+                label="Document Type"
+                options={idTypeOptions}
                 required
-                inputMode="numeric"
-                hint="Digits only (9–12 numbers)."
+                hint="Choose Omang for citizens, or Passport for non-citizens."
+                {...register('idType')}
+                error={errors.idType?.message}
+              />
+              <Input
+                label={isPassport ? 'Passport Number' : 'Omang / National ID Number'}
+                required
+                inputMode={isPassport ? 'text' : 'numeric'}
+                hint={
+                  isPassport
+                    ? 'Letters and numbers (6–15 characters).'
+                    : 'Digits only (9–12 numbers).'
+                }
                 {...register('idNumber')}
                 error={errors.idNumber?.message}
               />
@@ -378,6 +409,15 @@ export function ApplyPage() {
                 {...register('employmentStatus')}
                 error={errors.employmentStatus?.message}
               />
+              {isOtherEmployment && (
+                <Input
+                  label="Please specify"
+                  required
+                  hint="Tell us what you do (e.g. student, pensioner, business owner)."
+                  {...register('employmentOther')}
+                  error={errors.employmentOther?.message}
+                />
+              )}
               <a
                 href={buildWhatsAppLoanUrl(formValues)}
                 target="_blank"
@@ -430,18 +470,31 @@ export function ApplyPage() {
                 {...register('phone')}
                 error={errors.phone?.message}
               />
-              <Input
-                label="ID Number"
+              <Select
+                label="Document Type"
+                options={idTypeOptions}
                 required
-                inputMode="numeric"
-                hint="Digits only (9–12 numbers)."
+                hint="Choose Omang for citizens, or Passport for non-citizens."
+                {...register('idType')}
+                error={errors.idType?.message}
+              />
+              <Input
+                label={isPassport ? 'Passport Number' : 'Omang / National ID Number'}
+                required
+                inputMode={isPassport ? 'text' : 'numeric'}
+                hint={
+                  isPassport
+                    ? 'Letters and numbers (6–15 characters).'
+                    : 'Digits only (9–12 numbers).'
+                }
                 {...register('idNumber')}
                 error={errors.idNumber?.message}
               />
 
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-brand-800">
-                  ID Document Photo <span className="text-red-500">*</span>
+                  {isPassport ? 'Passport Photo' : 'ID Document Photo'}{' '}
+                  <span className="text-red-500">*</span>
                 </label>
                 <div
                   className={`relative rounded-xl border-2 border-dashed p-6 text-center transition ${
@@ -504,6 +557,15 @@ export function ApplyPage() {
                 {...register('employmentStatus')}
                 error={errors.employmentStatus?.message}
               />
+              {isOtherEmployment && (
+                <Input
+                  label="Please specify"
+                  required
+                  hint="Tell us what you do (e.g. student, pensioner, business owner)."
+                  {...register('employmentOther')}
+                  error={errors.employmentOther?.message}
+                />
+              )}
               <Input
                 label="Monthly Income (Pula, optional)"
                 type="number"

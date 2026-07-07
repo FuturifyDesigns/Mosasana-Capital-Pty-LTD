@@ -3,12 +3,19 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
-import { AlertCircle, CheckCircle, ShieldCheck } from 'lucide-react'
+import { AlertCircle, CheckCircle2, ShieldCheck, Lock, KeyRound } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/Logo'
 import { supabase } from '@/lib/supabase'
 import { resetPasswordSchema, type ResetPasswordFormData } from '@/lib/validation'
+
+const checks = [
+  { label: 'At least 8 characters', test: (v: string) => v.length >= 8 },
+  { label: 'One uppercase letter', test: (v: string) => /[A-Z]/.test(v) },
+  { label: 'One lowercase letter', test: (v: string) => /[a-z]/.test(v) },
+  { label: 'One number', test: (v: string) => /[0-9]/.test(v) },
+]
 
 export function ResetPasswordPage() {
   const navigate = useNavigate()
@@ -24,10 +31,13 @@ export function ResetPasswordPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
   })
+
+  const passwordValue = watch('password') || ''
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     setLoading(true)
@@ -44,11 +54,25 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-brand-50 via-white to-white px-4 py-16">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-brand-50 via-white to-brand-100 px-4 py-16">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md rounded-3xl border border-brand-100 bg-white p-8 shadow-2xl"
+        aria-hidden
+        className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-brand-200/50 blur-3xl"
+        animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.6, 0.4] }}
+        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-24 -right-16 h-80 w-80 rounded-full bg-brand-300/30 blur-3xl"
+        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+        transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 120, damping: 16 }}
+        className="relative z-10 w-full max-w-md rounded-[28px] border border-white/60 bg-white/85 p-8 shadow-2xl backdrop-blur-xl sm:p-10"
       >
         <div className="flex justify-center">
           <Logo className="h-12" />
@@ -56,29 +80,44 @@ export function ResetPasswordPage() {
 
         {done ? (
           <div className="mt-8 text-center">
-            <CheckCircle className="mx-auto h-16 w-16 text-growth-500" />
+            <div className="relative mx-auto flex h-20 w-20 items-center justify-center">
+              <motion.span
+                className="absolute h-20 w-20 rounded-full bg-growth-500/15"
+                animate={{ scale: [1, 1.5], opacity: [0.6, 0] }}
+                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut' }}
+              />
+              <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-growth-500 to-growth-600 shadow-lg shadow-growth-500/30">
+                <CheckCircle2 className="h-9 w-9 text-white" />
+              </span>
+            </div>
             <h1 className="mt-6 font-display text-2xl font-bold text-brand-900">Password updated</h1>
             <p className="mt-3 text-brand-600">
-              Your password has been changed. Redirecting you to your dashboard…
+              Your password has been changed. Taking you to your dashboard…
             </p>
           </div>
         ) : (
           <>
             <div className="mt-6 flex justify-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100 text-brand-600">
-                <ShieldCheck className="h-6 w-6" />
-              </span>
+              <motion.span
+                initial={{ scale: 0, rotate: -20 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.1, type: 'spring', stiffness: 200, damping: 12 }}
+                className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/30"
+              >
+                <KeyRound className="h-7 w-7" />
+              </motion.span>
             </div>
-            <h1 className="mt-4 text-center font-display text-2xl font-bold text-brand-900">
+            <h1 className="mt-5 text-center font-display text-2xl font-bold text-brand-900">
               Set a new password
             </h1>
             <p className="mt-2 text-center text-sm text-brand-600">
-              Choose a strong password for your account.
+              Choose a strong password to secure your account.
             </p>
 
             {!ready && (
-              <div className="mt-6 rounded-xl bg-brand-50 p-4 text-center text-sm text-brand-600">
-                Open this page from the password-reset link in your email to continue.
+              <div className="mt-6 flex items-start gap-2 rounded-xl bg-brand-50 p-4 text-sm text-brand-600">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
+                <span>Open this page from the password-reset link in your email to continue.</span>
               </div>
             )}
 
@@ -95,10 +134,35 @@ export function ResetPasswordPage() {
                 type="password"
                 required
                 autoComplete="new-password"
-                hint="At least 8 characters with an uppercase, lowercase and a number."
                 {...register('password')}
                 error={errors.password?.message}
               />
+
+              {passwordValue.length > 0 && (
+                <ul className="grid grid-cols-2 gap-1.5 rounded-xl bg-brand-50/70 p-3">
+                  {checks.map((c) => {
+                    const ok = c.test(passwordValue)
+                    return (
+                      <li
+                        key={c.label}
+                        className={`flex items-center gap-1.5 text-xs transition ${
+                          ok ? 'text-growth-600' : 'text-brand-400'
+                        }`}
+                      >
+                        <span
+                          className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] ${
+                            ok ? 'bg-growth-500 text-white' : 'bg-brand-200 text-white'
+                          }`}
+                        >
+                          <Lock className="h-2.5 w-2.5" />
+                        </span>
+                        {c.label}
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+
               <Input
                 label="Confirm New Password"
                 type="password"

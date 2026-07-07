@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS public.loan_requests (
   email TEXT NOT NULL,
   phone TEXT NOT NULL,
   id_number TEXT NOT NULL,
+  id_type TEXT NOT NULL DEFAULT 'national_id' CHECK (id_type IN ('national_id', 'passport')),
   id_photo_path TEXT,
   physical_address TEXT NOT NULL,
   loan_amount NUMERIC(12,2) NOT NULL CHECK (loan_amount >= 500 AND loan_amount <= 50000),
@@ -278,6 +279,40 @@ ALTER TABLE public.loan_requests DROP CONSTRAINT IF EXISTS loan_requests_status_
 ALTER TABLE public.loan_requests
   ADD CONSTRAINT loan_requests_status_check
   CHECK (status IN ('pending', 'reviewing', 'approved', 'rejected', 'disbursed', 'paid'));
+
+ALTER TABLE public.loan_requests
+  ADD COLUMN IF NOT EXISTS id_type TEXT NOT NULL DEFAULT 'national_id';
+ALTER TABLE public.loan_requests DROP CONSTRAINT IF EXISTS loan_requests_id_type_check;
+ALTER TABLE public.loan_requests
+  ADD CONSTRAINT loan_requests_id_type_check CHECK (id_type IN ('national_id', 'passport'));
+
+-- ============================================================
+-- Unique phone numbers: one account per phone number
+-- ============================================================
+
+-- Normalise a phone number (strip spaces/symbols and a leading 267 country code)
+CREATE OR REPLACE FUNCTION public.normalize_phone(p TEXT)
+RETURNS TEXT LANGUAGE sql IMMUTABLE AS $$
+  SELECT regexp_replace(regexp_replace(COALESCE(p, ''), '\D', '', 'g'), '^267', '')
+$$;
+
+-- Enforce uniqueness at the database level (hard guarantee)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_profiles_phone_unique
+  ON public.profiles (public.normalize_phone(phone))
+  WHERE phone IS NOT NULL AND phone <> '';
+
+-- Callable by the sign-up form (anon) to check availability without exposing data
+CREATE OR REPLACE FUNCTION public.phone_taken(p_phone TEXT)
+RETURNS BOOLEAN
+LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE phone IS NOT NULL AND phone <> ''
+      AND public.normalize_phone(phone) = public.normalize_phone(p_phone)
+  )
+$$;
+
+GRANT EXECUTE ON FUNCTION public.phone_taken(TEXT) TO anon, authenticated;
 
 -- To promote users to admin, run AFTER they have registered (so the account exists):
 UPDATE public.profiles

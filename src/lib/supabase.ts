@@ -20,6 +20,7 @@ export interface LoanRequest {
   email: string
   phone: string
   id_number: string
+  id_type: string | null
   id_photo_path: string | null
   physical_address: string
   loan_amount: number

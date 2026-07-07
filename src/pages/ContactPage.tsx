@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
 import { contactSchema, sanitizeText, type ContactFormData } from '@/lib/validation'
+import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import { COMPANY } from '@/lib/constants'
 import { buildWhatsAppContactUrl } from '@/lib/whatsapp'
 
@@ -32,6 +33,12 @@ export function ContactPage() {
   const formValues = watch()
 
   const onSubmit = async (data: ContactFormData) => {
+    const limit = checkRateLimit('contact', 4, 5 * 60 * 1000)
+    if (!limit.allowed) {
+      setError(rateLimitMessage(limit.retryAfterMs))
+      return
+    }
+
     setSubmitting(true)
     setError(null)
 

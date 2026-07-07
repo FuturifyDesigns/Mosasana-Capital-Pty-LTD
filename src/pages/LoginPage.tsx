@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
 import { loginSchema, type LoginFormData } from '@/lib/validation'
+import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 
 const BASE = import.meta.env.BASE_URL
@@ -27,6 +28,12 @@ export function LoginPage() {
   })
 
   const onSubmit = async (data: LoginFormData) => {
+    const limit = checkRateLimit('login', 8, 5 * 60 * 1000)
+    if (!limit.allowed) {
+      setError(rateLimitMessage(limit.retryAfterMs))
+      return
+    }
+
     setLoading(true)
     setError(null)
 

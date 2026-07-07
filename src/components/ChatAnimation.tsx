@@ -153,6 +153,8 @@ export function ChatAnimation() {
             <img
               src={`${import.meta.env.BASE_URL}favicon.png`}
               alt={COMPANY.shortName}
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-contain"
             />
           </div>

@@ -14,6 +14,8 @@ interface EditableImageProps {
   className?: string
   /** Classes applied to the wrapper (admin mode) */
   wrapperClassName?: string
+  /** Load immediately (for above-the-fold images like the hero). Defaults to lazy. */
+  eager?: boolean
 }
 
 export function EditableImage({
@@ -22,6 +24,7 @@ export function EditableImage({
   alt,
   className,
   wrapperClassName,
+  eager = false,
 }: EditableImageProps) {
   const { isAdmin } = useAuth()
   const { getImage, saveImage } = useContent()
@@ -30,6 +33,11 @@ export function EditableImage({
   const [busy, setBusy] = useState(false)
 
   const url = getImage(contentKey, src)
+
+  const imgProps = {
+    loading: eager ? ('eager' as const) : ('lazy' as const),
+    decoding: 'async' as const,
+  }
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -55,12 +63,12 @@ export function EditableImage({
   }
 
   if (!isAdmin) {
-    return <img src={url} alt={alt} className={className} />
+    return <img src={url} alt={alt} className={className} {...imgProps} />
   }
 
   return (
     <span className={`group/edit relative block ${wrapperClassName ?? ''}`}>
-      <img src={url} alt={alt} className={className} />
+      <img src={url} alt={alt} className={className} {...imgProps} />
       <button
         type="button"
         onClick={() => inputRef.current?.click()}

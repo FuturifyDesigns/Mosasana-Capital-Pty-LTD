@@ -47,6 +47,8 @@ export function AuthLayout({
             src={image}
             alt=""
             aria-hidden="true"
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-brand-900/95 via-brand-800/65 to-brand-700/45" />

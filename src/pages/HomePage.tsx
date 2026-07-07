@@ -321,6 +321,8 @@ export function HomePage() {
           src={`${BASE}money-band.png`}
           alt=""
           aria-hidden="true"
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-brand-900/80" />
@@ -438,6 +440,7 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
               contentKey="home.hero.image"
               src={`${BASE}hero-money.png`}
               alt="Happy Mosasana Capital client with cash"
+              eager
               className="relative w-full rounded-3xl border border-white/60 shadow-2xl"
             />
             <motion.div

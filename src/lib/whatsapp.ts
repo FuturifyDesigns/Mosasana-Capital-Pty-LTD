@@ -2,20 +2,25 @@ import { COMPANY, WHATSAPP_NUMBER } from './constants'
 import type { LoanRequestFormData } from './validation'
 
 export function buildWhatsAppLoanUrl(data: Partial<LoanRequestFormData>): string {
+  const docLabel = data.idType === 'passport' ? 'Passport Number' : 'Omang / ID Number'
+  const employment =
+    data.employmentStatus === 'other' && data.employmentOther
+      ? data.employmentOther
+      : data.employmentStatus || ''
   const message = [
     `*Loan Application - ${COMPANY.shortName}*`,
     '',
     `Name: ${data.fullName || ''}`,
     `Email: ${data.email || ''}`,
     `Phone: ${data.phone || ''}`,
-    `ID Number: ${data.idNumber || ''}`,
+    `${docLabel}: ${data.idNumber || ''}`,
     `Address: ${data.physicalAddress || ''}`,
     `Amount: P${data.loanAmount || ''}`,
     `Purpose: ${data.loanPurpose || ''}`,
-    `Employment: ${data.employmentStatus || ''}`,
+    `Employment: ${employment}`,
     data.monthlyIncome ? `Monthly Income: P${data.monthlyIncome}` : '',
     '',
-    'Please attach a photo of your ID document.',
+    'Please attach a photo of your ID / passport document.',
   ]
     .filter(Boolean)
     .join('\n')
