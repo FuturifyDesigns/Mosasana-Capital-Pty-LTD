@@ -4,11 +4,11 @@ import { Logo } from '@/components/Logo'
 
 export function VerifiedPage() {
   return (
-    <section className="mx-auto flex max-w-md flex-col items-center px-4 py-20 text-center sm:px-6">
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-brand-50 via-white to-white px-4 py-16 text-center">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full rounded-3xl border border-brand-100 bg-white p-10 shadow-2xl"
+        className="w-full max-w-md rounded-3xl border border-brand-100 bg-white p-10 shadow-2xl"
       >
         <div className="flex justify-center">
           <Logo className="h-14" />
@@ -28,6 +28,6 @@ export function VerifiedPage() {
           Your email address has been confirmed. You can now close this page.
         </p>
       </motion.div>
-    </section>
+    </main>
   )
 }

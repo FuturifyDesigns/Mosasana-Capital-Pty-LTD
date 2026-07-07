@@ -26,6 +26,7 @@ export default function App() {
         <HashRouter>
         <RecoveryHandler />
         <Routes>
+          <Route path="verified" element={<VerifiedPage />} />
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
             <Route path="about" element={<AboutPage />} />
@@ -43,7 +44,6 @@ export default function App() {
             <Route path="register" element={<RegisterPage />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
-            <Route path="verified" element={<VerifiedPage />} />
             <Route
               path="dashboard"
               element={
