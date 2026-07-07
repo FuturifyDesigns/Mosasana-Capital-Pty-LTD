@@ -3,9 +3,6 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Check, ShieldCheck } from 'lucide-react'
 import { Logo } from '@/components/Logo'
-import { COMPANY } from '@/lib/constants'
-
-const BASE = import.meta.env.BASE_URL
 
 interface AuthLayoutProps {
   title: string
@@ -53,12 +50,7 @@ export function AuthLayout({
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-brand-900/95 via-brand-800/65 to-brand-700/45" />
-          <div className="relative flex h-full flex-col justify-between p-8 text-white">
-            <img
-              src={`${BASE}logo-transparent.png`}
-              alt={COMPANY.name}
-              className="h-12 w-auto object-contain brightness-0 invert transition-transform duration-500 group-hover:scale-105"
-            />
+          <div className="relative flex h-full flex-col justify-end p-8 text-white">
             <div>
               <h2 className="font-display text-3xl font-bold">{panelHeading}</h2>
               <p className="mt-3 max-w-xs text-sm leading-relaxed text-white/85">{panelText}</p>

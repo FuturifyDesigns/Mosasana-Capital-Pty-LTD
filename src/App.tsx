@@ -9,6 +9,9 @@ import { ContactPage } from '@/pages/ContactPage'
 import { AuthPage } from '@/pages/AuthPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
+import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
+import { RecoveryHandler } from '@/components/RecoveryHandler'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { AdminPage } from '@/pages/AdminPage'
 
@@ -16,6 +19,7 @@ export default function App() {
   return (
     <AuthProvider>
       <HashRouter>
+        <RecoveryHandler />
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
@@ -32,6 +36,8 @@ export default function App() {
             <Route path="account" element={<AuthPage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
+            <Route path="forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="reset-password" element={<ResetPasswordPage />} />
             <Route
               path="dashboard"
               element={

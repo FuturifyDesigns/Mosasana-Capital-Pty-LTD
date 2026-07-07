@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, Check } from 'lucide-react'
 import { Logo } from '@/components/Logo'
-import { BotswanaFlag } from '@/components/icons/BotswanaFlag'
 import { COMPANY } from '@/lib/constants'
 
 const BASE = import.meta.env.BASE_URL
@@ -32,106 +31,119 @@ const panels = {
 export function AuthPage() {
   const navigate = useNavigate()
   const [hovered, setHovered] = useState<Side | null>(null)
+  const [clicked, setClicked] = useState<Side | null>(null)
+
+  // Percentage of the background covered in blue (from the left).
+  const blueWidth =
+    clicked === 'in' ? 100 : clicked === 'up' ? 0 : hovered === 'in' ? 78 : hovered === 'up' ? 22 : 50
 
   const flexGrow = (side: Side) => {
+    if (clicked) return clicked === side ? 4 : 0.2
     if (hovered === null) return 1
     return hovered === side ? 1.9 : 0.75
   }
 
+  const handleSelect = (side: Side) => {
+    setClicked(side)
+    setHovered(null)
+    setTimeout(() => navigate(panels[side].to), 560)
+  }
+
   return (
-    <section className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:py-16">
-      {/* soft blue/white wash behind the cards */}
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute left-1/2 top-10 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-brand-200/40 blur-[110px]" />
-        <div className="absolute bottom-0 right-10 h-64 w-64 rounded-full bg-sky-200/40 blur-[100px]" />
-      </div>
-
+    <section className="relative isolate overflow-hidden px-4 py-12 sm:px-6 lg:py-16">
+      {/* dynamic blue / white background */}
+      <div className="absolute inset-0 -z-10 bg-white" aria-hidden="true" />
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-10 text-center"
-      >
-        <div className="flex justify-center">
-          <Logo className="h-14 sm:h-16" />
-        </div>
-        <h1 className="mt-6 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
-          Welcome to {COMPANY.shortName}
-        </h1>
-        <p className="mx-auto mt-3 max-w-md text-brand-600">
-          Choose how you&apos;d like to continue. Hover to explore, click to get started.
-        </p>
-      </motion.div>
-
-      <div className="flex flex-col gap-4 md:h-[28rem] md:flex-row md:gap-0">
-        {(Object.keys(panels) as Side[]).map((side, index) => {
-          const p = panels[side]
-          const active = hovered === side
-          return (
-            <motion.button
-              key={side}
-              type="button"
-              onClick={() => navigate(p.to)}
-              onMouseEnter={() => setHovered(side)}
-              onMouseLeave={() => setHovered(null)}
-              onFocus={() => setHovered(side)}
-              onBlur={() => setHovered(null)}
-              style={{ flexGrow: flexGrow(side) }}
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.15 + index * 0.1 }}
-              className={`group relative flex h-72 flex-1 basis-0 overflow-hidden text-left text-white shadow-xl outline-none ring-1 ring-brand-100 transition-[flex-grow] duration-500 ease-out focus-visible:ring-4 focus-visible:ring-brand-400 md:h-full ${
-                side === 'in'
-                  ? 'rounded-3xl md:rounded-l-3xl md:rounded-r-none'
-                  : 'rounded-3xl md:rounded-l-none md:rounded-r-3xl'
-              }`}
-            >
-              <img
-                src={p.image}
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-brand-900/95 via-brand-900/35 to-transparent" />
-
-              <div className="relative z-10 flex h-full w-full flex-col justify-end p-6 sm:p-8">
-                <span className="text-sm font-semibold uppercase tracking-widest text-white/85">
-                  {p.tagline}
-                </span>
-
-                <div
-                  className={`overflow-hidden transition-all duration-500 ease-out md:max-h-0 md:opacity-0 ${
-                    active ? 'md:max-h-56 md:opacity-100' : ''
-                  }`}
-                >
-                  <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/90">
-                    {p.description}
-                  </p>
-                  <ul className="mt-3 space-y-1.5">
-                    {p.points.map((point) => (
-                      <li key={point} className="flex items-center gap-2 text-sm text-white/90">
-                        <Check className="h-4 w-4 shrink-0 text-gold-400" />
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-brand-800 shadow-lg transition-all duration-300 group-hover:gap-3">
-                  {p.cta}
-                  <ArrowRight className="h-4 w-4" />
-                </span>
-              </div>
-            </motion.button>
-          )
-        })}
+        className="absolute inset-y-0 left-0 -z-10 bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500"
+        aria-hidden="true"
+        animate={{ width: `${blueWidth}%` }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      />
+      {/* soft glow accents */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute left-10 top-10 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute bottom-10 right-10 h-64 w-64 rounded-full bg-brand-200/40 blur-3xl" />
       </div>
 
-      <div className="mt-8 flex justify-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white/80 px-4 py-2 text-sm font-medium text-brand-700 shadow-sm backdrop-blur-sm">
-          <BotswanaFlag className="h-4 w-6 rounded-sm ring-1 ring-black/5" />
-          Proudly Botswana
-        </span>
+      <div className="mx-auto max-w-6xl">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-10 text-center"
+        >
+          <div className="flex justify-center">
+            <span className="rounded-3xl bg-white/85 p-3 shadow-lg ring-1 ring-brand-100 backdrop-blur-sm">
+              <Logo className="h-20 sm:h-24" />
+            </span>
+          </div>
+          <h1 className="mt-6 font-display text-3xl font-bold text-brand-900 sm:text-4xl">
+            Welcome to {COMPANY.shortName}
+          </h1>
+          <p className="mx-auto mt-3 max-w-md font-medium text-brand-700">
+            Choose how you&apos;d like to continue. Hover to explore, click to get started.
+          </p>
+        </motion.div>
+
+        <div className="flex flex-col gap-4 md:h-[28rem] md:flex-row">
+          {(Object.keys(panels) as Side[]).map((side, index) => {
+            const p = panels[side]
+            const active = hovered === side
+            return (
+              <motion.button
+                key={side}
+                type="button"
+                onClick={() => handleSelect(side)}
+                onMouseEnter={() => !clicked && setHovered(side)}
+                onMouseLeave={() => !clicked && setHovered(null)}
+                onFocus={() => !clicked && setHovered(side)}
+                onBlur={() => !clicked && setHovered(null)}
+                style={{ flexGrow: flexGrow(side) }}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.15 + index * 0.1 }}
+                className="group relative flex h-72 flex-1 basis-0 overflow-hidden rounded-3xl text-left text-white shadow-2xl outline-none ring-1 ring-white/40 transition-[flex-grow] duration-500 ease-out focus-visible:ring-4 focus-visible:ring-white md:h-full"
+              >
+                <img
+                  src={p.image}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-brand-900/95 via-brand-900/35 to-transparent" />
+
+                <div className="relative z-10 flex h-full w-full flex-col justify-end p-6 sm:p-8">
+                  <span className="text-sm font-semibold uppercase tracking-widest text-white/85">
+                    {p.tagline}
+                  </span>
+
+                  <div
+                    className={`overflow-hidden transition-all duration-500 ease-out md:max-h-0 md:opacity-0 ${
+                      active ? 'md:max-h-56 md:opacity-100' : ''
+                    }`}
+                  >
+                    <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/90">
+                      {p.description}
+                    </p>
+                    <ul className="mt-3 space-y-1.5">
+                      {p.points.map((point) => (
+                        <li key={point} className="flex items-center gap-2 text-sm text-white/90">
+                          <Check className="h-4 w-4 shrink-0 text-gold-400" />
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-brand-800 shadow-lg transition-all duration-300 group-hover:gap-3">
+                    {p.cta}
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
+                </div>
+              </motion.button>
+            )
+          })}
+        </div>
       </div>
     </section>
   )
