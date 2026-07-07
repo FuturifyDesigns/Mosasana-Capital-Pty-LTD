@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
+  --color-brand-50: #f0f7fc;
+  --color-brand-100: #dceef8;
+  --color-brand-200: #b8ddf0;
+  --color-brand-300: #8bc4e3;
+  --color-brand-400: #5aa5d1;
+  --color-brand-500: #3d87b8;
+  --color-brand-600: #2f6d9a;
+  --color-brand-700: #27587d;
+  --color-brand-800: #234a68;
+  --color-brand-900: #1f3f57;
+  --color-gold-400: #d4b44a;
+  --color-gold-500: #c9a227;
+  --color-gold-600: #a8861f;
+  --color-growth-500: #3d9b5f;
+  --color-growth-600: #2f7a4a;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-brand-50 text-brand-900 font-sans antialiased;
+}
+
+::selection {
+  @apply bg-brand-200 text-brand-900;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #dceef8 25%, #f0f7fc 50%, #dceef8 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
