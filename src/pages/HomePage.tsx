@@ -121,7 +121,7 @@ export function HomePage() {
             <img
               src={`${BASE}hero-money.png`}
               alt="Happy Mosasana Capital client with cash"
-              className="relative w-full rounded-3xl border border-white/60 shadow-2xl"
+              className="relative w-full rounded-3xl border border-white/60 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25"
             />
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -216,7 +216,7 @@ export function HomePage() {
             <img
               src={`${BASE}consultation.png`}
               alt="Mosasana Capital loan officer assisting a client"
-              className="relative w-full rounded-3xl border border-white/60 shadow-2xl"
+              className="relative w-full rounded-3xl border border-white/60 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25"
             />
           </Reveal>
           <Reveal direction="left">
@@ -290,7 +290,7 @@ export function HomePage() {
             <img
               src={`${BASE}customer.png`}
               alt="Satisfied Mosasana Capital customer"
-              className="relative w-full rounded-3xl border border-white/60 shadow-2xl"
+              className="relative w-full rounded-3xl border border-white/60 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25"
             />
           </Reveal>
           <Reveal direction="left" className="order-1 lg:order-2">

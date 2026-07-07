@@ -63,7 +63,7 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/login">
+              <Link to="/account">
                 <Button variant="ghost" size="sm">
                   Sign In
                 </Button>
@@ -124,7 +124,7 @@ export function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link to="/login" onClick={() => setOpen(false)}>
+                  <Link to="/account" onClick={() => setOpen(false)}>
                     <Button variant="ghost" size="sm" className="w-full">
                       Sign In
                     </Button>
