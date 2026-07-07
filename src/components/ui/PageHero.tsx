@@ -9,7 +9,7 @@ interface PageHeroProps {
 
 export function PageHero({ title, subtitle, children }: PageHeroProps) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-brand-800 via-brand-700 to-brand-500 py-20 text-white">
+    <section className="relative overflow-hidden bg-gradient-to-br from-brand-800 via-brand-700 to-brand-500 py-14 text-white sm:py-20">
       <div className="absolute inset-0 opacity-20">
         <div className="absolute -left-24 -top-16 h-72 w-72 rounded-full bg-white blur-[90px]" />
         <div className="absolute right-[-6rem] bottom-[-4rem] h-80 w-80 rounded-full bg-gold-400 blur-[100px]" />

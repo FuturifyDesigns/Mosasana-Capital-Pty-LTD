@@ -29,8 +29,8 @@ export function HomePage() {
       <HeroSection applyTarget={applyTarget} />
 
       {/* How it works */}
-      <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-        <Reveal className="mb-16 text-center">
+      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+        <Reveal className="mb-10 text-center sm:mb-16">
           <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
             How it works
           </span>
@@ -45,7 +45,7 @@ export function HomePage() {
 
       {/* Two ways to apply */}
       <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
           <Reveal className="mx-auto max-w-2xl text-center">
             <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
               Two ways to apply
@@ -60,7 +60,7 @@ export function HomePage() {
             </p>
           </Reveal>
 
-          <div className="mt-16 grid items-center gap-16 lg:grid-cols-2 lg:gap-10">
+          <div className="mt-10 grid items-center gap-10 sm:mt-16 lg:grid-cols-2 lg:gap-10">
             <Reveal direction="right" className="flex flex-col items-center gap-5">
               <WebsiteFormAnimation />
               <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm">
@@ -82,7 +82,7 @@ export function HomePage() {
 
       {/* Tailored solutions — image left */}
       <section>
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
+        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
           <Reveal direction="right" className="relative">
             <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
             <img
@@ -118,7 +118,7 @@ export function HomePage() {
 
       {/* Track your loans — image right */}
       <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
+        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
           <Reveal direction="right" className="order-1">
             <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
               Stay in control
@@ -156,7 +156,7 @@ export function HomePage() {
 
       {/* Testimonial — image left */}
       <section>
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
+        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
           <Reveal direction="right" className="relative order-2 lg:order-1">
             <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-gold-400/20 to-brand-300/25 blur-2xl" />
             <img
@@ -179,7 +179,7 @@ export function HomePage() {
 
       {/* Why choose us — slideshow */}
       <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
           <Reveal className="mb-12 text-center">
             <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
               Why choose us
@@ -195,7 +195,7 @@ export function HomePage() {
       </section>
 
       {/* Vision & mission */}
-      <section className="bg-gradient-to-r from-brand-700 to-brand-600 py-20 text-white">
+      <section className="bg-gradient-to-r from-brand-700 to-brand-600 py-14 text-white sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid gap-10 md:grid-cols-2">
             <Reveal direction="right">
@@ -219,7 +219,7 @@ export function HomePage() {
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-brand-900/80" />
-        <div className="relative mx-auto max-w-6xl px-4 py-24 text-center sm:px-6">
+        <div className="relative mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-24">
           <Reveal>
             <h2 className="font-display text-3xl font-bold text-white sm:text-4xl">
               Ready to get started?
@@ -278,7 +278,7 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
       <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-brand-200/40 blur-3xl" />
       <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-gold-400/10 blur-3xl" />
 
-      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:py-24">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-2 lg:py-24">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}

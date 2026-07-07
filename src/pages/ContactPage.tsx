@@ -62,8 +62,8 @@ export function ContactPage() {
         subtitle="Have a question? Reach out to our team — we're here to help."
       />
 
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
-        <div className="grid gap-10 lg:grid-cols-5">
+      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+        <div className="grid gap-8 lg:grid-cols-5 lg:gap-10">
           <div className="space-y-6 lg:col-span-2">
             <Card>
               <h3 className="font-semibold text-brand-900">Principal Officer</h3>

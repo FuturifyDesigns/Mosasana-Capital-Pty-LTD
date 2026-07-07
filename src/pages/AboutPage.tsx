@@ -94,8 +94,8 @@ export function AboutPage() {
       />
 
       {/* Who we are */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
+      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
+        <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
           <Reveal direction="right">
             <span className="inline-flex items-center gap-2 rounded-full bg-brand-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-brand-700">
               <BotswanaFlag className="h-3.5 w-5 rounded-sm ring-1 ring-black/5" />
@@ -118,18 +118,20 @@ export function AboutPage() {
 
           <Reveal direction="left" className="relative">
             <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
-            <img
-              src={`${BASE}consultation.png`}
-              alt="Mosasana Capital team assisting a client"
-              className="relative w-full rounded-3xl border border-white/60 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25"
-            />
+            <div className="relative flex items-center justify-center rounded-3xl border border-white/60 bg-gradient-to-br from-brand-50 to-white p-10 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:shadow-brand-500/25 sm:p-14">
+              <img
+                src={`${BASE}logo-transparent.png`}
+                alt={COMPANY.name}
+                className="w-full max-w-xs transition-transform duration-500 ease-out hover:scale-[1.03]"
+              />
+            </div>
           </Reveal>
         </div>
       </section>
 
       {/* Story tree */}
       <section className="border-y border-brand-100/60 bg-gradient-to-b from-brand-50/60 via-white to-white">
-        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:py-24">
+        <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16 lg:py-24">
           <Reveal className="text-center">
             <span className="text-sm font-semibold uppercase tracking-widest text-growth-600">
               What&apos;s in a name
@@ -208,7 +210,7 @@ export function AboutPage() {
 
       {/* Values */}
       <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
           <Reveal className="mb-12 text-center">
             <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
               What we stand for
@@ -234,7 +236,7 @@ export function AboutPage() {
       </section>
 
       {/* Vision & Mission */}
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
+      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
         <RevealGroup className="grid gap-6 md:grid-cols-2">
           <RevealItem>
             <Card hover className="group h-full">
@@ -259,7 +261,7 @@ export function AboutPage() {
 
       {/* Leadership team */}
       <section className="border-t border-brand-100/60 bg-white/70 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
           <Reveal className="mb-10 text-center">
             <span className="text-sm font-semibold uppercase tracking-widest text-brand-500">
               The people behind Mosasana
@@ -307,7 +309,7 @@ export function AboutPage() {
       </section>
 
       {/* Proudly Botswana banner */}
-      <section className="relative overflow-hidden bg-gradient-to-r from-brand-700 to-brand-500 py-16 text-white">
+      <section className="relative overflow-hidden bg-gradient-to-r from-brand-700 to-brand-500 py-12 text-white sm:py-16">
         <div className="absolute -right-10 -top-10 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-12 left-1/4 h-56 w-56 rounded-full bg-gold-400/15 blur-3xl" />
         <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-5 px-4 text-center sm:px-6">
