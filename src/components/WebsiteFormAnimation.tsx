@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Lock, Upload, CheckCircle2, ImageIcon } from 'lucide-react'
+import { Lock, Upload, CheckCircle2, ImageIcon, ChevronLeft, ChevronRight, RotateCw } from 'lucide-react'
 import { COMPANY } from '@/lib/constants'
 
 type FieldType = 'text' | 'select' | 'upload'
@@ -26,13 +26,16 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export function WebsiteFormAnimation() {
   const reduce = useReducedMotion()
-  const [active, setActive] = useState(reduce ? -1 : -1)
+  const [active, setActive] = useState(-1)
   const [typed, setTyped] = useState('')
   const [filled, setFilled] = useState<Record<number, string>>(
     reduce ? Object.fromEntries(FIELDS.map((f, i) => [i, f.value])) : {},
   )
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(reduce)
+
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const fieldRefs = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
     if (reduce) return
@@ -43,7 +46,9 @@ export function WebsiteFormAnimation() {
         setDone(false)
         setFilled({})
         setTyped('')
-        await wait(600)
+        setActive(-1)
+        scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+        await wait(700)
 
         for (let i = 0; i < FIELDS.length; i++) {
           if (cancelled) return
@@ -64,17 +69,17 @@ export function WebsiteFormAnimation() {
           }
 
           setFilled((prev) => ({ ...prev, [i]: field.value }))
-          await wait(350)
+          await wait(400)
         }
 
         setActive(-1)
         await wait(500)
         setSubmitting(true)
-        await wait(1200)
+        await wait(1300)
         if (cancelled) return
         setSubmitting(false)
         setDone(true)
-        await wait(3400)
+        await wait(3600)
       }
     }
 
@@ -84,6 +89,22 @@ export function WebsiteFormAnimation() {
     }
   }, [reduce])
 
+  useEffect(() => {
+    const container = scrollRef.current
+    if (!container || active < 0) return
+    const el = fieldRefs.current[active]
+    if (el) {
+      container.scrollTo({ top: Math.max(0, el.offsetTop - 96), behavior: 'smooth' })
+    }
+  }, [active])
+
+  useEffect(() => {
+    const container = scrollRef.current
+    if (container && submitting) {
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+    }
+  }, [submitting])
+
   const valueFor = (i: number) => filled[i] ?? (i === active ? typed : '')
 
   return (
@@ -92,95 +113,108 @@ export function WebsiteFormAnimation() {
 
       <div className="relative overflow-hidden rounded-2xl border border-brand-200 bg-white shadow-2xl">
         {/* Browser chrome */}
-        <div className="flex items-center gap-2 border-b border-brand-100 bg-brand-50 px-4 py-3">
-          <div className="flex gap-1.5">
-            <span className="h-3 w-3 rounded-full bg-red-400" />
-            <span className="h-3 w-3 rounded-full bg-yellow-400" />
-            <span className="h-3 w-3 rounded-full bg-green-400" />
-          </div>
-          <div className="mx-auto flex items-center gap-1.5 rounded-lg bg-white px-3 py-1 text-[11px] text-brand-500 shadow-sm">
-            <Lock className="h-3 w-3 text-growth-500" />
-            mosasanacapital.com/apply
+        <div className="border-b border-brand-100 bg-brand-50 px-3 py-2.5">
+          <div className="flex items-center gap-2.5">
+            <div className="flex gap-1.5">
+              <span className="h-3 w-3 rounded-full bg-red-400" />
+              <span className="h-3 w-3 rounded-full bg-yellow-400" />
+              <span className="h-3 w-3 rounded-full bg-green-400" />
+            </div>
+            <div className="ml-1 hidden items-center gap-1.5 text-brand-300 sm:flex">
+              <ChevronLeft className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" />
+              <RotateCw className="h-3.5 w-3.5" />
+            </div>
+            <div className="flex flex-1 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] text-brand-600 shadow-sm ring-1 ring-brand-100">
+              <Lock className="h-3 w-3 shrink-0 text-growth-500" />
+              <span className="truncate">mosasanacapital.com/apply</span>
+            </div>
           </div>
         </div>
 
         {/* Form body */}
-        <div className="relative h-[430px] overflow-hidden px-5 py-4">
-          <p className="font-display text-base font-bold text-brand-900">Secure Loan Application</p>
-          <p className="mt-0.5 text-[11px] text-brand-500">
-            All information is encrypted and securely stored.
-          </p>
+        <div className="relative h-[430px] overflow-hidden">
+          <div
+            ref={scrollRef}
+            className="h-full overflow-y-auto px-5 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <p className="font-display text-base font-bold text-brand-900">Secure Loan Application</p>
+            <p className="mt-0.5 text-[11px] text-brand-500">
+              All information is encrypted and securely stored.
+            </p>
 
-          <div className="mt-3 space-y-2.5">
-            {FIELDS.map((field, i) => (
-              <div key={field.label}>
-                <label className="block text-[11px] font-medium text-brand-800">
-                  {field.label}
-                  {field.required && <span className="ml-0.5 text-red-500">*</span>}
-                </label>
+            <div className="mt-3 space-y-2.5">
+              {FIELDS.map((field, i) => (
+                <div
+                  key={field.label}
+                  ref={(el) => {
+                    fieldRefs.current[i] = el
+                  }}
+                >
+                  <label className="block text-[11px] font-medium text-brand-800">
+                    {field.label}
+                    {field.required && <span className="ml-0.5 text-red-500">*</span>}
+                  </label>
 
-                {field.type === 'upload' ? (
-                  <div
-                    className={`mt-1 flex items-center gap-2 rounded-lg border-2 border-dashed px-3 py-2 transition ${
-                      i === active ? 'border-brand-400 bg-brand-50' : 'border-brand-200'
-                    }`}
-                  >
-                    {valueFor(i) ? (
-                      <>
-                        <div className="flex h-7 w-7 items-center justify-center rounded bg-brand-100 text-brand-600">
-                          <ImageIcon className="h-4 w-4" />
-                        </div>
-                        <span className="text-[12px] text-brand-700">{valueFor(i)}</span>
-                        <CheckCircle2 className="ml-auto h-4 w-4 text-growth-500" />
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 text-brand-400" />
-                        <span className="text-[11px] text-brand-400">JPEG, PNG or WebP — max 5MB</span>
-                      </>
-                    )}
-                  </div>
+                  {field.type === 'upload' ? (
+                    <div
+                      className={`mt-1 flex items-center gap-2 rounded-lg border-2 border-dashed px-3 py-2 transition ${
+                        i === active ? 'border-brand-400 bg-brand-50' : 'border-brand-200'
+                      }`}
+                    >
+                      {valueFor(i) ? (
+                        <>
+                          <div className="flex h-7 w-7 items-center justify-center rounded bg-brand-100 text-brand-600">
+                            <ImageIcon className="h-4 w-4" />
+                          </div>
+                          <span className="text-[12px] text-brand-700">{valueFor(i)}</span>
+                          <CheckCircle2 className="ml-auto h-4 w-4 text-growth-500" />
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 text-brand-400" />
+                          <span className="text-[11px] text-brand-400">JPEG, PNG or WebP — max 5MB</span>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      className={`mt-1 flex h-9 items-center rounded-lg border bg-white px-3 text-[13px] transition ${
+                        i === active ? 'border-brand-500 ring-2 ring-brand-200' : 'border-brand-200'
+                      }`}
+                    >
+                      <span className="text-brand-900">
+                        {field.label.includes('Amount') && valueFor(i) ? `P ${valueFor(i)}` : valueFor(i)}
+                      </span>
+                      {i === active && field.type === 'text' && (
+                        <motion.span
+                          className="ml-0.5 inline-block h-4 w-px bg-brand-500"
+                          animate={{ opacity: [1, 0, 1] }}
+                          transition={{ duration: 0.8, repeat: Infinity }}
+                        />
+                      )}
+                      {field.type === 'select' && <span className="ml-auto text-brand-400">▾</span>}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              <button
+                className={`mt-2 flex h-10 w-full items-center justify-center rounded-lg font-semibold text-white transition ${
+                  submitting ? 'bg-brand-500' : 'bg-brand-600'
+                }`}
+              >
+                {submitting ? (
+                  <motion.span
+                    className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
+                  />
                 ) : (
-                  <div
-                    className={`mt-1 flex h-9 items-center rounded-lg border bg-white px-3 text-[13px] transition ${
-                      i === active
-                        ? 'border-brand-500 ring-2 ring-brand-200'
-                        : 'border-brand-200'
-                    }`}
-                  >
-                    <span className="text-brand-900">
-                      {field.label.includes('Amount') && valueFor(i) ? `P ${valueFor(i)}` : valueFor(i)}
-                    </span>
-                    {i === active && field.type === 'text' && (
-                      <motion.span
-                        className="ml-0.5 inline-block h-4 w-px bg-brand-500"
-                        animate={{ opacity: [1, 0, 1] }}
-                        transition={{ duration: 0.8, repeat: Infinity }}
-                      />
-                    )}
-                    {field.type === 'select' && (
-                      <span className="ml-auto text-brand-400">▾</span>
-                    )}
-                  </div>
+                  'Submit Application'
                 )}
-              </div>
-            ))}
-
-            <button
-              className={`mt-2 flex h-10 w-full items-center justify-center rounded-lg font-semibold text-white transition ${
-                submitting ? 'bg-brand-500' : 'bg-brand-600'
-              }`}
-            >
-              {submitting ? (
-                <motion.span
-                  className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
-                />
-              ) : (
-                'Submit Application'
-              )}
-            </button>
+              </button>
+            </div>
           </div>
 
           {/* Success overlay */}
