@@ -4,12 +4,12 @@ import { Footer } from './Footer'
 import { WhatsAppButton } from './WhatsAppButton'
 import { SoftBackground } from './SoftBackground'
 import { ScrollProgress } from './ScrollProgress'
-import { IntroOverlay } from './IntroOverlay'
+import { CookieConsent } from './CookieConsent'
+import { ExitIntentPopup } from './ExitIntentPopup'
 
 export function Layout() {
   return (
     <div className="relative flex min-h-screen flex-col">
-      <IntroOverlay />
       <ScrollProgress />
       <SoftBackground />
       <Navbar />
@@ -18,6 +18,8 @@ export function Layout() {
       </main>
       <Footer />
       <WhatsAppButton />
+      <CookieConsent />
+      <ExitIntentPopup />
     </div>
   )
 }

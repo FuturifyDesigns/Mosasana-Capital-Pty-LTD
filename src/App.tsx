@@ -1,5 +1,6 @@
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '@/context/AuthContext'
+import { ToastProvider } from '@/context/ToastContext'
 import { Layout } from '@/components/Layout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { HomePage } from '@/pages/HomePage'
@@ -19,7 +20,8 @@ import { AdminPage } from '@/pages/AdminPage'
 export default function App() {
   return (
     <AuthProvider>
-      <HashRouter>
+      <ToastProvider>
+        <HashRouter>
         <RecoveryHandler />
         <Routes>
           <Route element={<Layout />}>
@@ -58,7 +60,8 @@ export default function App() {
             />
           </Route>
         </Routes>
-      </HashRouter>
+        </HashRouter>
+      </ToastProvider>
     </AuthProvider>
   )
 }

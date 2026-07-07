@@ -191,14 +191,43 @@ export function ApplyPage() {
               Fill in your details below, then continue on WhatsApp to send your application and attach your ID photo.
             </p>
             <form className="mt-6 space-y-4" onSubmit={(e) => e.preventDefault()} noValidate>
-              <Input label="Full Name" required {...register('fullName')} error={errors.fullName?.message} />
-              <Input label="Email" type="email" required {...register('email')} error={errors.email?.message} />
-              <Input label="Phone" required {...register('phone')} error={errors.phone?.message} />
-              <Input label="ID Number" required {...register('idNumber')} error={errors.idNumber?.message} />
+              <Input
+                label="Full Name"
+                required
+                hint="Letters only — as on your ID (no numbers)."
+                {...register('fullName')}
+                error={errors.fullName?.message}
+              />
+              <Input
+                label="Email"
+                type="email"
+                required
+                hint="A valid email address."
+                {...register('email')}
+                error={errors.email?.message}
+              />
+              <Input
+                label="Phone"
+                required
+                type="tel"
+                inputMode="tel"
+                hint="Botswana number, 8 digits."
+                {...register('phone')}
+                error={errors.phone?.message}
+              />
+              <Input
+                label="ID Number"
+                required
+                inputMode="numeric"
+                hint="Digits only (9–12 numbers)."
+                {...register('idNumber')}
+                error={errors.idNumber?.message}
+              />
               <Textarea
                 label="Physical Address"
                 rows={3}
                 required
+                hint="Include plot number, street, and city/town."
                 {...register('physicalAddress')}
                 error={errors.physicalAddress?.message}
               />
@@ -206,6 +235,8 @@ export function ApplyPage() {
                 label="Loan Amount (Pula)"
                 type="number"
                 required
+                inputMode="numeric"
+                hint="Numbers only, between P500 and P50,000."
                 {...register('loanAmount', { valueAsNumber: true })}
                 error={errors.loanAmount?.message}
               />
@@ -213,6 +244,7 @@ export function ApplyPage() {
                 label="Purpose of Loan"
                 rows={3}
                 required
+                hint="Briefly describe what the loan is for."
                 {...register('loanPurpose')}
                 error={errors.loanPurpose?.message}
               />
@@ -220,6 +252,7 @@ export function ApplyPage() {
                 label="Employment Status"
                 options={employmentOptions}
                 required
+                hint="Select the option that best describes you."
                 {...register('employmentStatus')}
                 error={errors.employmentStatus?.message}
               />
@@ -251,10 +284,38 @@ export function ApplyPage() {
             )}
 
             <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmitWebsite)} noValidate>
-              <Input label="Full Name" required {...register('fullName')} error={errors.fullName?.message} />
-              <Input label="Email" type="email" required {...register('email')} error={errors.email?.message} />
-              <Input label="Phone" required {...register('phone')} error={errors.phone?.message} />
-              <Input label="ID Number" required {...register('idNumber')} error={errors.idNumber?.message} />
+              <Input
+                label="Full Name"
+                required
+                hint="Letters only — as on your ID (no numbers)."
+                {...register('fullName')}
+                error={errors.fullName?.message}
+              />
+              <Input
+                label="Email"
+                type="email"
+                required
+                hint="A valid email address."
+                {...register('email')}
+                error={errors.email?.message}
+              />
+              <Input
+                label="Phone"
+                required
+                type="tel"
+                inputMode="tel"
+                hint="Botswana number, 8 digits."
+                {...register('phone')}
+                error={errors.phone?.message}
+              />
+              <Input
+                label="ID Number"
+                required
+                inputMode="numeric"
+                hint="Digits only (9–12 numbers)."
+                {...register('idNumber')}
+                error={errors.idNumber?.message}
+              />
 
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-brand-800">
@@ -290,6 +351,7 @@ export function ApplyPage() {
                 label="Physical Address"
                 rows={3}
                 required
+                hint="Include plot number, street, and city/town."
                 {...register('physicalAddress')}
                 error={errors.physicalAddress?.message}
               />
@@ -299,6 +361,8 @@ export function ApplyPage() {
                 required
                 min={500}
                 max={50000}
+                inputMode="numeric"
+                hint="Numbers only, between P500 and P50,000."
                 {...register('loanAmount', { valueAsNumber: true })}
                 error={errors.loanAmount?.message}
               />
@@ -306,6 +370,7 @@ export function ApplyPage() {
                 label="Purpose of Loan"
                 rows={3}
                 required
+                hint="Briefly describe what the loan is for."
                 {...register('loanPurpose')}
                 error={errors.loanPurpose?.message}
               />
@@ -313,6 +378,7 @@ export function ApplyPage() {
                 label="Employment Status"
                 options={employmentOptions}
                 required
+                hint="Select the option that best describes you."
                 {...register('employmentStatus')}
                 error={errors.employmentStatus?.message}
               />
@@ -320,7 +386,11 @@ export function ApplyPage() {
                 label="Monthly Income (Pula, optional)"
                 type="number"
                 min={0}
-                {...register('monthlyIncome', { valueAsNumber: true })}
+                inputMode="numeric"
+                hint="Optional — numbers only."
+                {...register('monthlyIncome', {
+                  setValueAs: (v) => (v === '' || v == null ? null : Number(v)),
+                })}
                 error={errors.monthlyIncome?.message}
               />
 

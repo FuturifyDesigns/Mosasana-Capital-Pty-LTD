@@ -106,14 +106,37 @@ export function RegisterPage() {
       )}
 
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-        <Input label="Full Name" required {...register('fullName')} error={errors.fullName?.message} />
-        <Input label="Email" type="email" required autoComplete="email" {...register('email')} error={errors.email?.message} />
-        <Input label="Phone" required {...register('phone')} error={errors.phone?.message} />
+        <Input
+          label="Full Name"
+          required
+          hint="Letters only — as it appears on your ID (no numbers)."
+          {...register('fullName')}
+          error={errors.fullName?.message}
+        />
+        <Input
+          label="Email"
+          type="email"
+          required
+          autoComplete="email"
+          hint="We'll send a verification link to this address."
+          {...register('email')}
+          error={errors.email?.message}
+        />
+        <Input
+          label="Phone"
+          required
+          type="tel"
+          inputMode="tel"
+          hint="Botswana number, 8 digits (e.g. 71234567)."
+          {...register('phone')}
+          error={errors.phone?.message}
+        />
         <Input
           label="Password"
           type="password"
           required
           autoComplete="new-password"
+          hint="At least 8 characters with an uppercase, lowercase and a number."
           {...register('password')}
           error={errors.password?.message}
         />
@@ -122,6 +145,7 @@ export function RegisterPage() {
           type="password"
           required
           autoComplete="new-password"
+          hint="Re-enter your password to confirm."
           {...register('confirmPassword')}
           error={errors.confirmPassword?.message}
         />

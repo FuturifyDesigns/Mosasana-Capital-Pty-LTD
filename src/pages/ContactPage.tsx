@@ -160,14 +160,41 @@ export function ContactPage() {
               )}
 
               <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
-                <Input label="Full Name" required {...register('fullName')} error={errors.fullName?.message} />
-                <Input label="Email" type="email" required {...register('email')} error={errors.email?.message} />
-                <Input label="Phone (optional)" {...register('phone')} error={errors.phone?.message} />
-                <Input label="Subject" required {...register('subject')} error={errors.subject?.message} />
+                <Input
+                  label="Full Name"
+                  required
+                  hint="Letters only — no numbers."
+                  {...register('fullName')}
+                  error={errors.fullName?.message}
+                />
+                <Input
+                  label="Email"
+                  type="email"
+                  required
+                  hint="We'll reply to this address."
+                  {...register('email')}
+                  error={errors.email?.message}
+                />
+                <Input
+                  label="Phone (optional)"
+                  type="tel"
+                  inputMode="tel"
+                  hint="Botswana number, 8 digits."
+                  {...register('phone')}
+                  error={errors.phone?.message}
+                />
+                <Input
+                  label="Subject"
+                  required
+                  hint="A short summary of your enquiry."
+                  {...register('subject')}
+                  error={errors.subject?.message}
+                />
                 <Textarea
                   label="Message"
                   rows={5}
                   required
+                  hint="Tell us how we can help — at least 10 characters."
                   {...register('message')}
                   error={errors.message?.message}
                 />

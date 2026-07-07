@@ -3,14 +3,19 @@ import { forwardRef, type SelectHTMLAttributes } from 'react'
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string
   error?: string
+  hint?: string
   required?: boolean
   hidePlaceholder?: boolean
   options: { value: string; label: string }[]
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, error, options, className = '', id, required, hidePlaceholder, ...props }, ref) => {
+  (
+    { label, error, hint, options, className = '', id, required, hidePlaceholder, ...props },
+    ref,
+  ) => {
     const selectId = id || props.name
+    const hintId = hint ? `${selectId}-hint` : undefined
     return (
       <div className="space-y-1.5">
         {label && (
@@ -25,6 +30,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           required={required}
           aria-required={required}
           aria-invalid={!!error}
+          aria-describedby={hintId}
           className={`w-full rounded-xl border bg-white px-4 py-3 text-brand-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:opacity-60 ${
             error ? 'border-red-400' : 'border-brand-200'
           } ${className}`}
@@ -37,10 +43,16 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        {error && (
+        {error ? (
           <p className="text-sm text-red-600" role="alert">
             {error}
           </p>
+        ) : (
+          hint && (
+            <p id={hintId} className="text-xs text-brand-400">
+              {hint}
+            </p>
+          )
         )}
       </div>
     )

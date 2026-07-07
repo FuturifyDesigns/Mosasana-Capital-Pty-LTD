@@ -131,7 +131,7 @@ export function WebsiteFormAnimation() {
         <div className="relative h-[430px] overflow-hidden">
           <div
             ref={scrollRef}
-            className="h-full overflow-y-auto px-5 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="h-full touch-none select-none overflow-hidden overscroll-none px-5 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             <p className="font-display text-base font-bold text-brand-900">Secure Loan Application</p>
             <p className="mt-0.5 text-[11px] text-brand-500">

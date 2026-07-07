@@ -85,6 +85,7 @@ export function ForgotPasswordPage() {
                 type="email"
                 required
                 autoComplete="email"
+                hint="Enter the email linked to your account."
                 {...register('email')}
                 error={errors.email?.message}
               />

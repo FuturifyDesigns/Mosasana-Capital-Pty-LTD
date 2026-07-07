@@ -242,16 +242,11 @@ export function HomePage() {
                   </Link>
                 </>
               ) : (
-                <>
-                  <Link to="/register">
-                    <Button size="lg">Create Account</Button>
-                  </Link>
-                  <Link to="/login">
-                    <Button variant="gold" size="lg">
-                      Sign In
-                    </Button>
-                  </Link>
-                </>
+                <Link to="/account">
+                  <Button size="lg">
+                    Get Started <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
               )}
             </div>
           </Reveal>

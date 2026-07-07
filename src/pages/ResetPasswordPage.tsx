@@ -95,6 +95,7 @@ export function ResetPasswordPage() {
                 type="password"
                 required
                 autoComplete="new-password"
+                hint="At least 8 characters with an uppercase, lowercase and a number."
                 {...register('password')}
                 error={errors.password?.message}
               />
@@ -103,6 +104,7 @@ export function ResetPasswordPage() {
                 type="password"
                 required
                 autoComplete="new-password"
+                hint="Re-enter your new password to confirm."
                 {...register('confirmPassword')}
                 error={errors.confirmPassword?.message}
               />
