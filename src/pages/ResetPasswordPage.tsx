@@ -75,7 +75,7 @@ export function ResetPasswordPage() {
         className="relative z-10 w-full max-w-md rounded-[28px] border border-white/60 bg-white/85 p-8 shadow-2xl backdrop-blur-xl sm:p-10"
       >
         <div className="flex justify-center">
-          <Logo className="h-12" />
+          <Logo className="h-24 sm:h-28" />
         </div>
 
         {done ? (

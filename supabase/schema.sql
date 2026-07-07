@@ -407,6 +407,51 @@ BEGIN
   END IF;
 END $$;
 
+-- ============================================================
+-- Repayment reminders (email + WhatsApp) — see supabase/functions/loan-reminders
+-- ============================================================
+
+-- Logs each reminder we send so the scheduled job never sends the same
+-- milestone twice per channel.
+CREATE TABLE IF NOT EXISTS public.loan_reminder_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  loan_id UUID REFERENCES public.loan_requests(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,      -- e.g. d-7, d-3, d-1, d-0, overdue
+  channel TEXT NOT NULL,   -- email | whatsapp
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (loan_id, kind, channel)
+);
+
+ALTER TABLE public.loan_reminder_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can view reminder log"
+  ON public.loan_reminder_log FOR SELECT
+  USING (public.is_admin());
+
+-- ------------------------------------------------------------
+-- Schedule the reminder Edge Function to run once a day (08:00 UTC).
+-- Requires the pg_cron and pg_net extensions (enable them in
+-- Dashboard → Database → Extensions), then replace <PROJECT_REF> and
+-- <SERVICE_ROLE_KEY> below and run this block ONCE.
+-- ------------------------------------------------------------
+-- CREATE EXTENSION IF NOT EXISTS pg_cron;
+-- CREATE EXTENSION IF NOT EXISTS pg_net;
+--
+-- SELECT cron.schedule(
+--   'loan-reminders-daily',
+--   '0 8 * * *',
+--   $$
+--   SELECT net.http_post(
+--     url := 'https://<PROJECT_REF>.supabase.co/functions/v1/loan-reminders',
+--     headers := jsonb_build_object(
+--       'Content-Type', 'application/json',
+--       'Authorization', 'Bearer <SERVICE_ROLE_KEY>'
+--     ),
+--     body := '{}'::jsonb
+--   );
+--   $$
+-- );
+
 -- To promote users to admin, run AFTER they have registered (so the account exists):
 UPDATE public.profiles
 SET role = 'admin'

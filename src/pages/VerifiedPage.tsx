@@ -49,7 +49,7 @@ export function VerifiedPage() {
         className="relative z-10 w-full max-w-md rounded-[28px] border border-white/60 bg-white/80 p-10 shadow-2xl backdrop-blur-xl"
       >
         <div className="flex justify-center">
-          <Logo className="h-14" />
+          <Logo className="h-24 sm:h-28" />
         </div>
 
         {/* Animated success check with ripple */}
