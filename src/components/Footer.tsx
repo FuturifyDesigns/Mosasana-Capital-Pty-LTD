@@ -23,7 +23,7 @@ export function Footer() {
     { to: '/privacy', label: 'Privacy' },
   ]
 
-  const licenseLine = `${COMPANY.nbfiraLicense} · Reg. ${COMPANY.companyRegistration} · ${COMPANY.location}, Botswana`
+  const licenseLine = COMPANY.nbfiraLicense
 
   return (
     <footer className="relative mt-auto bg-gradient-to-b from-brand-800 to-brand-900 text-brand-100 max-sm:pb-[calc(var(--footer-bottom-pad)+env(safe-area-inset-bottom))]">

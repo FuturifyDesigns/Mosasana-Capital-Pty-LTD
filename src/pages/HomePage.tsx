@@ -10,6 +10,7 @@ import {
   Wallet,
   History,
   TrendingDown,
+  Sparkles,
 } from 'lucide-react'
 import { formatPula } from '@/lib/format'
 import { Button } from '@/components/ui/Button'
@@ -410,13 +411,20 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
-          <EditableText
-            as="p"
-            contentKey="home.hero.welcome"
-            className="mb-3 text-sm font-semibold uppercase tracking-widest text-brand-500 sm:text-base"
-          >
-            Welcome to Mosasana Capital
-          </EditableText>
+          <div className="mb-6 sm:mb-8">
+            <div className="inline-flex max-w-full items-center gap-3 rounded-2xl border border-brand-200/70 bg-gradient-to-r from-white via-brand-50/90 to-brand-100/70 px-4 py-3 shadow-lg shadow-brand-300/25 ring-1 ring-brand-100/80 sm:gap-4 sm:px-6 sm:py-4">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-500 text-white shadow-md shadow-brand-600/30 sm:h-14 sm:w-14 sm:rounded-2xl">
+                <Sparkles className="h-5 w-5 sm:h-7 sm:w-7" />
+              </span>
+              <EditableText
+                as="p"
+                contentKey="home.hero.welcome"
+                className="font-display text-xl font-bold leading-tight text-brand-900 sm:text-2xl lg:text-3xl"
+              >
+                Welcome to Mosasana Capital
+              </EditableText>
+            </div>
+          </div>
           <h1 className="font-display text-4xl font-bold leading-[1.1] text-brand-900 sm:text-5xl lg:text-6xl">
             <EditableText as="span" contentKey="home.hero.title1">
               Cash when life

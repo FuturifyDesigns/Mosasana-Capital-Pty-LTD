@@ -20,6 +20,7 @@ import { VerifiedPage } from '@/pages/VerifiedPage'
 import { TermsPage } from '@/pages/TermsPage'
 import { PrivacyPage } from '@/pages/PrivacyPage'
 import { RecoveryHandler } from '@/components/RecoveryHandler'
+import { ScrollToTop } from '@/components/ScrollToTop'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { AdminPage } from '@/pages/AdminPage'
 
@@ -32,6 +33,7 @@ export default function App() {
         <NotificationPopupListener />
         <ContentProvider>
         <HashRouter>
+        <ScrollToTop />
         <RecoveryHandler />
         <Routes>
           <Route path="verified" element={<VerifiedPage />} />
