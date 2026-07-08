@@ -1,6 +1,7 @@
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from '@/context/AuthContext'
 import { ToastProvider } from '@/context/ToastContext'
+import { NotificationProvider } from '@/context/NotificationContext'
 import { ContentProvider } from '@/context/ContentContext'
 import { Layout } from '@/components/Layout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -22,6 +23,7 @@ export default function App() {
   return (
     <AuthProvider>
       <ToastProvider>
+        <NotificationProvider>
         <ContentProvider>
         <HashRouter>
         <RecoveryHandler />
@@ -64,6 +66,7 @@ export default function App() {
         </Routes>
         </HashRouter>
         </ContentProvider>
+        </NotificationProvider>
       </ToastProvider>
     </AuthProvider>
   )

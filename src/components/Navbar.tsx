@@ -4,6 +4,7 @@ import { Menu, X, LogOut, LayoutDashboard, Shield } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Logo } from './Logo'
 import { Button } from './ui/Button'
+import { NotificationBell } from './NotificationBell'
 import { useAuth } from '@/context/AuthContext'
 
 const navLinks = [
@@ -62,6 +63,7 @@ export function Navbar() {
                   </span>
                 </NavLink>
               )}
+              <NotificationBell />
               <div
                 className="flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50 py-1 pl-1 pr-3"
                 title={`Signed in as ${displayName}`}
@@ -104,7 +106,8 @@ export function Navbar() {
           >
             <div className="flex flex-col gap-1 p-4">
               {user && (
-                <div className="mb-2 flex items-center gap-2 rounded-xl border border-brand-100 bg-brand-50 p-2.5">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <div className="flex flex-1 items-center gap-2 rounded-xl border border-brand-100 bg-brand-50 p-2.5">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-500 text-sm font-bold text-white">
                     {initials}
                   </span>
@@ -112,6 +115,8 @@ export function Navbar() {
                     <p className="text-sm font-semibold text-brand-900">Hi, {firstName}</p>
                     <p className="truncate text-xs text-brand-500">{displayName}</p>
                   </div>
+                  </div>
+                  <NotificationBell />
                 </div>
               )}
               {navLinks.map((link) => (

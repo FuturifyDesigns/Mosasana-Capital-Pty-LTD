@@ -24,6 +24,8 @@ import {
   type LoanRequestFormData,
 } from '@/lib/validation'
 import { buildWhatsAppLoanUrl } from '@/lib/whatsapp'
+import { formatPula } from '@/lib/format'
+import { getOutstandingBalance } from '@/lib/loans'
 
 type ApplyMode = 'website' | 'whatsapp'
 
@@ -225,10 +227,7 @@ export function ApplyPage() {
   }
 
   if (activeLoan) {
-    const balance =
-      activeLoan.total_repayable != null
-        ? Math.max(activeLoan.total_repayable - (activeLoan.amount_paid ?? 0), 0)
-        : null
+    const balance = getOutstandingBalance(activeLoan)
 
     return (
       <>
@@ -245,7 +244,7 @@ export function ApplyPage() {
                 </div>
                 <div>
                   <p className="text-lg font-bold text-brand-900">
-                    P{activeLoan.loan_amount.toLocaleString()}
+                    {formatPula(activeLoan.loan_amount)}
                   </p>
                   <p className="text-sm text-brand-600">{activeLoan.loan_purpose}</p>
                 </div>
@@ -259,14 +258,14 @@ export function ApplyPage() {
                   <div className="rounded-xl bg-brand-50 p-3">
                     <dt className="text-brand-500">Total repayable</dt>
                     <dd className="font-semibold text-brand-900">
-                      P{activeLoan.total_repayable.toLocaleString()}
+                      {formatPula(activeLoan.total_repayable)}
                     </dd>
                   </div>
                 )}
                 {balance != null && (
                   <div className="rounded-xl bg-brand-50 p-3">
                     <dt className="text-brand-500">Outstanding balance</dt>
-                    <dd className="font-semibold text-brand-900">P{balance.toLocaleString()}</dd>
+                    <dd className="font-semibold text-brand-900">{formatPula(balance)}</dd>
                   </div>
                 )}
                 {activeLoan.due_date && (

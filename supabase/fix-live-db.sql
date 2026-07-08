@@ -177,3 +177,211 @@ CREATE POLICY "Admins can view reminder log"
 
 -- 8. Reload PostgREST schema cache (so new columns/functions are visible immediately)
 NOTIFY pgrst, 'reload schema';
+
+-- ============================================================
+-- 9. Interest rate, payment ledger, in-app notifications
+-- ============================================================
+
+ALTER TABLE public.loan_requests
+  ADD COLUMN IF NOT EXISTS interest_rate NUMERIC(5,2);
+
+-- Individual payment records (admin records; customer read-only)
+CREATE TABLE IF NOT EXISTS public.loan_payments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  loan_id UUID NOT NULL REFERENCES public.loan_requests(id) ON DELETE CASCADE,
+  amount NUMERIC(12,2) NOT NULL CHECK (amount > 0),
+  notes TEXT,
+  recorded_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_loan_payments_loan_id ON public.loan_payments(loan_id);
+
+ALTER TABLE public.loan_payments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can insert loan payments" ON public.loan_payments;
+CREATE POLICY "Admins can insert loan payments"
+  ON public.loan_payments FOR INSERT
+  TO authenticated
+  WITH CHECK (public.is_admin());
+
+DROP POLICY IF EXISTS "Admins can view all loan payments" ON public.loan_payments;
+CREATE POLICY "Admins can view all loan payments"
+  ON public.loan_payments FOR SELECT
+  USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Users can view own loan payments" ON public.loan_payments;
+CREATE POLICY "Users can view own loan payments"
+  ON public.loan_payments FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.loan_requests l
+      WHERE l.id = loan_id AND l.user_id = auth.uid()
+    )
+  );
+
+-- Keep amount_paid in sync with the payment ledger
+CREATE OR REPLACE FUNCTION public.sync_loan_amount_paid()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  target_loan UUID;
+BEGIN
+  target_loan := COALESCE(NEW.loan_id, OLD.loan_id);
+  UPDATE public.loan_requests
+  SET amount_paid = COALESCE(
+    (SELECT SUM(amount) FROM public.loan_payments WHERE loan_id = target_loan),
+    0
+  )
+  WHERE id = target_loan;
+  RETURN COALESCE(NEW, OLD);
+END;
+$$;
+
+DROP TRIGGER IF EXISTS loan_payments_sync_amount ON public.loan_payments;
+CREATE TRIGGER loan_payments_sync_amount
+  AFTER INSERT OR DELETE ON public.loan_payments
+  FOR EACH ROW EXECUTE FUNCTION public.sync_loan_amount_paid();
+
+-- In-app notifications
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type TEXT NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  loan_id UUID REFERENCES public.loan_requests(id) ON DELETE SET NULL,
+  read_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON public.notifications(created_at DESC);
+
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own notifications" ON public.notifications;
+CREATE POLICY "Users can view own notifications"
+  ON public.notifications FOR SELECT
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can mark own notifications read" ON public.notifications;
+CREATE POLICY "Users can mark own notifications read"
+  ON public.notifications FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Notify customer when loan status changes
+CREATE OR REPLACE FUNCTION public.notify_loan_status_change()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NEW.user_id IS NOT NULL AND OLD.status IS DISTINCT FROM NEW.status THEN
+    INSERT INTO public.notifications (user_id, type, title, message, loan_id)
+    VALUES (
+      NEW.user_id,
+      'loan_status',
+      'Loan status updated',
+      'Your loan application is now: ' || initcap(NEW.status) || '.',
+      NEW.id
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS loan_requests_notify_status ON public.loan_requests;
+CREATE TRIGGER loan_requests_notify_status
+  AFTER UPDATE OF status ON public.loan_requests
+  FOR EACH ROW EXECUTE FUNCTION public.notify_loan_status_change();
+
+-- Notify admins of new loan applications
+CREATE OR REPLACE FUNCTION public.notify_new_loan()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  INSERT INTO public.notifications (user_id, type, title, message, loan_id)
+  SELECT
+    p.id,
+    'new_loan',
+    'New loan application',
+    NEW.full_name || ' applied for ' || NEW.loan_amount::text || ' pula.',
+    NEW.id
+  FROM public.profiles p
+  WHERE p.role = 'admin';
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS loan_requests_notify_new ON public.loan_requests;
+CREATE TRIGGER loan_requests_notify_new
+  AFTER INSERT ON public.loan_requests
+  FOR EACH ROW EXECUTE FUNCTION public.notify_new_loan();
+
+-- Notify customer when admin records a payment
+CREATE OR REPLACE FUNCTION public.notify_loan_payment()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  loan_row public.loan_requests%ROWTYPE;
+BEGIN
+  SELECT * INTO loan_row FROM public.loan_requests WHERE id = NEW.loan_id;
+  IF loan_row.user_id IS NOT NULL THEN
+    INSERT INTO public.notifications (user_id, type, title, message, loan_id)
+    VALUES (
+      loan_row.user_id,
+      'payment_received',
+      'Payment recorded',
+      'A payment of P' || NEW.amount::text || ' was recorded on your loan.',
+      NEW.loan_id
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS loan_payments_notify ON public.loan_payments;
+CREATE TRIGGER loan_payments_notify
+  AFTER INSERT ON public.loan_payments
+  FOR EACH ROW EXECUTE FUNCTION public.notify_loan_payment();
+
+-- Record a payment (admin only)
+CREATE OR REPLACE FUNCTION public.record_loan_payment(
+  p_loan_id UUID,
+  p_amount NUMERIC,
+  p_notes TEXT DEFAULT NULL
+)
+RETURNS public.loan_payments
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  row public.loan_payments;
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+  IF p_amount IS NULL OR p_amount <= 0 THEN
+    RAISE EXCEPTION 'Payment amount must be greater than zero';
+  END IF;
+  INSERT INTO public.loan_payments (loan_id, amount, notes, recorded_by)
+  VALUES (p_loan_id, p_amount, p_notes, auth.uid())
+  RETURNING * INTO row;
+  RETURN row;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.record_loan_payment(UUID, NUMERIC, TEXT) TO authenticated;
+
+-- Realtime for payments + notifications
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'loan_payments') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.loan_payments;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'notifications') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'loan_reminder_log') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.loan_reminder_log;
+  END IF;
+END $$;
+
+NOTIFY pgrst, 'reload schema';

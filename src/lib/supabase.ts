@@ -42,6 +42,7 @@ export interface LoanRequest {
   employment_status: string
   monthly_income: number | null
   status: string
+  interest_rate: number | null
   total_repayable: number | null
   amount_paid: number | null
   due_date: string | null
@@ -49,6 +50,26 @@ export interface LoanRequest {
   source: 'website' | 'whatsapp'
   created_at: string
   updated_at: string
+}
+
+export interface LoanPayment {
+  id: string
+  loan_id: string
+  amount: number
+  notes: string | null
+  recorded_by: string | null
+  created_at: string
+}
+
+export interface AppNotification {
+  id: string
+  user_id: string
+  type: string
+  title: string
+  message: string
+  loan_id: string | null
+  read_at: string | null
+  created_at: string
 }
 
 export interface ContactEnquiry {
