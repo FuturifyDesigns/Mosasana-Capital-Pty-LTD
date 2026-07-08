@@ -9,7 +9,7 @@ import { ExitIntentPopup } from './ExitIntentPopup'
 
 export function Layout() {
   return (
-    <div className="relative flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col overflow-x-clip">
       <ScrollProgress />
       <SoftBackground />
       <Navbar />

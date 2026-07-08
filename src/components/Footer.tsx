@@ -12,7 +12,7 @@ export function Footer() {
   ]
 
   return (
-    <footer className="relative mt-auto bg-gradient-to-b from-brand-800 to-brand-900 text-brand-100">
+    <footer className="relative mt-auto bg-gradient-to-b from-brand-800 to-brand-900 text-brand-100 max-sm:pb-[calc(var(--footer-bottom-pad)+env(safe-area-inset-bottom))]">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold-500/50 to-transparent" />
 
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -79,7 +79,7 @@ export function Footer() {
       </div>
 
       <div className="border-t border-brand-700/60">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-4 text-center text-sm sm:flex-row sm:px-6 sm:text-left">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-5 text-center text-sm sm:flex-row sm:gap-2 sm:px-6 sm:py-4 sm:text-left">
           <p className="text-brand-200">
             &copy; {year} {COMPANY.name}. All rights reserved.
             <span className="mt-0.5 block text-xs text-brand-400">

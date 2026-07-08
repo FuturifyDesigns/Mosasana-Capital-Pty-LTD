@@ -23,6 +23,7 @@ import { EditableText } from '@/components/editable/EditableText'
 import { EditableImage } from '@/components/editable/EditableImage'
 import { COMPANY } from '@/lib/constants'
 import { useAuth } from '@/context/AuthContext'
+import { useIsMobile } from '@/lib/useMediaQuery'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -58,7 +59,7 @@ export function HomePage() {
       </section>
 
       {/* Two ways to apply */}
-      <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
+      <section className="overflow-x-clip border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
           <Reveal className="mx-auto max-w-2xl text-center">
             <EditableText
@@ -108,9 +109,9 @@ export function HomePage() {
       </section>
 
       {/* Tailored solutions — image left */}
-      <section>
+      <section className="overflow-x-clip">
         <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
-          <Reveal direction="right" className="relative">
+          <Reveal direction="right" className="relative overflow-hidden">
             <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
             <EditableImage
               contentKey="home.tailored.image"
@@ -160,7 +161,7 @@ export function HomePage() {
       </section>
 
       {/* Track your loans — image right */}
-      <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
+      <section className="overflow-x-clip border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
           <Reveal direction="right" className="order-1">
             <EditableText
@@ -213,9 +214,9 @@ export function HomePage() {
       </section>
 
       {/* Testimonial — image left */}
-      <section>
+      <section className="overflow-x-clip">
         <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
-          <Reveal direction="right" className="relative order-2 lg:order-1">
+          <Reveal direction="right" className="relative order-2 overflow-hidden lg:order-1">
             <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-gold-400/20 to-brand-300/25 blur-2xl" />
             <EditableImage
               contentKey="home.testimonial.image"
@@ -253,7 +254,7 @@ export function HomePage() {
       </section>
 
       {/* Why choose us — slideshow */}
-      <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
+      <section className="overflow-x-clip border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
           <Reveal className="mb-12 text-center">
             <EditableText
@@ -278,7 +279,7 @@ export function HomePage() {
       </section>
 
       {/* Vision & mission */}
-      <section className="bg-gradient-to-r from-brand-700 to-brand-600 py-14 text-white sm:py-20">
+      <section className="overflow-x-clip bg-gradient-to-r from-brand-700 to-brand-600 py-14 text-white sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="grid gap-10 md:grid-cols-2">
             <Reveal direction="right">
@@ -380,12 +381,14 @@ export function HomePage() {
 }
 
 function HeroSection({ applyTarget }: { applyTarget: string }) {
+  const mobile = useIsMobile()
   const mx = useMotionValue(0)
   const my = useMotionValue(0)
   const rx = useSpring(useTransform(my, [-0.5, 0.5], [7, -7]), { stiffness: 150, damping: 15 })
   const ry = useSpring(useTransform(mx, [-0.5, 0.5], [-7, 7]), { stiffness: 150, damping: 15 })
 
   const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (mobile) return
     const rect = e.currentTarget.getBoundingClientRect()
     mx.set((e.clientX - rect.left) / rect.width - 0.5)
     my.set((e.clientY - rect.top) / rect.height - 0.5)
@@ -444,9 +447,9 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
           transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
           onMouseMove={handleMove}
           onMouseLeave={handleLeave}
-          className="relative [perspective:1000px]"
+          className="relative overflow-hidden [perspective:1000px]"
         >
-          <motion.div style={{ rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}>
+          <motion.div style={mobile ? undefined : { rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}>
             <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/30 to-gold-400/20 blur-2xl" />
             <EditableImage
               contentKey="home.hero.image"
@@ -459,8 +462,8 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              style={{ transform: 'translateZ(50px)' }}
-              className="absolute -bottom-5 -left-3 flex items-center gap-3 rounded-2xl border border-brand-100 bg-white/95 px-4 py-3 shadow-xl backdrop-blur-sm sm:-left-5"
+              style={mobile ? undefined : { transform: 'translateZ(50px)' }}
+              className="absolute bottom-2 left-2 flex items-center gap-2 rounded-2xl border border-brand-100 bg-white/95 px-3 py-2.5 shadow-xl backdrop-blur-sm sm:-bottom-5 sm:-left-5 sm:gap-3 sm:px-4 sm:py-3"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-growth-500/10 text-growth-500">
                 <CheckCircle2 className="h-6 w-6" />
@@ -505,7 +508,7 @@ function DashboardMock() {
   const pct = Math.round((paid / totalDue) * 100)
 
   return (
-    <div className="relative w-full max-w-md">
+    <div className="relative w-full max-w-md overflow-hidden">
       <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
       <div className="relative overflow-hidden rounded-3xl border border-brand-100 bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-brand-50 px-5 py-3.5">

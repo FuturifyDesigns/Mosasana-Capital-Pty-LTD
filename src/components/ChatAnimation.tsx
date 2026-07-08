@@ -144,7 +144,7 @@ export function ChatAnimation() {
   const visible = CONVERSATION.slice(0, visibleCount)
 
   return (
-    <div className="relative mx-auto w-full max-w-[320px]">
+    <div className="relative mx-auto w-full max-w-[min(320px,100%)] overflow-hidden">
       <div className="absolute -inset-4 rounded-[3rem] bg-gradient-to-br from-brand-300/30 to-gold-400/20 blur-2xl" />
 
       <div className="relative overflow-hidden rounded-[2.5rem] border-[6px] border-[#0b141a] bg-[#0b141a] shadow-2xl">
@@ -172,7 +172,7 @@ export function ChatAnimation() {
         </div>
 
         {/* Chat body */}
-        <div ref={scrollRef} className="relative h-[430px] overflow-hidden bg-[#0b141a] px-3 py-3">
+        <div ref={scrollRef} className="relative h-[280px] overflow-hidden bg-[#0b141a] px-3 py-3 sm:h-[430px]">
           <WhatsAppDoodle />
 
           <div className="relative space-y-2">

@@ -21,7 +21,41 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @media (min-width: 768px) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+}
+
+:root {
+  --bottom-overlay: 0px;
+  --footer-bottom-pad: 0px;
+}
+
+@media (max-width: 639px) {
+  :root {
+    --bottom-overlay: 4.5rem;
+    --footer-bottom-pad: 5.5rem;
+  }
+
+  :root[data-cookie-visible='true'] {
+    --bottom-overlay: 11rem;
+    --footer-bottom-pad: 12.5rem;
+  }
+}
+
+body {
+  @apply bg-brand-50 text-brand-900 font-sans antialiased;
+  font-feature-settings: "ss01", "cv01", "cv11";
+  overflow-x: clip;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Zoom out only specific pages (e.g. sign-up) that otherwise feel too large.
@@ -36,11 +70,6 @@ html {
   .page-zoom-out {
     zoom: 0.85;
   }
-}
-
-body {
-  @apply bg-brand-50 text-brand-900 font-sans antialiased;
-  font-feature-settings: "ss01", "cv01", "cv11";
 }
 
 .font-display {

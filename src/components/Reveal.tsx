@@ -1,5 +1,6 @@
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
 import type { ReactNode } from 'react'
+import { useIsMobile } from '@/lib/useMediaQuery'
 
 type Direction = 'up' | 'down' | 'left' | 'right' | 'none'
 
@@ -12,12 +13,21 @@ interface RevealProps {
   blur?: boolean
 }
 
-const offset: Record<Direction, { x?: number; y?: number }> = {
-  up: { y: 48 },
-  down: { y: -48 },
-  left: { x: 48 },
-  right: { x: -48 },
-  none: {},
+function resolveDirection(direction: Direction, mobile: boolean): Direction {
+  if (mobile && (direction === 'left' || direction === 'right')) return 'up'
+  return direction
+}
+
+function getOffset(direction: Direction, mobile: boolean) {
+  const amount = mobile ? 20 : 48
+  const map: Record<Direction, { x?: number; y?: number }> = {
+    up: { y: amount },
+    down: { y: -amount },
+    left: { x: amount },
+    right: { x: -amount },
+    none: {},
+  }
+  return map[direction]
 }
 
 // Smooth, refined easing inspired by Lusion-style scroll reveals.
@@ -32,17 +42,21 @@ export function Reveal({
   blur = true,
 }: RevealProps) {
   const reduce = useReducedMotion()
+  const mobile = useIsMobile()
+  const resolvedDirection = resolveDirection(direction, mobile)
+  const useBlur = blur && !mobile && !reduce
+  const viewportMargin = mobile ? '-24px' : '-80px'
 
   const variants: Variants = {
     hidden: reduce
       ? { opacity: 0 }
-      : { opacity: 0, ...offset[direction], filter: blur ? 'blur(10px)' : 'blur(0px)' },
+      : { opacity: 0, ...getOffset(resolvedDirection, mobile), filter: useBlur ? 'blur(10px)' : 'blur(0px)' },
     visible: {
       opacity: 1,
       x: 0,
       y: 0,
       filter: 'blur(0px)',
-      transition: { duration: 0.8, ease: EASE, delay },
+      transition: { duration: mobile ? 0.55 : 0.8, ease: EASE, delay },
     },
   }
 
@@ -52,7 +66,7 @@ export function Reveal({
       variants={variants}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once, margin: '-80px' }}
+      viewport={{ once, margin: viewportMargin }}
     >
       {children}
     </motion.div>
@@ -67,15 +81,17 @@ interface RevealGroupProps {
 }
 
 export function RevealGroup({ children, className = '', stagger = 0.12, once = true }: RevealGroupProps) {
+  const mobile = useIsMobile()
+
   return (
     <motion.div
       className={className}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once, margin: '-80px' }}
+      viewport={{ once, margin: mobile ? '-24px' : '-80px' }}
       variants={{
         hidden: {},
-        visible: { transition: { staggerChildren: stagger } },
+        visible: { transition: { staggerChildren: mobile ? stagger * 0.6 : stagger } },
       }}
     >
       {children}
@@ -97,19 +113,23 @@ export function RevealItem({
   blur?: boolean
 }) {
   const reduce = useReducedMotion()
+  const mobile = useIsMobile()
+  const resolvedDirection = resolveDirection(direction, mobile)
+  const useBlur = blur && !mobile && !reduce
+
   return (
     <motion.div
       className={className}
       variants={{
         hidden: reduce
           ? { opacity: 0 }
-          : { opacity: 0, ...offset[direction], filter: blur ? 'blur(10px)' : 'blur(0px)' },
+          : { opacity: 0, ...getOffset(resolvedDirection, mobile), filter: useBlur ? 'blur(10px)' : 'blur(0px)' },
         visible: {
           opacity: 1,
           x: 0,
           y: 0,
           filter: 'blur(0px)',
-          transition: { duration: 0.7, ease: EASE_ITEM },
+          transition: { duration: mobile ? 0.5 : 0.7, ease: EASE_ITEM },
         },
       }}
     >

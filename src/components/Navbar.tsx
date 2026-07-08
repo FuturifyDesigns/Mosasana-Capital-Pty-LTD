@@ -87,13 +87,22 @@ export function Navbar() {
           )}
         </div>
 
-        <button
-          className="rounded-lg p-2 text-brand-700 md:hidden"
-          onClick={() => setOpen(!open)}
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          {!user && (
+            <Link to="/login">
+              <Button size="sm" variant="outline" className="px-3">
+                Sign In
+              </Button>
+            </Link>
+          )}
+          <button
+            className="rounded-lg p-2 text-brand-700"
+            onClick={() => setOpen(!open)}
+            aria-label="Toggle menu"
+          >
+            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </nav>
 
       <AnimatePresence>
@@ -102,7 +111,7 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="border-t border-brand-100 bg-white md:hidden"
+            className="overflow-hidden border-t border-brand-100 bg-white md:hidden"
           >
             <div className="flex flex-col gap-1 p-4">
               {user && (
@@ -151,11 +160,18 @@ export function Navbar() {
                   </Button>
                 </>
               ) : (
-                <Link to="/account" onClick={() => setOpen(false)}>
-                  <Button size="sm" className="w-full">
-                    Get Started
-                  </Button>
-                </Link>
+                <div className="mt-2 flex flex-col gap-2">
+                  <Link to="/login" onClick={() => setOpen(false)}>
+                    <Button variant="outline" size="sm" className="w-full">
+                      Sign In
+                    </Button>
+                  </Link>
+                  <Link to="/register" onClick={() => setOpen(false)}>
+                    <Button size="sm" className="w-full">
+                      Create Account
+                    </Button>
+                  </Link>
+                </div>
               )}
             </div>
           </motion.div>

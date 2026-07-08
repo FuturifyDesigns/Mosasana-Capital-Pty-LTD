@@ -98,7 +98,7 @@ export function AboutPage() {
       />
 
       {/* Who we are */}
-      <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
+      <section className="mx-auto max-w-6xl overflow-x-clip px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
         <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
           <Reveal direction="right">
             <span className="inline-flex items-center gap-2 rounded-full bg-brand-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-brand-700">
@@ -130,7 +130,7 @@ export function AboutPage() {
             </EditableText>
           </Reveal>
 
-          <Reveal direction="left" className="relative">
+          <Reveal direction="left" className="relative overflow-hidden">
             <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
             <div className="relative flex items-center justify-center rounded-3xl border border-white/60 bg-gradient-to-br from-brand-50 to-white p-10 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:shadow-brand-500/25 sm:p-14">
               <EditableImage
