@@ -137,13 +137,29 @@ export const ALLOWED_ID_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as con
 export const MAX_ID_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
 export function validateIdFile(file: File): string | null {
-  if (!ALLOWED_ID_TYPES.includes(file.type as (typeof ALLOWED_ID_TYPES)[number])) {
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  const allowedByExt = ext === 'jpg' || ext === 'jpeg' || ext === 'png' || ext === 'webp'
+  const allowedByType =
+    !file.type ||
+    ALLOWED_ID_TYPES.includes(file.type as (typeof ALLOWED_ID_TYPES)[number]) ||
+    file.type === 'image/jpg'
+
+  if (!allowedByType && !allowedByExt) {
     return 'ID photo must be JPEG, PNG, or WebP'
   }
   if (file.size > MAX_ID_FILE_SIZE) {
     return 'ID photo must be under 5MB'
   }
   return null
+}
+
+/** Guess a safe image MIME type when the browser leaves file.type empty. */
+export function imageContentType(file: File): string {
+  if (file.type && file.type !== 'application/octet-stream') return file.type
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  if (ext === 'png') return 'image/png'
+  if (ext === 'webp') return 'image/webp'
+  return 'image/jpeg'
 }
 
 export function sanitizeText(input: string): string {

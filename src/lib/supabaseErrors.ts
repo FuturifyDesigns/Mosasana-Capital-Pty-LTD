@@ -32,6 +32,22 @@ export function formatSupabaseError(err: unknown): string {
     return 'This record already exists. Please use different details or sign in.'
   }
 
+  if (/bucket not found|Bucket not found/i.test(msg)) {
+    return 'ID document storage is not set up. Please run supabase/fix-live-db.sql in the Supabase SQL editor.'
+  }
+
+  if (/mime|content.type|not allowed|invalid file type/i.test(msg)) {
+    return 'That file type is not allowed. Please upload a JPEG, PNG, or WebP image under 5MB.'
+  }
+
+  if (/payload too large|exceeded|too large/i.test(msg)) {
+    return 'The file is too large. Please upload an image under 5MB.'
+  }
+
+  if (/storage/i.test(msg) && /policy|permission|denied|unauthorized/i.test(msg)) {
+    return 'Could not upload your ID photo. Please sign in again and retry, or ask an admin to run fix-live-db.sql.'
+  }
+
   const parts = [msg, details, hint].filter(Boolean)
   return parts.join(' — ') || 'Something went wrong. Please try again.'
 }

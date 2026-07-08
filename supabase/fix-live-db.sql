@@ -58,13 +58,38 @@ CREATE POLICY "Users can submit own loan request"
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
 
--- 5. ID document uploads — authenticated users only
+-- 5. ID document storage bucket + upload policies
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'id-documents',
+  'id-documents',
+  false,
+  5242880,
+  ARRAY['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
 DROP POLICY IF EXISTS "Anyone can upload ID documents" ON storage.objects;
 DROP POLICY IF EXISTS "Authenticated can upload ID documents" ON storage.objects;
-CREATE POLICY "Authenticated can upload ID documents"
+DROP POLICY IF EXISTS "Users can upload own ID documents" ON storage.objects;
+DROP POLICY IF EXISTS "Admins can read ID documents" ON storage.objects;
+
+-- Users upload into a folder named with their own user id: {user_id}/{filename}
+CREATE POLICY "Users can upload own ID documents"
   ON storage.objects FOR INSERT
   TO authenticated
-  WITH CHECK (bucket_id = 'id-documents');
+  WITH CHECK (
+    bucket_id = 'id-documents'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+CREATE POLICY "Admins can read ID documents"
+  ON storage.objects FOR SELECT
+  TO authenticated
+  USING (bucket_id = 'id-documents' AND public.is_admin());
 
 -- 6. Reminder log (for admin “reminders sent” + email job)
 CREATE TABLE IF NOT EXISTS public.loan_reminder_log (

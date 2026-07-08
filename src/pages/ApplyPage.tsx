@@ -20,6 +20,7 @@ import {
   loanRequestSchema,
   validateIdFile,
   sanitizeText,
+  imageContentType,
   type LoanRequestFormData,
 } from '@/lib/validation'
 import { buildWhatsAppLoanUrl } from '@/lib/whatsapp'
@@ -139,14 +140,14 @@ export function ApplyPage() {
     try {
       const fileExt = idFile.name.split('.').pop()?.toLowerCase() || 'jpg'
       const fileName = `${crypto.randomUUID()}.${fileExt}`
-      const filePath = `${crypto.randomUUID()}/${fileName}`
+      const filePath = `${user.id}/${fileName}`
 
       const { error: uploadError } = await supabase.storage
         .from('id-documents')
         .upload(filePath, idFile, {
           cacheControl: '3600',
           upsert: false,
-          contentType: idFile.type,
+          contentType: imageContentType(idFile),
         })
 
       if (uploadError) throw uploadError

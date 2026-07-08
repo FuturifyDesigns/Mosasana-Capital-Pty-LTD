@@ -151,14 +151,17 @@ VALUES (
   'id-documents',
   false,
   5242880,
-  ARRAY['image/jpeg', 'image/png', 'image/webp']
+  ARRAY['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Storage policies
-CREATE POLICY "Authenticated can upload ID documents"
+CREATE POLICY "Users can upload own ID documents"
   ON storage.objects FOR INSERT
   TO authenticated
-  WITH CHECK (bucket_id = 'id-documents');
+  WITH CHECK (
+    bucket_id = 'id-documents'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
 
 CREATE POLICY "Admins can read ID documents"
   ON storage.objects FOR SELECT
