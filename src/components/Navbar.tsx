@@ -46,12 +46,14 @@ export function Navbar() {
         <div className="hidden items-center gap-2 md:flex">
           {user ? (
             <>
-              <NavLink to="/dashboard" className={linkClass}>
-                <span className="flex items-center gap-1.5">
-                  <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
-                </span>
-              </NavLink>
+              {!isAdmin && (
+                <NavLink to="/dashboard" className={linkClass}>
+                  <span className="flex items-center gap-1.5">
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </span>
+                </NavLink>
+              )}
               {isAdmin && (
                 <NavLink to="/admin" className={linkClass}>
                   <span className="flex items-center gap-1.5">
@@ -129,9 +131,11 @@ export function Navbar() {
               )}
               {user ? (
                 <>
-                  <NavLink to="/dashboard" className={linkClass} onClick={() => setOpen(false)}>
-                    Dashboard
-                  </NavLink>
+                  {!isAdmin && (
+                    <NavLink to="/dashboard" className={linkClass} onClick={() => setOpen(false)}>
+                      Dashboard
+                    </NavLink>
+                  )}
                   {isAdmin && (
                     <NavLink to="/admin" className={linkClass} onClick={() => setOpen(false)}>
                       Admin Portal

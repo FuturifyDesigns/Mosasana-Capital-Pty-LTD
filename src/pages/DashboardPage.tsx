@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Plus, FileText, Clock, Info, CalendarClock, AlertTriangle } from 'lucide-react'
 import { PageHero } from '@/components/ui/PageHero'
@@ -20,7 +20,7 @@ const statusColors: Record<string, string> = {
 }
 
 export function DashboardPage() {
-  const { user, profile } = useAuth()
+  const { user, profile, isAdmin } = useAuth()
   const [loans, setLoans] = useState<LoanRequest[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -68,6 +68,10 @@ export function DashboardPage() {
         .filter((r) => r.reminder && r.reminder.level !== 'ok'),
     [loans],
   )
+
+  if (isAdmin) {
+    return <Navigate to="/admin" replace />
+  }
 
   return (
     <>

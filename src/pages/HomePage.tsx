@@ -23,8 +23,8 @@ import { useAuth } from '@/context/AuthContext'
 const BASE = import.meta.env.BASE_URL
 
 export function HomePage() {
-  const { user } = useAuth()
-  const applyTarget = user ? '/apply' : '/register'
+  const { user, isAdmin } = useAuth()
+  const applyTarget = user ? (isAdmin ? '/admin' : '/apply') : '/register'
 
   return (
     <>
@@ -337,21 +337,29 @@ export function HomePage() {
             </EditableText>
             <p className="mx-auto mt-4 max-w-xl text-brand-100">
               {user
-                ? 'Submit a new loan request or track your existing applications from your dashboard.'
+                ? isAdmin
+                  ? 'Manage loan applications, enquiries, and users from the admin portal.'
+                  : 'Submit a new loan request or track your existing applications from your dashboard.'
                 : 'Create an account to apply for a loan and track your applications. You can also reach us on WhatsApp.'}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               {user ? (
-                <>
-                  <Link to="/apply">
-                    <Button size="lg">Apply for a Loan</Button>
+                isAdmin ? (
+                  <Link to="/admin">
+                    <Button size="lg">Go to Admin Portal</Button>
                   </Link>
-                  <Link to="/dashboard">
-                    <Button variant="gold" size="lg">
-                      Go to Dashboard
-                    </Button>
-                  </Link>
-                </>
+                ) : (
+                  <>
+                    <Link to="/apply">
+                      <Button size="lg">Apply for a Loan</Button>
+                    </Link>
+                    <Link to="/dashboard">
+                      <Button variant="gold" size="lg">
+                        Go to Dashboard
+                      </Button>
+                    </Link>
+                  </>
+                )
               ) : (
                 <Link to="/account">
                   <Button size="lg">
