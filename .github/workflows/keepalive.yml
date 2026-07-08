@@ -18,7 +18,7 @@ jobs:
         run: |
           ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3Y29vdGNkcmJuYWRzYndkdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MjY5MDAsImV4cCI6MjA5OTAwMjkwMH0.wT1W3gC5Pfktjb875Rn2gxQWO_jahzdMZkP-GdHf5xw"
           STATUS=$(curl -sS -o /dev/null -w "%{http_code}" \
-            "https://pwcootcdrbnadsbwduxi.supabase.co/rest/v1/site_content?select=key&limit=1" \
+            "https://pwcootcdrbnadsbwduxi.supabase.co/rest/v1/profiles?select=id&limit=1" \
             -H "apikey: $ANON_KEY" \
             -H "Authorization: Bearer $ANON_KEY")
           echo "Supabase responded with HTTP $STATUS"

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
 import { loginSchema, type LoginFormData } from '@/lib/validation'
+import { formatSupabaseError } from '@/lib/supabaseErrors'
 import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 
@@ -43,7 +44,12 @@ export function LoginPage() {
     })
 
     if (authError) {
-      setError(authError.message)
+      const msg = formatSupabaseError(authError)
+      setError(
+        /invalid login credentials/i.test(msg)
+          ? 'Incorrect email or password. If you just registered, confirm your email first.'
+          : msg,
+      )
       setLoading(false)
       return
     }

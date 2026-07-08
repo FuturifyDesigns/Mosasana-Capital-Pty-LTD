@@ -15,6 +15,7 @@ import { useAuth } from '@/context/AuthContext'
 import { supabase, type LoanRequest } from '@/lib/supabase'
 import { ACTIVE_LOAN_STATUSES, LOAN_TERMS } from '@/lib/constants'
 import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
+import { formatSupabaseError } from '@/lib/supabaseErrors'
 import {
   loanRequestSchema,
   validateIdFile,
@@ -87,6 +88,7 @@ export function ApplyPage() {
       phone: profile?.phone || '',
       physicalAddress: profile?.physical_address || '',
       idType: 'national_id',
+      termMonths: 3,
     },
   })
 
@@ -128,6 +130,12 @@ export function ApplyPage() {
     setSubmitting(true)
     setSubmitError(null)
 
+    if (!user?.id) {
+      setSubmitError('You must be signed in to submit a loan application.')
+      setSubmitting(false)
+      return
+    }
+
     try {
       const fileExt = idFile.name.split('.').pop()?.toLowerCase() || 'jpg'
       const fileName = `${crypto.randomUUID()}.${fileExt}`
@@ -144,7 +152,7 @@ export function ApplyPage() {
       if (uploadError) throw uploadError
 
       const { error: insertError } = await supabase.from('loan_requests').insert({
-        user_id: user?.id || null,
+        user_id: user.id,
         full_name: sanitizeText(data.fullName),
         email: sanitizeText(data.email).toLowerCase(),
         phone: sanitizeText(data.phone),
@@ -170,7 +178,7 @@ export function ApplyPage() {
       setIdFile(null)
       setIdPreview(null)
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Failed to submit application. Please try again.')
+      setSubmitError(formatSupabaseError(err))
     } finally {
       setSubmitting(false)
     }

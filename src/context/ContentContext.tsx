@@ -28,15 +28,16 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     supabase
       .from('site_content')
       .select('key,value')
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (!active) return
-        if (data) {
+        if (!error && data) {
           const map: Record<string, string> = {}
           for (const row of data as { key: string; value: string | null }[]) {
             if (row.value != null) map[row.key] = row.value
           }
           setContent(map)
         }
+        // Missing table (404) is fine — site uses built-in fallbacks until CMS is set up.
         setLoaded(true)
       })
     return () => {
