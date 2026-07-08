@@ -5,9 +5,13 @@ import {
   ArrowRight,
   Globe,
   CheckCircle2,
-  BarChart3,
   Quote,
+  CalendarClock,
+  Wallet,
+  History,
+  TrendingDown,
 } from 'lucide-react'
+import { formatPula } from '@/lib/format'
 import { Button } from '@/components/ui/Button'
 import { ChatAnimation } from '@/components/ChatAnimation'
 import { WebsiteFormAnimation } from '@/components/WebsiteFormAnimation'
@@ -489,78 +493,156 @@ function DashboardMock() {
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
-    const t = setInterval(() => setTick((v) => v + 1), 4800)
+    const t = setInterval(() => setTick((v) => v + 1), 5200)
     return () => clearInterval(t)
   }, [])
 
+  // Mirrors the real customer dashboard layout (balances, progress, payment history).
+  const principal = 5000
+  const totalDue = 5500
+  const paid = 2000
+  const outstanding = totalDue - paid
+  const pct = Math.round((paid / totalDue) * 100)
+
   return (
-    <div className="relative w-full max-w-sm">
+    <div className="relative w-full max-w-md">
       <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
-      <div className="relative rounded-3xl border border-brand-100 bg-white p-5 shadow-2xl">
-        <div className="flex items-center justify-between">
+      <div className="relative overflow-hidden rounded-3xl border border-brand-100 bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-brand-50 px-5 py-3.5">
           <div>
             <p className="text-xs text-brand-400">My Dashboard</p>
-            <p className="font-display text-lg font-bold text-brand-900">Loan Applications</p>
+            <p className="font-display text-base font-bold text-brand-900">Welcome back, Client</p>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 rounded-full bg-growth-500/10 px-2.5 py-1 text-[11px] font-semibold text-growth-600">
-              <motion.span
-                className="h-1.5 w-1.5 rounded-full bg-growth-500"
-                animate={{ opacity: [1, 0.3, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-              Live
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-100 text-brand-600">
-              <BarChart3 className="h-5 w-5" />
-            </div>
-          </div>
+          <span className="flex items-center gap-1.5 rounded-full bg-growth-500/10 px-2.5 py-1 text-[11px] font-semibold text-growth-600">
+            <motion.span
+              className="h-1.5 w-1.5 rounded-full bg-growth-500"
+              animate={{ opacity: [1, 0.3, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+            Live
+          </span>
         </div>
 
-        <div className="mt-4 space-y-3" key={tick}>
+        <div className="space-y-4 p-4 sm:p-5" key={tick}>
+          {/* Active loan hero — same as customer dashboard */}
           <motion.div
-            initial={{ opacity: 0, x: -12 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="rounded-2xl border border-brand-100 bg-brand-50/60 p-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+            className="overflow-hidden rounded-2xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500 p-4 text-white shadow-lg shadow-brand-900/15"
           >
-            <div className="flex items-center justify-between">
-              <p className="text-lg font-bold text-brand-900">P3,000</p>
-              <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">
-                Approved
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-medium text-brand-100">Active loan</p>
+                <p className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+                  {formatPula(outstanding)}
+                </p>
+                <p className="mt-1 text-xs text-brand-100">Outstanding balance · Groceries · 2 months</p>
+              </div>
+              <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[11px] font-semibold capitalize text-brand-800">
+                disbursed
               </span>
             </div>
-            <p className="mt-1 text-xs text-brand-500">Rent · submitted 2 days ago</p>
-            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-brand-100">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: '100%' }}
-                transition={{ duration: 1.1, delay: 0.3 }}
-                className="h-full rounded-full bg-gradient-to-r from-brand-500 to-growth-500"
-              />
+
+            <div className="mt-4">
+              <div className="flex justify-between text-[11px] text-brand-100">
+                <span>
+                  Paid {formatPula(paid)} of {formatPula(totalDue)}
+                </span>
+                <span>{pct}%</span>
+              </div>
+              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/20">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 1.1, delay: 0.25, ease: 'easeOut' }}
+                  className="h-full rounded-full bg-emerald-300"
+                />
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-brand-100">
+              <span className="flex items-center gap-1">
+                <CalendarClock className="h-3.5 w-3.5" />
+                Due 15 Jul 2026
+              </span>
+              <span className="flex items-center gap-1">
+                <Wallet className="h-3.5 w-3.5" />
+                Applied {formatPula(principal)}
+              </span>
             </div>
           </motion.div>
 
+          {/* Application card with repayment summary */}
           <motion.div
-            initial={{ opacity: 0, x: -12 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.25 }}
-            className="rounded-2xl border border-brand-100 p-4"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.45 }}
+            className="overflow-hidden rounded-2xl border border-brand-100"
           >
-            <div className="flex items-center justify-between">
-              <p className="text-lg font-bold text-brand-900">P1,500</p>
-              <span className="rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-yellow-800">
-                Reviewing
+            <div className="flex items-start justify-between gap-3 border-b border-brand-100 bg-brand-50/50 px-4 py-3">
+              <div>
+                <p className="text-xl font-bold text-brand-900">{formatPula(principal)}</p>
+                <p className="mt-0.5 text-xs text-brand-600">Groceries · 2-month term</p>
+              </div>
+              <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[11px] font-semibold capitalize text-brand-800">
+                disbursed
               </span>
             </div>
-            <p className="mt-1 text-xs text-brand-500">Emergency · submitted today</p>
-            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-brand-100">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: '55%' }}
-                transition={{ duration: 1.1, delay: 0.45 }}
-                className="h-full rounded-full bg-gradient-to-r from-brand-400 to-gold-400"
-              />
+
+            <div className="space-y-3 p-4">
+              <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-brand-50 p-3.5 ring-1 ring-emerald-100">
+                <div className="flex items-end justify-between gap-3">
+                  <div>
+                    <p className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-emerald-700">
+                      <TrendingDown className="h-3 w-3" />
+                      Outstanding
+                    </p>
+                    <p className="text-xl font-bold text-emerald-900">{formatPula(outstanding)}</p>
+                  </div>
+                  <div className="text-right text-xs text-brand-700">
+                    <p>
+                      Paid <strong>{formatPula(paid)}</strong>
+                    </p>
+                    <p className="text-[10px] text-brand-500">of {formatPula(totalDue)} total</p>
+                  </div>
+                </div>
+                <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-emerald-100">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 1.1, delay: 0.4, ease: 'easeOut' }}
+                    className="h-full rounded-full bg-emerald-500"
+                  />
+                </div>
+                <p className="mt-2 flex items-center gap-1 text-[10px] text-brand-500">
+                  <CalendarClock className="h-3 w-3" /> Due 15 Jul 2026
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-brand-100 bg-white p-2.5">
+                <p className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brand-600">
+                  <History className="h-3 w-3" />
+                  Payment history
+                </p>
+                <ul className="space-y-1">
+                  {[
+                    { amount: 1000, date: '8 Jun 2026' },
+                    { amount: 1000, date: '22 May 2026' },
+                  ].map((p, i) => (
+                    <motion.li
+                      key={p.date}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.55 + i * 0.12 }}
+                      className="flex items-center justify-between rounded-lg bg-brand-50/80 px-2.5 py-1.5 text-xs"
+                    >
+                      <span className="font-medium text-brand-900">{formatPula(p.amount)}</span>
+                      <span className="text-[10px] text-brand-400">{p.date}</span>
+                    </motion.li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </motion.div>
         </div>

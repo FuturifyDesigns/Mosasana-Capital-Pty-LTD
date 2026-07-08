@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, type Profile } from '@/lib/supabase'
 
@@ -20,31 +20,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const fetchProfile = async (userId: string) => {
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut()
+    setProfile(null)
+    setSession(null)
+  }, [])
+
+  const fetchProfile = useCallback(async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
 
-    if (!error && data) {
-      setProfile(data as Profile)
-    } else {
+    if (error) {
       setProfile(null)
+      return null
     }
-  }
 
-  const refreshProfile = async () => {
+    // Account removed while JWT is still locally cached — force sign-out.
+    if (!data) {
+      setProfile(null)
+      await supabase.auth.signOut()
+      setSession(null)
+      return null
+    }
+
+    const next = data as Profile
+    if (next.banned) {
+      setProfile(next)
+      await supabase.auth.signOut()
+      setProfile(null)
+      setSession(null)
+      return null
+    }
+
+    setProfile(next)
+    return next
+  }, [])
+
+  const refreshProfile = useCallback(async () => {
     if (session?.user?.id) {
       await fetchProfile(session.user.id)
     }
-  }
+  }, [session?.user?.id, fetchProfile])
 
   useEffect(() => {
+    let cancelled = false
+
     supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return
       setSession(data.session)
       if (data.session?.user) {
-        fetchProfile(data.session.user.id).finally(() => setLoading(false))
+        fetchProfile(data.session.user.id).finally(() => {
+          if (!cancelled) setLoading(false)
+        })
       } else {
         setLoading(false)
       }
@@ -55,20 +85,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession)
       if (nextSession?.user) {
-        fetchProfile(nextSession.user.id)
+        void fetchProfile(nextSession.user.id)
       } else {
         setProfile(null)
       }
       setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => {
+      cancelled = true
+      subscription.unsubscribe()
+    }
+  }, [fetchProfile])
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
-    setProfile(null)
-  }
+  // Realtime: if admin deletes or bans this account, kick the session immediately.
+  useEffect(() => {
+    const userId = session?.user?.id
+    if (!userId) return
+
+    const channel = supabase
+      .channel(`auth-profile-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userId}`,
+        },
+        () => {
+          void signOut()
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userId}`,
+        },
+        (payload) => {
+          const next = payload.new as Profile
+          if (next.banned) {
+            void signOut()
+            return
+          }
+          setProfile(next)
+        },
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [session?.user?.id, signOut])
 
   const value = useMemo(
     () => ({
@@ -81,7 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut,
       refreshProfile,
     }),
-    [session, profile, loading],
+    [session, profile, loading, signOut, refreshProfile],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
