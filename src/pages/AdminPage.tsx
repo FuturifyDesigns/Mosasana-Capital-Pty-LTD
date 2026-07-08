@@ -10,14 +10,11 @@ import {
   Inbox,
   Mail,
   Phone,
-  MapPin,
-  IdCard,
   Wallet,
   Users,
   Ban,
   Trash2,
   ShieldCheck,
-  CalendarClock,
   X,
   Archive,
 } from 'lucide-react'
@@ -26,17 +23,9 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { supabase, type LoanRequest, type ContactEnquiry, type AdminUser, type LoanPayment } from '@/lib/supabase'
-import { LOAN_STATUSES, ENQUIRY_STATUSES } from '@/lib/constants'
-import { getRepaymentReminder } from '@/lib/loans'
-import { formatPula } from '@/lib/format'
-import {
-  canAdminChangeStatus,
-  getAdminStatusOptions,
-  isLoanLocked,
-  LOAN_STATUS_META,
-  validateStatusChange,
-} from '@/lib/loanStatus'
-import { RepaymentEditor } from '@/components/admin/RepaymentEditor'
+import { ENQUIRY_STATUSES, OPEN_LOAN_PIPELINE_STATUSES, CLOSED_LOAN_STATUSES } from '@/lib/constants'
+import { isLoanLocked, validateStatusChange } from '@/lib/loanStatus'
+import { LoanRequestCard } from '@/components/admin/LoanRequestCard'
 import { ClientRecordsPanel } from '@/components/admin/ClientRecordsPanel'
 import { buildClientRecords, filterClientRecords } from '@/lib/clientRecords'
 import { useToast } from '@/context/ToastContext'
@@ -79,6 +68,8 @@ export function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [loanPipeline, setLoanPipeline] = useState<'active' | 'archive'>('active')
+  const [expandedLoanId, setExpandedLoanId] = useState<string | null>(null)
   const [idDocUrls, setIdDocUrls] = useState<Record<string, string>>({})
   const [previewDoc, setPreviewDoc] = useState<{ name: string; url: string } | null>(null)
 
@@ -128,7 +119,7 @@ export function AdminPage() {
           email: p.email ?? '—',
           loan_count: loansData.filter((l) => l.user_id === p.id).length,
           active_loan_count: loansData.filter(
-            (l) => l.user_id === p.id && !['rejected', 'paid'].includes(l.status),
+            (l) => l.user_id === p.id && !['rejected', 'paid', 'discontinued'].includes(l.status),
           ).length,
         })),
       )
@@ -236,6 +227,46 @@ export function AdminPage() {
     showToast(`Loan status updated to ${cap(status)}.`, 'success')
   }
 
+  const discontinueLoan = async (loan: LoanRequest) => {
+    const ok = await confirm({
+      title: 'Discontinue this request?',
+      message: `${loan.full_name}'s loan request will be marked discontinued and the client will be notified. The record stays in client history.`,
+      confirmLabel: 'Discontinue',
+      cancelLabel: 'Cancel',
+      tone: 'danger',
+    })
+    if (!ok) return
+
+    const { error } = await supabase.rpc('admin_discontinue_loan', { p_loan_id: loan.id })
+    if (error) {
+      showToast(error.message || 'Could not discontinue loan request.', 'error')
+      return
+    }
+    setExpandedLoanId((id) => (id === loan.id ? null : id))
+    await fetchData({ silent: true })
+    showToast('Loan request discontinued. Client notified.', 'success')
+  }
+
+  const deleteLoanRequest = async (loan: LoanRequest) => {
+    const ok = await confirm({
+      title: 'Delete this request permanently?',
+      message: `${loan.full_name}'s application will be removed. The client will be notified. This cannot be undone.`,
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      tone: 'danger',
+    })
+    if (!ok) return
+
+    const { error } = await supabase.rpc('admin_delete_loan_request', { p_loan_id: loan.id })
+    if (error) {
+      showToast(error.message || 'Could not delete loan request.', 'error')
+      return
+    }
+    setLoans((prev) => prev.filter((l) => l.id !== loan.id))
+    setExpandedLoanId((id) => (id === loan.id ? null : id))
+    showToast('Loan request deleted. Client notified.', 'success')
+  }
+
   const saveRepaymentTerms = async (
     id: string,
     fields: {
@@ -281,7 +312,12 @@ export function AdminPage() {
       pending: loans.filter((l) => l.status === 'pending').length,
       approved: loans.filter((l) => l.status === 'approved').length,
       disbursed: loans.filter((l) => l.status === 'disbursed').length,
-      paid: loans.filter((l) => l.status === 'paid').length,
+      openPipeline: loans.filter((l) =>
+        (OPEN_LOAN_PIPELINE_STATUSES as readonly string[]).includes(l.status),
+      ).length,
+      archived: loans.filter((l) =>
+        (CLOSED_LOAN_STATUSES as readonly string[]).includes(l.status),
+      ).length,
       fundedClients: filterClientRecords(buildClientRecords(loans, users), 'funded').length,
       newEnquiries: enquiries.filter((e) => e.status === 'new').length,
       totalUsers: users.length,
@@ -291,7 +327,13 @@ export function AdminPage() {
 
   const filteredLoans = useMemo(() => {
     const q = query.trim().toLowerCase()
+    const pipelineStatuses =
+      loanPipeline === 'active'
+        ? (OPEN_LOAN_PIPELINE_STATUSES as readonly string[])
+        : (CLOSED_LOAN_STATUSES as readonly string[])
+
     return loans.filter((l) => {
+      const inPipeline = pipelineStatuses.includes(l.status)
       const matchesStatus = statusFilter === 'all' || l.status === statusFilter
       const matchesQuery =
         !q ||
@@ -299,9 +341,9 @@ export function AdminPage() {
         l.email.toLowerCase().includes(q) ||
         l.phone.includes(q) ||
         l.id_number.includes(q)
-      return matchesStatus && matchesQuery
+      return inPipeline && matchesStatus && matchesQuery
     })
-  }, [loans, query, statusFilter])
+  }, [loans, query, statusFilter, loanPipeline])
 
   const filteredEnquiries = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -337,9 +379,17 @@ export function AdminPage() {
     )
   }, [users, query])
 
+  const loanStatusOptions = useMemo(() => {
+    const statuses =
+      loanPipeline === 'active'
+        ? [...OPEN_LOAN_PIPELINE_STATUSES]
+        : [...CLOSED_LOAN_STATUSES]
+    return [{ value: 'all', label: 'All statuses' }, ...statuses.map((s) => ({ value: s, label: cap(s) }))]
+  }, [loanPipeline])
+
   const statusOptions =
     tab === 'loans'
-      ? [{ value: 'all', label: 'All statuses' }, ...LOAN_STATUSES.map((s) => ({ value: s, label: cap(s) }))]
+      ? loanStatusOptions
       : tab === 'enquiries'
         ? [{ value: 'all', label: 'All statuses' }, ...ENQUIRY_STATUSES.map((s) => ({ value: s, label: cap(s) }))]
         : []
@@ -348,6 +398,8 @@ export function AdminPage() {
     setTab(t)
     setStatusFilter('all')
     setQuery('')
+    setLoanPipeline('active')
+    setExpandedLoanId(null)
   }
 
   return (
@@ -360,7 +412,7 @@ export function AdminPage() {
           <StatCard icon={FileText} label="Total loans" value={stats.totalLoans} tone="brand" />
           <StatCard icon={Clock} label="Pending" value={stats.pending} tone="yellow" highlight={stats.pending > 0} />
           <StatCard icon={CheckCircle2} label="Approved" value={stats.approved} tone="green" />
-          <StatCard icon={Wallet} label="Settled" value={stats.paid} tone="emerald" />
+          <StatCard icon={Wallet} label="Settled" value={stats.archived} tone="emerald" />
           <StatCard icon={Archive} label="Funded clients" value={stats.fundedClients} tone="green" />
           <StatCard icon={Inbox} label="New enquiries" value={stats.newEnquiries} tone="blue" highlight={stats.newEnquiries > 0} />
           <StatCard icon={Users} label="Users" value={stats.totalUsers} tone="brand" />
@@ -458,8 +510,52 @@ export function AdminPage() {
             </div>
           ) : tab === 'loans' ? (
             <div className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoanPipeline('active')
+                    setStatusFilter('all')
+                    setExpandedLoanId(null)
+                  }}
+                  className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                    loanPipeline === 'active'
+                      ? 'bg-brand-600 text-white shadow-sm'
+                      : 'bg-white text-brand-700 ring-1 ring-brand-100 hover:bg-brand-50'
+                  }`}
+                >
+                  Active pipeline ({stats.openPipeline})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoanPipeline('archive')
+                    setStatusFilter('all')
+                    setExpandedLoanId(null)
+                  }}
+                  className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                    loanPipeline === 'archive'
+                      ? 'bg-brand-600 text-white shadow-sm'
+                      : 'bg-white text-brand-700 ring-1 ring-brand-100 hover:bg-brand-50'
+                  }`}
+                >
+                  Archive — paid & closed ({stats.archived})
+                </button>
+              </div>
+              <p className="text-sm text-brand-600">
+                {loanPipeline === 'active'
+                  ? 'Open requests only — paid and closed loans are in Archive or Client Records.'
+                  : 'Settled, rejected, and discontinued loans. Full history is also in Client Records.'}
+              </p>
+
               {filteredLoans.length === 0 ? (
-                <EmptyState label="No loan requests match your filters." />
+                <EmptyState
+                  label={
+                    loanPipeline === 'active'
+                      ? 'No active loan requests.'
+                      : 'No archived loans match your filters.'
+                  }
+                />
               ) : (
                 filteredLoans.map((loan, i) => (
                   <motion.div
@@ -468,146 +564,35 @@ export function AdminPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: Math.min(i * 0.03, 0.3) }}
                   >
-                    <Card className="overflow-hidden !p-0">
-                      <div className="bg-gradient-to-r from-brand-600 to-brand-500 px-5 py-4 text-white">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="text-lg font-semibold">{loan.full_name}</p>
-                            <p className="mt-1 text-3xl font-bold tracking-tight">
-                              {formatPula(loan.loan_amount)}
-                            </p>
-                            <p className="mt-0.5 text-sm text-brand-100">{loan.loan_purpose}</p>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold text-white">
-                              {cap(loan.status)}
-                            </span>
-                            <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium capitalize">
-                              {loan.source}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-5">
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div className="min-w-0 space-y-2">
-                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-brand-600">
-                            <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5 text-brand-400" />{loan.email}</span>
-                            <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-brand-400" />{loan.phone}</span>
-                            <span className="flex items-center gap-1.5"><IdCard className="h-3.5 w-3.5 text-brand-400" />{loan.id_type === 'passport' ? 'Passport' : 'ID'}: {loan.id_number}</span>
-                          </div>
-                          <p className="flex items-start gap-1.5 text-sm text-brand-600">
-                            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-400" />
-                            {loan.physical_address}
-                          </p>
-                          <p className="text-xs text-brand-500">
-                            {cap(loan.employment_status)}
-                            {loan.term_months ? ` · ${loan.term_months}-month term` : ''}
-                            {loan.monthly_income ? ` · Income: ${formatPula(loan.monthly_income)}` : ''}
-                            {' · '}
-                            {new Date(loan.created_at).toLocaleString()}
-                          </p>
-                          {(() => {
-                            const reminder = getRepaymentReminder(loan)
-                            if (!reminder || reminder.level === 'ok') return null
-                            const tones: Record<string, string> = {
-                              soon: 'bg-yellow-50 text-yellow-800',
-                              due: 'bg-orange-50 text-orange-800',
-                              overdue: 'bg-red-50 text-red-700',
-                            }
-                            return (
-                              <span
-                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${tones[reminder.level]}`}
-                              >
-                                <CalendarClock className="h-3.5 w-3.5" />
-                                {reminder.message}
-                              </span>
-                            )
-                          })()}
-                          {(() => {
-                            const sent = remindersByLoan.get(loan.id) ?? []
-                            if (sent.length === 0) return null
-                            const kinds = sent
-                              .map((r) => reminderKindLabel[r.kind] ?? r.kind)
-                              .join(', ')
-                            return (
-                              <span
-                                className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-600"
-                                title={`Reminder emails sent: ${kinds}`}
-                              >
-                                <Mail className="h-3.5 w-3.5 text-brand-400" />
-                                {sent.length} reminder{sent.length === 1 ? '' : 's'} sent
-                              </span>
-                            )
-                          })()}
-                          {loan.id_photo_path && idDocUrls[loan.id_photo_path] && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setPreviewDoc({
-                                  name: `${loan.full_name} — ${loan.id_type === 'passport' ? 'Passport' : 'ID'} document`,
-                                  url: idDocUrls[loan.id_photo_path!],
-                                })
-                              }
-                              className="mt-2 overflow-hidden rounded-xl border border-brand-200 bg-white text-left transition hover:border-brand-400"
-                              title="Click to open larger preview"
-                            >
-                              <img
-                                src={idDocUrls[loan.id_photo_path]}
-                                alt={`${loan.full_name} ID document`}
-                                className="h-24 w-40 object-cover"
-                                loading="lazy"
-                              />
-                              <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-brand-700">
-                                <IdCard className="h-3.5 w-3.5" />
-                                Click to enlarge
-                              </div>
-                            </button>
-                          )}
-                        </div>
-                        <div className="w-44 shrink-0">
-                          {canAdminChangeStatus(loan) ? (
-                            <>
-                              <Select
-                                label="Update status"
-                                hidePlaceholder
-                                options={getAdminStatusOptions(loan)}
-                                value={loan.status}
-                                onChange={(e) => updateLoanStatus(loan.id, e.target.value)}
-                              />
-                              <p className="mt-2 text-[11px] leading-snug text-brand-500">
-                                {LOAN_STATUS_META[loan.status as keyof typeof LOAN_STATUS_META]?.adminHint}
-                              </p>
-                            </>
-                          ) : (
-                            <div className="rounded-xl border border-brand-100 bg-brand-50/80 p-3">
-                              <p className="text-xs font-semibold uppercase tracking-wide text-brand-500">
-                                Status locked
-                              </p>
-                              <p className="mt-1 text-sm font-semibold capitalize text-brand-900">
-                                {loan.status}
-                              </p>
-                              <p className="mt-1 text-[11px] leading-snug text-brand-500">
-                                {LOAN_STATUS_META[loan.status as keyof typeof LOAN_STATUS_META]?.adminHint}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <RepaymentEditor
-                        loan={loan}
-                        payments={payments}
-                        onSaveTerms={saveRepaymentTerms}
-                        onPaymentRecorded={() => fetchData({ silent: true })}
-                      />
-                      </div>
-                    </Card>
+                    <LoanRequestCard
+                      loan={loan}
+                      payments={payments}
+                      remindersByLoan={remindersByLoan}
+                      reminderKindLabel={reminderKindLabel}
+                      idDocUrl={loan.id_photo_path ? idDocUrls[loan.id_photo_path] : undefined}
+                      expanded={expandedLoanId === loan.id}
+                      onToggle={() =>
+                        setExpandedLoanId((id) => (id === loan.id ? null : loan.id))
+                      }
+                      onPreviewDoc={(name, url) => setPreviewDoc({ name, url })}
+                      onStatusChange={updateLoanStatus}
+                      onSaveTerms={saveRepaymentTerms}
+                      onPaymentRecorded={() => fetchData({ silent: true })}
+                      onDiscontinue={discontinueLoan}
+                      onDelete={deleteLoanRequest}
+                    />
                   </motion.div>
                 ))
               )}
             </div>
           ) : tab === 'records' ? (
-            <ClientRecordsPanel loans={loans} users={users} query={query} />
+            <ClientRecordsPanel
+              loans={loans}
+              users={users}
+              query={query}
+              idDocUrls={idDocUrls}
+              onPreviewDoc={(name, url) => setPreviewDoc({ name, url })}
+            />
           ) : tab === 'enquiries' ? (
             <div className="space-y-4">
               {filteredEnquiries.length === 0 ? (

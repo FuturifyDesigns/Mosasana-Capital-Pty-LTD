@@ -2,34 +2,55 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { isEmailVerification } from '@/lib/verifiedFlag'
+import { useToast } from '@/context/ToastContext'
+import {
+  cleanAuthCallbackFromUrl,
+  clearOAuthReturnPath,
+  getAuthCallbackParams,
+  getOAuthReturnPath,
+  isOAuthCancelled,
+  isOAuthErrorCallback,
+  isOAuthSuccessCallback,
+} from '@/lib/oauthReturn'
 
 function isOAuthCallback(): boolean {
-  try {
-    const hash = window.location.hash || ''
-    const search = window.location.search || ''
-    return (
-      (/access_token=/.test(hash) || /access_token=/.test(search)) &&
-      !/type=signup/.test(hash) &&
-      !/type=signup/.test(search)
-    )
-  } catch {
-    return false
-  }
+  const params = getAuthCallbackParams()
+  return params != null && isOAuthSuccessCallback(params)
 }
 
 /**
  * Handles Supabase auth-link arrivals:
  *  - Email confirmation links (contain `type=signup` / `?verified=1`) → /verified
  *  - Password-recovery links → /reset-password
- *  - Google / OAuth callbacks → /dashboard
+ *  - Google / OAuth success → /dashboard
+ *  - Google / OAuth cancel or error → back to login or register
  */
 export function RecoveryHandler() {
   const navigate = useNavigate()
+  const { showToast } = useToast()
 
   useEffect(() => {
     if (isEmailVerification) {
       navigate('/verified', { replace: true })
       window.history.replaceState({}, '', window.location.pathname + window.location.hash)
+    }
+
+    const callbackParams = getAuthCallbackParams()
+    if (callbackParams && isOAuthErrorCallback(callbackParams)) {
+      const returnPath = getOAuthReturnPath()
+      const cancelled = isOAuthCancelled(callbackParams)
+
+      cleanAuthCallbackFromUrl(returnPath)
+      clearOAuthReturnPath()
+      navigate(returnPath, { replace: true })
+
+      showToast(
+        cancelled
+          ? 'Google sign-in was cancelled. You can try again or use email instead.'
+          : 'Google sign-in did not complete. Please try again.',
+        cancelled ? 'info' : 'error',
+      )
+      return
     }
 
     const {
@@ -41,6 +62,7 @@ export function RecoveryHandler() {
       }
 
       if (event === 'SIGNED_IN' && session && isOAuthCallback()) {
+        clearOAuthReturnPath()
         navigate('/dashboard', { replace: true })
         window.history.replaceState({}, '', `${window.location.pathname}#/dashboard`)
       }
@@ -49,6 +71,7 @@ export function RecoveryHandler() {
     if (isOAuthCallback()) {
       supabase.auth.getSession().then(({ data }) => {
         if (data.session) {
+          clearOAuthReturnPath()
           navigate('/dashboard', { replace: true })
           window.history.replaceState({}, '', `${window.location.pathname}#/dashboard`)
         }
@@ -56,7 +79,7 @@ export function RecoveryHandler() {
     }
 
     return () => subscription.unsubscribe()
-  }, [navigate])
+  }, [navigate, showToast])
 
   return null
 }

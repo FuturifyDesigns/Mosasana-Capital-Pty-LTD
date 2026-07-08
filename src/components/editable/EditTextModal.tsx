@@ -4,6 +4,7 @@ import { X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { useContent } from '@/context/ContentContext'
 import { useToast } from '@/context/ToastContext'
+import { sanitizeStoredText } from '@/lib/security'
 
 interface EditTextModalProps {
   contentKey: string
@@ -21,7 +22,7 @@ export function EditTextModal({ contentKey, initial, multiline, onClose }: EditT
   const handleSave = async () => {
     setSaving(true)
     try {
-      await saveText(contentKey, value)
+      await saveText(contentKey, sanitizeStoredText(value))
       showToast('Content updated.', 'success')
       onClose()
     } catch {

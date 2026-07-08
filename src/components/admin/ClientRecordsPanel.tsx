@@ -7,7 +7,6 @@ import {
   Phone,
   IdCard,
   MapPin,
-  Calendar,
   TrendingUp,
   Wallet,
 } from 'lucide-react'
@@ -28,7 +27,7 @@ const FILTER_OPTIONS: { value: ClientRecordsFilter; label: string }[] = [
   { value: 'funded', label: 'Funded (disbursed/paid)' },
   { value: 'active', label: 'Active borrowers' },
   { value: 'settled', label: 'Fully settled' },
-  { value: 'rejected', label: 'Never funded' },
+  { value: 'rejected', label: 'Never funded / closed' },
 ]
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
@@ -37,11 +36,20 @@ interface ClientRecordsPanelProps {
   loans: LoanRequest[]
   users: AdminUser[]
   query: string
+  idDocUrls: Record<string, string>
+  onPreviewDoc: (name: string, url: string) => void
 }
 
-export function ClientRecordsPanel({ loans, users, query }: ClientRecordsPanelProps) {
+export function ClientRecordsPanel({
+  loans,
+  users,
+  query,
+  idDocUrls,
+  onPreviewDoc,
+}: ClientRecordsPanelProps) {
   const [recordsFilter, setRecordsFilter] = useState<ClientRecordsFilter>('funded')
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
+  const [expandedLoanId, setExpandedLoanId] = useState<string | null>(null)
 
   const records = useMemo(() => {
     const built = buildClientRecords(loans, users)
@@ -87,7 +95,7 @@ export function ClientRecordsPanel({ loans, users, query }: ClientRecordsPanelPr
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-brand-600">
-          Organised client history — expand any row to see their full loan record.
+          Client file history — expand a client, then each loan for full details and ID documents.
         </p>
         <div className="w-full sm:w-52">
           <Select
@@ -107,8 +115,21 @@ export function ClientRecordsPanel({ loans, users, query }: ClientRecordsPanelPr
             record={record}
             index={i}
             expanded={expandedKey === record.key}
-            onToggle={() =>
-              setExpandedKey((prev) => (prev === record.key ? null : record.key))
+            expandedLoanId={expandedKey === record.key ? expandedLoanId : null}
+            idDocUrls={idDocUrls}
+            onPreviewDoc={onPreviewDoc}
+            onToggle={() => {
+              setExpandedKey((prev) => {
+                if (prev === record.key) {
+                  setExpandedLoanId(null)
+                  return null
+                }
+                setExpandedLoanId(null)
+                return record.key
+              })
+            }}
+            onToggleLoan={(loanId) =>
+              setExpandedLoanId((prev) => (prev === loanId ? null : loanId))
             }
           />
         ))}
@@ -142,12 +163,20 @@ function ClientRecordCard({
   record,
   index,
   expanded,
+  expandedLoanId,
+  idDocUrls,
+  onPreviewDoc,
   onToggle,
+  onToggleLoan,
 }: {
   record: ClientRecord
   index: number
   expanded: boolean
+  expandedLoanId: string | null
+  idDocUrls: Record<string, string>
+  onPreviewDoc: (name: string, url: string) => void
   onToggle: () => void
+  onToggleLoan: (loanId: string) => void
 }) {
   return (
     <motion.div
@@ -240,75 +269,126 @@ function ClientRecordCard({
                   {record.address}
                 </p>
 
-                <div className="overflow-x-auto rounded-xl border border-brand-100 bg-white">
-                  <table className="min-w-[640px] w-full text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-brand-100 bg-brand-50/80 text-xs uppercase tracking-wide text-brand-500">
-                        <th className="px-4 py-3 font-semibold">Date</th>
-                        <th className="px-4 py-3 font-semibold">Amount</th>
-                        <th className="px-4 py-3 font-semibold">Purpose</th>
-                        <th className="px-4 py-3 font-semibold">Status</th>
-                        <th className="px-4 py-3 font-semibold">Total due</th>
-                        <th className="px-4 py-3 font-semibold">Paid</th>
-                        <th className="px-4 py-3 font-semibold">Balance</th>
-                        <th className="px-4 py-3 font-semibold">Due</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {record.loans.map((loan) => {
-                        const paid = toNumber(loan.amount_paid)
-                        const total = loan.total_repayable != null ? toNumber(loan.total_repayable) : null
-                        const balance =
-                          loan.status === 'paid'
-                            ? 0
-                            : total != null
-                              ? Math.max(total - paid, 0)
-                              : null
+                <div className="space-y-2">
+                  {record.loans.map((loan) => {
+                    const loanExpanded = expandedLoanId === loan.id
+                    const idUrl = loan.id_photo_path ? idDocUrls[loan.id_photo_path] : undefined
+                    const paid = toNumber(loan.amount_paid)
+                    const total =
+                      loan.total_repayable != null ? toNumber(loan.total_repayable) : null
+                    const balance =
+                      loan.status === 'paid'
+                        ? 0
+                        : total != null
+                          ? Math.max(total - paid, 0)
+                          : null
 
-                        return (
-                          <tr key={loan.id} className="border-b border-brand-50 last:border-0">
-                            <td className="px-4 py-3 text-brand-700">
-                              <span className="flex items-center gap-1.5">
-                                <Calendar className="h-3.5 w-3.5 text-brand-400" />
-                                {new Date(loan.created_at).toLocaleDateString('en-GB', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  year: 'numeric',
-                                })}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 font-semibold text-brand-900">
-                              {formatPula(loan.loan_amount)}
-                            </td>
-                            <td className="px-4 py-3 text-brand-600">{loan.loan_purpose}</td>
-                            <td className="px-4 py-3">
+                    return (
+                      <div
+                        key={loan.id}
+                        className="overflow-hidden rounded-xl border border-brand-100 bg-white"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => onToggleLoan(loan.id)}
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-brand-50/80"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-semibold text-brand-900">
+                                {formatPula(loan.loan_amount)} · {loan.loan_purpose}
+                              </p>
                               <span
                                 className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${statusBadgeClass(loan.status)}`}
                               >
                                 {cap(loan.status)}
                               </span>
-                            </td>
-                            <td className="px-4 py-3 text-brand-700">
-                              {total != null ? formatPula(total) : '—'}
-                            </td>
-                            <td className="px-4 py-3 text-brand-700">{formatPula(paid)}</td>
-                            <td className="px-4 py-3 font-medium text-brand-900">
-                              {balance != null ? formatPula(balance) : '—'}
-                            </td>
-                            <td className="px-4 py-3 text-brand-600">
+                            </div>
+                            <p className="mt-0.5 text-xs text-brand-500">
+                              {new Date(loan.created_at).toLocaleDateString('en-GB', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
                               {loan.due_date
-                                ? new Date(loan.due_date).toLocaleDateString('en-GB', {
-                                    day: 'numeric',
-                                    month: 'short',
-                                    year: 'numeric',
-                                  })
-                                : '—'}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+                                ? ` · Due ${new Date(loan.due_date).toLocaleDateString('en-GB')}`
+                                : ''}
+                            </p>
+                          </div>
+                          <ChevronDown
+                            className={`h-4 w-4 shrink-0 text-brand-400 transition ${loanExpanded ? 'rotate-180' : ''}`}
+                          />
+                        </button>
+
+                        <AnimatePresence initial={false}>
+                          {loanExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden border-t border-brand-100"
+                            >
+                              <div className="grid gap-4 p-4 sm:grid-cols-[1fr_auto]">
+                                <div className="space-y-2 text-sm text-brand-700">
+                                  <p>
+                                    <strong>Email:</strong> {loan.email}
+                                  </p>
+                                  <p>
+                                    <strong>Phone:</strong> {loan.phone}
+                                  </p>
+                                  <p>
+                                    <strong>{loan.id_type === 'passport' ? 'Passport' : 'ID'}:</strong>{' '}
+                                    {loan.id_number}
+                                  </p>
+                                  <p>
+                                    <strong>Address:</strong> {loan.physical_address}
+                                  </p>
+                                  <p>
+                                    <strong>Employment:</strong> {cap(loan.employment_status)}
+                                    {loan.term_months ? ` · ${loan.term_months} months` : ''}
+                                    {loan.monthly_income
+                                      ? ` · Income ${formatPula(loan.monthly_income)}`
+                                      : ''}
+                                  </p>
+                                  <p>
+                                    <strong>Total due:</strong>{' '}
+                                    {total != null ? formatPula(total) : '—'} ·{' '}
+                                    <strong>Paid:</strong> {formatPula(paid)} ·{' '}
+                                    <strong>Balance:</strong>{' '}
+                                    {balance != null ? formatPula(balance) : '—'}
+                                  </p>
+                                </div>
+
+                                {idUrl && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      onPreviewDoc(
+                                        `${loan.full_name} — ${loan.id_type === 'passport' ? 'Passport' : 'ID'}`,
+                                        idUrl,
+                                      )
+                                    }
+                                    className="shrink-0 overflow-hidden rounded-xl border border-brand-200 text-left transition hover:border-brand-400"
+                                  >
+                                    <img
+                                      src={idUrl}
+                                      alt={`${loan.full_name} ID`}
+                                      className="h-36 w-56 object-cover"
+                                      loading="lazy"
+                                    />
+                                    <div className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-brand-700">
+                                      <IdCard className="h-3.5 w-3.5" />
+                                      View ID document
+                                    </div>
+                                  </button>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             </motion.div>

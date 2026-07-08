@@ -61,6 +61,14 @@ export const LOAN_STATUS_META: Record<LoanStatus, LoanStatusMeta> = {
       'Unfortunately this application was not approved. Contact us if you have questions or would like to discuss options.',
     tone: 'red',
   },
+  discontinued: {
+    label: 'Discontinued',
+    adminHint: 'Request discontinued — record is locked. Client was notified.',
+    clientTitle: 'Request discontinued',
+    clientMessage:
+      'This loan request was discontinued. You may submit a new application when you are ready, or contact us if you have questions.',
+    tone: 'red',
+  },
 }
 
 const TRANSITIONS: Record<LoanStatus, LoanStatus[]> = {
@@ -70,10 +78,15 @@ const TRANSITIONS: Record<LoanStatus, LoanStatus[]> = {
   disbursed: ['disbursed', 'rejected'],
   paid: ['paid'],
   rejected: ['rejected'],
+  discontinued: ['discontinued'],
+}
+
+export function isClosedLoanStatus(status: string): boolean {
+  return status === 'paid' || status === 'rejected' || status === 'discontinued'
 }
 
 export function isLoanLocked(loan: LoanRequest): boolean {
-  return loan.status === 'paid' || loan.status === 'rejected'
+  return isClosedLoanStatus(loan.status)
 }
 
 export function getAdminStatusOptions(loan: LoanRequest): { value: string; label: string }[] {
@@ -99,7 +112,7 @@ export function validateStatusChange(loan: LoanRequest, nextStatus: string): str
   if (current === nextStatus) return null
 
   if (isLoanLocked(loan)) {
-    return 'Paid and rejected loans cannot be changed.'
+    return 'Closed loan requests cannot be changed.'
   }
 
   if (nextStatus === 'paid') {
@@ -127,6 +140,7 @@ export function statusBadgeClass(status: string): string {
     reviewing: 'bg-blue-100 text-blue-800',
     approved: 'bg-green-100 text-green-800',
     rejected: 'bg-red-100 text-red-800',
+    discontinued: 'bg-orange-100 text-orange-800',
     disbursed: 'bg-brand-100 text-brand-800',
     paid: 'bg-emerald-100 text-emerald-800',
   }

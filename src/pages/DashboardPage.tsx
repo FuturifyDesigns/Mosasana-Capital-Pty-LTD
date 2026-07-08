@@ -305,7 +305,7 @@ export function DashboardPage() {
 
                       <LoanStatusBanner status={loan.status as LoanStatus} />
 
-                      {loan.status !== 'rejected' && (
+                      {loan.status !== 'rejected' && loan.status !== 'discontinued' && (
                         <RepaymentSummary loan={loan} payments={loanPayments} />
                       )}
 

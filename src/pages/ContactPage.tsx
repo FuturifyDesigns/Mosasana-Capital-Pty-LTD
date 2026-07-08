@@ -18,6 +18,7 @@ import { buildWhatsAppContactUrl } from '@/lib/whatsapp'
 import { PrivacyConsentField } from '@/components/PrivacyConsentField'
 import { EditableOfficerCard } from '@/components/editable/EditableOfficerCard'
 import { EditableText } from '@/components/editable/EditableText'
+import { isHoneypotTriggered } from '@/lib/security'
 import { normalizeBotswanaPhone } from '@/lib/phone'
 
 export function ContactPage() {
@@ -33,12 +34,17 @@ export function ContactPage() {
     formState: { errors },
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
-    defaultValues: { acceptPrivacy: false },
+    defaultValues: { acceptPrivacy: false, companyWebsite: '' },
   })
 
   const formValues = watch()
 
   const onSubmit = async (data: ContactFormData) => {
+    if (isHoneypotTriggered(data.companyWebsite)) {
+      setSuccess(true)
+      return
+    }
+
     const limit = checkRateLimit('contact', 4, 5 * 60 * 1000)
     if (!limit.allowed) {
       setError(rateLimitMessage(limit.retryAfterMs))
@@ -159,6 +165,14 @@ export function ContactPage() {
               )}
 
               <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+                <input
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-[-9999px] h-0 w-0 opacity-0"
+                  {...register('companyWebsite')}
+                />
                 <Input
                   label="Full Name"
                   required

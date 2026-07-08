@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { SITE_URL } from '@/lib/constants'
+import { setOAuthReturnPath } from '@/lib/oauthReturn'
 import { Button } from '@/components/ui/Button'
 import { formatSupabaseError } from '@/lib/supabaseErrors'
 
@@ -30,11 +31,14 @@ function GoogleIcon({ className }: { className?: string }) {
 interface GoogleSignInButtonProps {
   label?: string
   className?: string
+  /** Where to send the user if they cancel Google sign-in */
+  returnTo?: string
 }
 
 export function GoogleSignInButton({
   label = 'Continue with Google',
   className = '',
+  returnTo = '/login',
 }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -42,6 +46,8 @@ export function GoogleSignInButton({
   const handleGoogleSignIn = async () => {
     setLoading(true)
     setError(null)
+
+    setOAuthReturnPath(returnTo)
 
     const redirectTo = `${SITE_URL}${import.meta.env.BASE_URL}`.replace(/\/$/, '') + '/'
 

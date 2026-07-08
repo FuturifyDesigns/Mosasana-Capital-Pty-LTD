@@ -54,17 +54,17 @@ export function buildClientRecords(loans: LoanRequest[], users: AdminUser[] = []
     const activeCount = sorted.filter((l) =>
       (ACTIVE_LOAN_STATUSES as readonly string[]).includes(l.status),
     ).length
-    const rejectedCount = sorted.filter((l) => l.status === 'rejected').length
+    const rejectedCount = sorted.filter((l) => l.status === 'rejected' || l.status === 'discontinued').length
     const fundedCount = sorted.filter((l) => ['disbursed', 'paid'].includes(l.status)).length
 
     const totalPrincipal = sorted
-      .filter((l) => l.status !== 'rejected')
+      .filter((l) => !['rejected', 'discontinued'].includes(l.status))
       .reduce((sum, l) => sum + toNumber(l.loan_amount), 0)
 
     const totalRepaid = sorted.reduce((sum, l) => sum + toNumber(l.amount_paid), 0)
 
     const totalOutstanding = sorted
-      .filter((l) => !['rejected', 'paid'].includes(l.status))
+      .filter((l) => !['rejected', 'paid', 'discontinued'].includes(l.status))
       .reduce((sum, l) => sum + (getOutstandingBalance(l) ?? 0), 0)
 
     records.push({

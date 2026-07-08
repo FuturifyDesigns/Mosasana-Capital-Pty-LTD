@@ -1,13 +1,13 @@
 export const SITE_URL = 'https://mosasanacapital.com'
 
-// The anon key is a public, RLS-protected key and is safe to ship in the client
-// bundle. Fallback defaults ensure the app never white-screens if a build-time
-// environment variable is missing (e.g. a GitHub Actions secret is not set).
+// The anon key is public and RLS-protected — load from env (GitHub secret / .env).
 export const SUPABASE_URL =
   (import.meta.env.VITE_SUPABASE_URL as string) || 'https://pwcootcdrbnadsbwduxi.supabase.co'
-export const SUPABASE_ANON_KEY =
-  (import.meta.env.VITE_SUPABASE_ANON_KEY as string) ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3Y29vdGNkcmJuYWRzYndkdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM0MjY5MDAsImV4cCI6MjA5OTAwMjkwMH0.wT1W3gC5Pfktjb875Rn2gxQWO_jahzdMZkP-GdHf5xw'
+export const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || ''
+
+if (import.meta.env.PROD && !SUPABASE_ANON_KEY) {
+  console.error('Missing VITE_SUPABASE_ANON_KEY — set it in GitHub Actions secrets or .env')
+}
 export const WHATSAPP_NUMBER = (import.meta.env.VITE_WHATSAPP_NUMBER as string) || '26773467206'
 
 export const COMPANY = {
@@ -69,7 +69,14 @@ export const LOAN_STATUSES = [
   'disbursed',
   'paid',
   'rejected',
+  'discontinued',
 ] as const
+
+/** Shown in the active admin pipeline (Loan Requests tab). */
+export const OPEN_LOAN_PIPELINE_STATUSES = ['pending', 'reviewing', 'approved', 'disbursed'] as const
+
+/** Archived — settled or closed; shown under Client Records / archive view. */
+export const CLOSED_LOAN_STATUSES = ['paid', 'rejected', 'discontinued'] as const
 
 // Statuses that mean the loan is still open — the client cannot apply for another
 // loan while any of their loans are in one of these states.

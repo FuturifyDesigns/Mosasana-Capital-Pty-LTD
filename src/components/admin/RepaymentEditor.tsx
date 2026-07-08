@@ -28,7 +28,7 @@ interface RepaymentEditorProps {
       due_date: string | null
       interest_rate: number | null
     },
-  ) => Promise<void>
+  ) => void | Promise<void>
   onPaymentRecorded: () => void
 }
 
@@ -294,10 +294,14 @@ export function RepaymentEditor({
     </div>
   )
 
-  if (['rejected', 'pending', 'reviewing'].includes(loan.status)) {
+  if (['rejected', 'discontinued', 'pending', 'reviewing'].includes(loan.status)) {
     return (
       <div className="mt-4 rounded-xl border border-dashed border-brand-200 bg-brand-50/40 p-4 text-sm text-brand-600">
-        Set repayment terms once this loan is approved or disbursed.
+        {loan.status === 'discontinued'
+          ? 'This request was discontinued. No further repayment actions apply.'
+          : loan.status === 'rejected'
+            ? 'This application was rejected. No repayment terms apply.'
+            : 'Set repayment terms once this loan is approved or disbursed.'}
       </div>
     )
   }

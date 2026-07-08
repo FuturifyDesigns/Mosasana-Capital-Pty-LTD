@@ -142,6 +142,7 @@ export const contactSchema = z.object({
   acceptPrivacy: z.boolean().refine((val) => val === true, {
     message: 'You must consent to our Privacy Policy to send an enquiry',
   }),
+  companyWebsite: z.string().max(0, 'Invalid submission').optional().or(z.literal('')),
 })
 
 export const ALLOWED_ID_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
@@ -174,7 +175,10 @@ export function imageContentType(file: File): string {
 }
 
 export function sanitizeText(input: string): string {
-  return input.trim().replace(/[<>]/g, '')
+  return input
+    .trim()
+    .replace(/[\0-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+    .replace(/[<>]/g, '')
 }
 
 export type LoginFormData = z.infer<typeof loginSchema>

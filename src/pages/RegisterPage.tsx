@@ -182,7 +182,7 @@ export function RegisterPage() {
       </form>
 
       <AuthDivider />
-      <GoogleSignInButton label="Sign up with Google" />
+      <GoogleSignInButton returnTo="/register" label="Sign up with Google" />
     </AuthLayout>
   )
 }
