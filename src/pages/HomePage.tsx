@@ -36,8 +36,8 @@ export function HomePage() {
       <HeroSection applyTarget={applyTarget} />
 
       {/* How it works */}
-      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-        <Reveal className="mb-10 text-center sm:mb-16">
+      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-20">
+        <Reveal className="mb-6 text-center sm:mb-16">
           <EditableText
             as="span"
             contentKey="home.how.eyebrow"
@@ -60,7 +60,7 @@ export function HomePage() {
 
       {/* Two ways to apply */}
       <section className="overflow-x-clip border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-20">
           <Reveal className="mx-auto max-w-2xl text-center">
             <EditableText
               as="span"
@@ -88,7 +88,7 @@ export function HomePage() {
             </EditableText>
           </Reveal>
 
-          <div className="mt-10 grid items-center gap-10 sm:mt-16 lg:grid-cols-2 lg:gap-10">
+          <div className="mt-6 grid items-center gap-6 sm:mt-16 lg:grid-cols-2 lg:gap-10">
             <Reveal direction="right" className="flex flex-col items-center gap-5">
               <WebsiteFormAnimation />
               <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm">
@@ -110,7 +110,7 @@ export function HomePage() {
 
       {/* Tailored solutions — image left */}
       <section className="overflow-x-clip">
-        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
+        <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 py-8 sm:gap-8 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
           <Reveal direction="right" className="relative overflow-hidden">
             <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
             <EditableImage
@@ -162,7 +162,7 @@ export function HomePage() {
 
       {/* Track your loans — image right */}
       <section className="overflow-x-clip border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
-        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
+        <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 py-8 sm:gap-8 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
           <Reveal direction="right" className="order-1">
             <EditableText
               as="span"
@@ -215,7 +215,7 @@ export function HomePage() {
 
       {/* Testimonial — image left */}
       <section className="overflow-x-clip">
-        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
+        <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 py-8 sm:gap-8 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
           <Reveal direction="right" className="relative order-2 overflow-hidden lg:order-1">
             <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-gold-400/20 to-brand-300/25 blur-2xl" />
             <EditableImage
@@ -255,8 +255,8 @@ export function HomePage() {
 
       {/* Why choose us — slideshow */}
       <section className="overflow-x-clip border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-          <Reveal className="mb-12 text-center">
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-20">
+          <Reveal className="mb-8 text-center sm:mb-12">
             <EditableText
               as="span"
               contentKey="home.why.eyebrow"
@@ -279,9 +279,9 @@ export function HomePage() {
       </section>
 
       {/* Vision & mission */}
-      <section className="overflow-x-clip bg-gradient-to-r from-brand-700 to-brand-600 py-14 text-white sm:py-20">
+      <section className="overflow-x-clip bg-gradient-to-r from-brand-700 to-brand-600 py-8 text-white sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="grid gap-10 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 md:gap-10">
             <Reveal direction="right">
               <EditableText
                 as="h2"
@@ -404,7 +404,7 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
       <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-brand-200/40 blur-3xl" />
       <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-gold-400/10 blur-3xl" />
 
-      <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-2 lg:py-24">
+      <div className="relative mx-auto grid max-w-6xl items-center gap-6 px-4 py-8 sm:gap-10 sm:px-6 sm:py-16 lg:grid-cols-2 lg:py-24">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}

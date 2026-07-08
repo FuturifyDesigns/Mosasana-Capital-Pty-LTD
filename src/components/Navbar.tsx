@@ -28,7 +28,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-brand-100/80 bg-white/90 backdrop-blur-md">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2.5 sm:px-6 sm:py-3">
         <Logo className="h-10 sm:h-12" />
 
         <div className="hidden items-center gap-1 md:flex">
@@ -89,9 +89,9 @@ export function Navbar() {
 
         <div className="flex items-center gap-2 md:hidden">
           {!user && (
-            <Link to="/login">
-              <Button size="sm" variant="outline" className="px-3">
-                Sign In
+            <Link to="/account">
+              <Button size="sm" className="px-3">
+                Get Started
               </Button>
             </Link>
           )}
@@ -160,18 +160,11 @@ export function Navbar() {
                   </Button>
                 </>
               ) : (
-                <div className="mt-2 flex flex-col gap-2">
-                  <Link to="/login" onClick={() => setOpen(false)}>
-                    <Button variant="outline" size="sm" className="w-full">
-                      Sign In
-                    </Button>
-                  </Link>
-                  <Link to="/register" onClick={() => setOpen(false)}>
-                    <Button size="sm" className="w-full">
-                      Create Account
-                    </Button>
-                  </Link>
-                </div>
+                <Link to="/account" onClick={() => setOpen(false)}>
+                  <Button size="sm" className="mt-2 w-full">
+                    Get Started
+                  </Button>
+                </Link>
               )}
             </div>
           </motion.div>

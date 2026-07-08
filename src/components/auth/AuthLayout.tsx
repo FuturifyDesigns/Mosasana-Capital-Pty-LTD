@@ -28,7 +28,7 @@ export function AuthLayout({
   className = '',
 }: AuthLayoutProps) {
   return (
-    <section className={`mx-auto max-w-5xl px-4 py-10 pb-[calc(var(--footer-bottom-pad)+1.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-12 lg:py-16 ${className}`}>
+    <section className={`mx-auto max-w-5xl px-4 py-6 pb-[calc(var(--footer-bottom-pad)+1rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-12 lg:py-16 ${className}`}>
       <Link
         to="/account"
         className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-brand-600 transition hover:text-brand-900"

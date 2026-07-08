@@ -40,13 +40,13 @@ html {
 
 @media (max-width: 639px) {
   :root {
-    --bottom-overlay: 4.5rem;
-    --footer-bottom-pad: 5.5rem;
+    --bottom-overlay: 4rem;
+    --footer-bottom-pad: 4.5rem;
   }
 
   :root[data-cookie-visible='true'] {
-    --bottom-overlay: 11rem;
-    --footer-bottom-pad: 12.5rem;
+    --bottom-overlay: 9.5rem;
+    --footer-bottom-pad: 10rem;
   }
 }
 
