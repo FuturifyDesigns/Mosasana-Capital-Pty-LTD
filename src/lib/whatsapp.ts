@@ -13,6 +13,7 @@ export function buildWhatsAppLoanUrl(data: Partial<LoanRequestFormData>): string
     `Name: ${data.fullName || ''}`,
     `Email: ${data.email || ''}`,
     `Phone: ${data.phone || ''}`,
+    `ID Type: ${data.idType === 'passport' ? 'Passport' : 'Omang / National ID'}`,
     `${docLabel}: ${data.idNumber || ''}`,
     `Address: ${data.physicalAddress || ''}`,
     `Amount: P${data.loanAmount || ''}`,

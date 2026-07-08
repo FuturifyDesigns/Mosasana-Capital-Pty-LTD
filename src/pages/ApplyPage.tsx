@@ -99,6 +99,24 @@ export function ApplyPage() {
   const isPassport = formValues.idType === 'passport'
   const isOtherEmployment = formValues.employmentStatus === 'other'
 
+  const confirmHighBorrowingRisk = (data: Partial<LoanRequestFormData>): boolean => {
+    const income =
+      data.monthlyIncome == null || data.monthlyIncome === ('' as unknown as number)
+        ? null
+        : Number(data.monthlyIncome)
+    const amount =
+      data.loanAmount == null || data.loanAmount === ('' as unknown as number)
+        ? null
+        : Number(data.loanAmount)
+
+    if (!income || !amount || !Number.isFinite(income) || !Number.isFinite(amount)) return true
+    if (income <= 0 || amount <= income) return true
+
+    return window.confirm(
+      'Advisory: You are requesting more than your monthly income. Borrowing more than you can comfortably afford may lead to serious financial strain. Are you sure you want to continue?',
+    )
+  }
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     setFileError(null)
@@ -121,6 +139,10 @@ export function ApplyPage() {
   const onSubmitWebsite = async (data: LoanRequestFormData) => {
     if (!idFile) {
       setFileError('Please upload a photo of your ID document')
+      return
+    }
+
+    if (!confirmHighBorrowingRisk(data)) {
       return
     }
 
@@ -342,6 +364,10 @@ export function ApplyPage() {
             <p className="mt-2 text-brand-600">
               Fill in your details below, then continue on WhatsApp to send your application and attach your ID photo.
             </p>
+            <div className="mt-3 rounded-xl border border-brand-100 bg-brand-50/70 p-3 text-sm text-brand-700">
+              We now include your selected <strong>repayment period</strong>, <strong>employment details</strong>,
+              and optional <strong>monthly income</strong> in the WhatsApp application summary.
+            </div>
             <form className="mt-6 space-y-4" onSubmit={(e) => e.preventDefault()} noValidate>
               <Input
                 label="Full Name"
@@ -442,6 +468,11 @@ export function ApplyPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block"
+                onClick={(e) => {
+                  if (!confirmHighBorrowingRisk(formValues)) {
+                    e.preventDefault()
+                  }
+                }}
               >
                 <Button variant="whatsapp" className="w-full" type="button">
                   <WhatsAppIcon className="h-5 w-5" />

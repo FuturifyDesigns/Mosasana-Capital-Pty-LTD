@@ -62,6 +62,7 @@ export function RepaymentEditor({
   const [total, setTotal] = useState(
     loan.total_repayable != null ? String(loan.total_repayable) : String(estimatedTotal),
   )
+  const [totalEdited, setTotalEdited] = useState(false)
   const [due, setDue] = useState(() => {
     if (loan.due_date) return loan.due_date
     const d = getDueDate(loan)
@@ -85,6 +86,7 @@ export function RepaymentEditor({
         ? String(loan.total_repayable)
         : String(calculateTotalRepayable(principal, term, r)),
     )
+    setTotalEdited(false)
     if (loan.due_date) setDue(loan.due_date)
     else {
       const d = getDueDate(loan)
@@ -95,16 +97,15 @@ export function RepaymentEditor({
   const rateNum = parseInterestRateInput(rate) ?? DEFAULT_MONTHLY_INTEREST_RATE
   const previewInterest = calculateInterestAmount(principal, term, rateNum)
   const previewTotal = calculateTotalRepayable(principal, term, rateNum)
-  const isZeroInterest = rateNum === 0
 
   const totalNum = total === '' ? null : Number(total)
   const paidNum = toNumber(loan.amount_paid)
   const hasPayments = paidNum > 0
   const minTotal = Math.max(principal, paidNum)
   const savedTotal = loan.total_repayable != null ? toNumber(loan.total_repayable) : null
-  const balance = getOutstandingBalance(loan) ?? (totalNum != null ? Math.max(totalNum - paidNum, 0) : null)
-  const pct =
-    totalNum && totalNum > 0 ? Math.min(Math.round((paidNum / totalNum) * 100), 100) : 0
+  const balance =
+    getOutstandingBalance(loan) ?? (totalNum != null ? Math.max(totalNum - paidNum, 0) : null)
+  const pct = totalNum && totalNum > 0 ? Math.min(Math.round((paidNum / totalNum) * 100), 100) : 0
 
   const termsDirty = useMemo(() => {
     const savedRate = storedRateLabel(loan)
@@ -113,32 +114,6 @@ export function RepaymentEditor({
       loan.total_repayable != null ? String(loan.total_repayable) : String(estimatedTotal)
     return total !== expectedTotal || rate !== savedRate || due !== savedDue
   }, [total, rate, due, loan, estimatedTotal])
-
-  const applyCalculatedTerms = () => {
-    if (hasPayments && savedTotal != null) {
-      const extra = isZeroInterest ? 0 : previewInterest
-      if (extra <= 0) {
-        showToast('Set an interest rate above 0% to add calculated interest, or use the fee field.', 'info')
-        return
-      }
-      const newTotal = Math.round((savedTotal + extra) * 100) / 100
-      setTotal(String(newTotal))
-      showToast(
-        `Added ${formatPula(extra)} interest/fee for delayed payment. New total: ${formatPula(newTotal)}.`,
-        'info',
-      )
-      return
-    }
-    setTotal(String(previewTotal))
-    if (isZeroInterest) {
-      showToast(`No interest — total is ${formatPula(principal)} (principal only).`, 'info')
-    } else {
-      showToast(
-        `Calculated: ${formatPula(principal)} + ${formatPula(previewInterest)} interest`,
-        'info',
-      )
-    }
-  }
 
   const addAdditionalFee = () => {
     const fee = Number(additionalFee)
@@ -149,26 +124,29 @@ export function RepaymentEditor({
     const base = totalNum ?? savedTotal ?? previewTotal
     const newTotal = Math.round((base + fee) * 100) / 100
     setTotal(String(newTotal))
+    setTotalEdited(true)
     setAdditionalFee('')
     showToast(`Added ${formatPula(fee)}. New total repayable: ${formatPula(newTotal)}.`, 'info')
   }
 
-  const setZeroInterest = () => {
-    setRate('0')
-    setTotal(String(principal))
-    showToast('0% interest — total set to principal only.', 'info')
+  const autoTotalFromRate = (parsedRate: number): number => {
+    // If payments already exist, applying a new rate should add extra charges to the current total.
+    if (hasPayments && savedTotal != null) {
+      const extra = parsedRate > 0 ? calculateInterestAmount(principal, term, parsedRate) : 0
+      return Math.round((savedTotal + extra) * 100) / 100
+    }
+    return calculateTotalRepayable(principal, term, parsedRate)
   }
 
-  const validateTerms = (): string | null => {
-    const parsedRate = parseInterestRateInput(rate)
+  const validateTerms = (candidateTotal: number | null, parsedRate: number | null): string | null => {
     if (parsedRate === null) return 'Enter a valid interest rate between 0 and 100.'
-    if (total === '' || totalNum == null || totalNum <= 0) {
+    if (candidateTotal == null || candidateTotal <= 0) {
       return 'Total repayable must be greater than zero.'
     }
-    if (totalNum < minTotal) {
+    if (candidateTotal < minTotal) {
       return `Total cannot be less than ${formatPula(minTotal)} (principal or amount already paid).`
     }
-    if (parsedRate === 0 && !hasPayments && totalNum !== principal) {
+    if (parsedRate === 0 && !hasPayments && candidateTotal !== principal) {
       return `With 0% interest and no payments yet, total must equal the principal (${formatPula(principal)}).`
     }
     if (due === '') return 'Set a due date before saving repayment terms.'
@@ -176,18 +154,32 @@ export function RepaymentEditor({
   }
 
   const handleSaveTerms = async () => {
-    const err = validateTerms()
+    const parsedRate = parseInterestRateInput(rate)
+    const previousRate = parseInterestRateInput(storedRateLabel(loan))
+    const rateChanged = parsedRate !== previousRate
+
+    let candidateTotal = totalNum
+
+    // If admin changed interest rate but didn't type total manually, apply rate automatically.
+    if (!totalEdited && rateChanged && parsedRate != null) {
+      candidateTotal = autoTotalFromRate(parsedRate)
+      setTotal(String(candidateTotal))
+    }
+
+    const err = validateTerms(candidateTotal, parsedRate)
     if (err) {
       showToast(err, 'error')
       return
     }
+
     setSavingTerms(true)
     await onSaveTerms(loan.id, {
-      total_repayable: totalNum,
+      total_repayable: candidateTotal,
       due_date: due,
-      interest_rate: parseInterestRateInput(rate),
+      interest_rate: parsedRate,
     })
     setSavingTerms(false)
+    setTotalEdited(false)
     showToast('Repayment terms saved.', 'success')
   }
 
@@ -260,7 +252,7 @@ export function RepaymentEditor({
           <p className="mt-1 font-bold text-amber-700">
             {totalNum != null && totalNum > principal
               ? formatPula(totalNum - principal)
-              : isZeroInterest
+              : rateNum === 0
                 ? 'None'
                 : formatPula(previewInterest)}
           </p>
@@ -290,7 +282,10 @@ export function RepaymentEditor({
             type="number"
             min={minTotal}
             value={total}
-            onChange={(e) => setTotal(e.target.value)}
+            onChange={(e) => {
+              setTotal(e.target.value)
+              setTotalEdited(true)
+            }}
             className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
           />
         </label>
@@ -305,20 +300,6 @@ export function RepaymentEditor({
         </label>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        {!hasPayments && (
-          <Button type="button" variant="outline" size="sm" onClick={setZeroInterest}>
-            No interest (0%)
-          </Button>
-        )}
-        <Button type="button" variant="outline" size="sm" onClick={applyCalculatedTerms}>
-          {hasPayments
-            ? isZeroInterest
-              ? 'Add calculated fee'
-              : `Add ${rateNum}% interest`
-            : isZeroInterest
-              ? 'Apply principal only'
-              : `Apply ${rateNum}% interest`}
-        </Button>
         <Button type="button" size="sm" onClick={handleSaveTerms} disabled={!termsDirty || savingTerms}>
           {savingTerms ? 'Saving…' : 'Save terms'}
         </Button>

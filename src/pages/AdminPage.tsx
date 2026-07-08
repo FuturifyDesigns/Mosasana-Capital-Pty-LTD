@@ -18,6 +18,7 @@ import {
   Trash2,
   ShieldCheck,
   CalendarClock,
+  X,
 } from 'lucide-react'
 import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
@@ -66,6 +67,8 @@ export function AdminPage() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [idDocUrls, setIdDocUrls] = useState<Record<string, string>>({})
+  const [previewDoc, setPreviewDoc] = useState<{ name: string; url: string } | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -82,6 +85,24 @@ export function AdminPage() {
     setEnquiries((enquiriesRes.data as ContactEnquiry[]) || [])
     setReminderLog((remindersRes.data as ReminderLogRow[]) || [])
     setPayments((paymentsRes.data as LoanPayment[]) || [])
+
+    const paths = loansData
+      .map((l) => l.id_photo_path)
+      .filter((p): p is string => Boolean(p))
+
+    if (paths.length > 0) {
+      const entries = await Promise.all(
+        paths.map(async (p) => {
+          const { data } = await supabase.storage.from('id-documents').createSignedUrl(p, 300)
+          return [p, data?.signedUrl ?? ''] as const
+        }),
+      )
+      setIdDocUrls(
+        Object.fromEntries(entries.filter(([, url]) => url)) as Record<string, string>,
+      )
+    } else {
+      setIdDocUrls({})
+    }
 
     if (usersRes.error) {
       // RPC not deployed yet — fall back to profiles (no emails until SQL is run)
@@ -197,11 +218,6 @@ export function AdminPage() {
   const updateEnquiryStatus = async (id: string, status: string) => {
     setEnquiries((prev) => prev.map((e) => (e.id === id ? { ...e, status } : e)))
     await supabase.from('contact_enquiries').update({ status }).eq('id', id)
-  }
-
-  const viewIdDocument = async (path: string) => {
-    const { data } = await supabase.storage.from('id-documents').createSignedUrl(path, 300)
-    if (data?.signedUrl) window.open(data.signedUrl, '_blank')
   }
 
   const stats = useMemo(
@@ -454,13 +470,28 @@ export function AdminPage() {
                               </span>
                             )
                           })()}
-                          {loan.id_photo_path && (
+                          {loan.id_photo_path && idDocUrls[loan.id_photo_path] && (
                             <button
                               type="button"
-                              onClick={() => viewIdDocument(loan.id_photo_path!)}
-                              className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700 transition hover:bg-brand-100"
+                              onClick={() =>
+                                setPreviewDoc({
+                                  name: `${loan.full_name} — ${loan.id_type === 'passport' ? 'Passport' : 'ID'} document`,
+                                  url: idDocUrls[loan.id_photo_path!],
+                                })
+                              }
+                              className="mt-2 overflow-hidden rounded-xl border border-brand-200 bg-white text-left transition hover:border-brand-400"
+                              title="Click to open larger preview"
                             >
-                              <IdCard className="h-4 w-4" /> View ID document
+                              <img
+                                src={idDocUrls[loan.id_photo_path]}
+                                alt={`${loan.full_name} ID document`}
+                                className="h-24 w-40 object-cover"
+                                loading="lazy"
+                              />
+                              <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-brand-700">
+                                <IdCard className="h-3.5 w-3.5" />
+                                Click to enlarge
+                              </div>
                             </button>
                           )}
                         </div>
@@ -612,6 +643,36 @@ export function AdminPage() {
           )}
         </div>
       </section>
+      {previewDoc && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4"
+          onClick={() => setPreviewDoc(null)}
+        >
+          <div
+            className="relative w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-brand-100 px-4 py-3">
+              <p className="text-sm font-semibold text-brand-900">{previewDoc.name}</p>
+              <button
+                type="button"
+                onClick={() => setPreviewDoc(null)}
+                className="rounded-lg p-1.5 text-brand-600 transition hover:bg-brand-50"
+                aria-label="Close document preview"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="bg-brand-50 p-3">
+              <img
+                src={previewDoc.url}
+                alt={previewDoc.name}
+                className="max-h-[75vh] w-full rounded-xl object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

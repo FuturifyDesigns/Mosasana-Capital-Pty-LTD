@@ -14,12 +14,17 @@ interface Field {
 
 const FIELDS: Field[] = [
   { label: 'Full Name', value: 'Thabo Nkile', type: 'text', required: true },
+  { label: 'Email', value: 'thabo@example.com', type: 'text', required: true },
   { label: 'Phone', value: '71 234 567', type: 'text', required: true },
+  { label: 'Document Type', value: 'Omang / National ID', type: 'select', required: true },
   { label: 'ID Number', value: '123456789', type: 'text', required: true },
   { label: 'ID Document Photo', value: 'omang-id.jpg', type: 'upload', required: true },
+  { label: 'Physical Address', value: 'Plot 456, Gaborone', type: 'text', required: true },
   { label: 'Loan Amount (Pula)', value: '3000', type: 'text', required: true },
+  { label: 'Repayment Period', value: '3 months', type: 'select', required: true },
   { label: 'Purpose of Loan', value: 'Rent for this month', type: 'text', required: true },
   { label: 'Employment Status', value: 'Employed', type: 'select', required: true },
+  { label: 'Monthly Income (Pula, optional)', value: '12000', type: 'text' },
 ]
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
