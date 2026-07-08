@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
 import { useConfirm } from '@/context/ConfirmContext'
 import { supabase, type LoanRequest } from '@/lib/supabase'
-import { ACTIVE_LOAN_STATUSES, LOAN_TERMS } from '@/lib/constants'
+import { ACTIVE_LOAN_STATUSES, COMPANY, LOAN_TERMS } from '@/lib/constants'
 import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import { formatSupabaseError } from '@/lib/supabaseErrors'
 import {
@@ -25,6 +25,7 @@ import {
   type LoanRequestFormData,
 } from '@/lib/validation'
 import { buildWhatsAppLoanUrl } from '@/lib/whatsapp'
+import { RegulatoryNotice } from '@/components/RegulatoryNotice'
 import { formatPula } from '@/lib/format'
 import { getOutstandingBalance } from '@/lib/loans'
 
@@ -435,7 +436,7 @@ export function ApplyPage() {
                 type="number"
                 required
                 inputMode="numeric"
-                hint="Numbers only, between P500 and P50,000."
+                hint={`Numbers only, between P${COMPANY.loanAmountMin.toLocaleString()} and P${COMPANY.loanAmountMax.toLocaleString()}.`}
                 {...register('loanAmount', { valueAsNumber: true })}
                 error={errors.loanAmount?.message}
               />
@@ -591,9 +592,9 @@ export function ApplyPage() {
                 type="number"
                 required
                 min={500}
-                max={50000}
+                max={COMPANY.loanAmountMax}
                 inputMode="numeric"
-                hint="Numbers only, between P500 and P50,000."
+                hint={`Numbers only, between P${COMPANY.loanAmountMin.toLocaleString()} and P${COMPANY.loanAmountMax.toLocaleString()}.`}
                 {...register('loanAmount', { valueAsNumber: true })}
                 error={errors.loanAmount?.message}
               />
@@ -648,6 +649,9 @@ export function ApplyPage() {
             </form>
           </Card>
         )}
+        <div className="mx-auto mt-8 max-w-3xl px-4 sm:px-6">
+          <RegulatoryNotice className="text-brand-500" />
+        </div>
       </section>
     </>
   )

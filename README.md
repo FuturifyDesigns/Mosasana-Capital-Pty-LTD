@@ -104,7 +104,32 @@ In [Supabase Dashboard](https://supabase.com/dashboard/project/pwcootcdrbnadsbwd
 - **Site URL:** `https://mosasanacapital.com`
 - **Redirect URLs:** `https://mosasanacapital.com/**` and `https://www.mosasanacapital.com/**`
 
-### 7. Run locally
+### 7. Google Sign-In (Supabase Auth)
+
+The login and register pages include **Continue with Google**. Enable it once in Supabase and Google Cloud:
+
+#### A. Google Cloud Console
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Credentials**
+2. Create an **OAuth 2.0 Client ID** (Web application)
+3. **Authorized JavaScript origins:**
+   - `https://mosasanacapital.com`
+   - `http://localhost:5173` (local dev)
+4. **Authorized redirect URIs:**
+   - `https://pwcootcdrbnadsbwduxi.supabase.co/auth/v1/callback`
+5. Copy the **Client ID** and **Client Secret**
+
+#### B. Supabase Dashboard
+
+1. [Authentication → Providers → Google](https://supabase.com/dashboard/project/pwcootcdrbnadsbwduxi/auth/providers)
+2. Enable **Google** and paste the Client ID and Client Secret
+3. Confirm redirect URL shown by Supabase matches the Google Cloud redirect URI above
+
+#### C. Live database (loan cap P10,000)
+
+If the database was created before the P10,000 cap, run `supabase/fix-loan-cap.sql` in the SQL Editor.
+
+### 8. Run locally
 
 ```bash
 npm run dev

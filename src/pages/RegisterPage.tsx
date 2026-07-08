@@ -10,7 +10,9 @@ import { supabase } from '@/lib/supabase'
 import { registerSchema, sanitizeText, type RegisterFormData } from '@/lib/validation'
 import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import { AuthLayout } from '@/components/auth/AuthLayout'
+import { AuthDivider, GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 import { Logo } from '@/components/Logo'
+import { COMPANY } from '@/lib/constants'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -25,6 +27,7 @@ export function RegisterPage() {
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    defaultValues: { acceptTerms: false },
   })
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -167,10 +170,35 @@ export function RegisterPage() {
           {...register('confirmPassword')}
           error={errors.confirmPassword?.message}
         />
+        <label className="flex items-start gap-3 rounded-xl border border-brand-100 bg-brand-50/50 p-3 text-sm text-brand-700">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 rounded border-brand-300 text-brand-600 focus:ring-brand-500"
+            {...register('acceptTerms')}
+          />
+          <span>
+            I agree to the{' '}
+            <Link to="/terms" className="font-semibold text-brand-800 underline-offset-2 hover:underline">
+              Terms and Conditions
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy" className="font-semibold text-brand-800 underline-offset-2 hover:underline">
+              Privacy Policy
+            </Link>
+            . I understand that loans are from {COMPANY.loanAmountRangeLabel} with terms of{' '}
+            {COMPANY.loanTermRange}.
+          </span>
+        </label>
+        {errors.acceptTerms?.message && (
+          <p className="text-sm text-red-600">{errors.acceptTerms.message}</p>
+        )}
         <Button type="submit" className="w-full" loading={loading}>
           Create Account
         </Button>
       </form>
+
+      <AuthDivider />
+      <GoogleSignInButton label="Sign up with Google" />
     </AuthLayout>
   )
 }

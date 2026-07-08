@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, CheckCheck, FileText, Wallet, MessageSquare, Info, Percent } from 'lucide-react'
+import { Bell, CheckCheck, FileText, Wallet, MessageSquare, Info, Percent, PartyPopper } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNotifications } from '@/context/NotificationContext'
 import { useAuth } from '@/context/AuthContext'
@@ -9,6 +9,7 @@ import type { AppNotification } from '@/lib/supabase'
 const typeIcon: Record<string, typeof Bell> = {
   new_loan: FileText,
   loan_status: Info,
+  loan_paid: PartyPopper,
   payment_received: Wallet,
   interest_added: Percent,
   terms_updated: Info,

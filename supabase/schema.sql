@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS public.loan_requests (
   id_type TEXT NOT NULL DEFAULT 'national_id' CHECK (id_type IN ('national_id', 'passport')),
   id_photo_path TEXT,
   physical_address TEXT NOT NULL,
-  loan_amount NUMERIC(12,2) NOT NULL CHECK (loan_amount >= 500 AND loan_amount <= 50000),
+  loan_amount NUMERIC(12,2) NOT NULL CHECK (loan_amount >= 500 AND loan_amount <= 10000),
   loan_purpose TEXT NOT NULL,
   term_months INTEGER CHECK (term_months BETWEEN 1 AND 12),
   employment_status TEXT NOT NULL,
@@ -80,7 +80,11 @@ BEGIN
   INSERT INTO public.profiles (id, full_name, phone, role)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+    COALESCE(
+      NEW.raw_user_meta_data->>'full_name',
+      NEW.raw_user_meta_data->>'name',
+      split_part(COALESCE(NEW.email, ''), '@', 1)
+    ),
     COALESCE(NEW.raw_user_meta_data->>'phone', ''),
     'user'
   );

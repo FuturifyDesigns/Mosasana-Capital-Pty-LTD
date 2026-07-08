@@ -10,6 +10,7 @@ import { loginSchema, type LoginFormData } from '@/lib/validation'
 import { formatSupabaseError } from '@/lib/supabaseErrors'
 import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import { AuthLayout } from '@/components/auth/AuthLayout'
+import { AuthDivider, GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -126,6 +127,9 @@ export function LoginPage() {
           Sign In
         </Button>
       </form>
+
+      <AuthDivider />
+      <GoogleSignInButton />
     </AuthLayout>
   )
 }

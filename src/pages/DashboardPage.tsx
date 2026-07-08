@@ -11,6 +11,7 @@ import {
   Wallet,
   History,
   TrendingDown,
+  PartyPopper,
 } from 'lucide-react'
 import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
@@ -26,15 +27,12 @@ import {
   getRepaymentReminder,
 } from '@/lib/loans'
 import { formatPula, toNumber } from '@/lib/format'
-
-const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  reviewing: 'bg-blue-100 text-blue-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
-  disbursed: 'bg-brand-100 text-brand-800',
-  paid: 'bg-emerald-100 text-emerald-800',
-}
+import {
+  clientStatusBannerClass,
+  LOAN_STATUS_META,
+  statusBadgeClass,
+  type LoanStatus,
+} from '@/lib/loanStatus'
 
 export function DashboardPage() {
   const { user, profile, isAdmin } = useAuth()
@@ -149,7 +147,7 @@ export function DashboardPage() {
               </div>
               <span
                 className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                  statusColors[activeLoan.status] || 'bg-white/20 text-white'
+                  statusBadgeClass(activeLoan.status)
                 }`}
               >
                 {activeLoan.status}
@@ -287,7 +285,7 @@ export function DashboardPage() {
                       </div>
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                          statusColors[loan.status] || 'bg-gray-100 text-gray-800'
+                          statusBadgeClass(loan.status)
                         }`}
                       >
                         {loan.status}
@@ -304,6 +302,8 @@ export function DashboardPage() {
                           year: 'numeric',
                         })}
                       </div>
+
+                      <LoanStatusBanner status={loan.status as LoanStatus} />
 
                       {loan.status !== 'rejected' && (
                         <RepaymentSummary loan={loan} payments={loanPayments} />
@@ -323,6 +323,23 @@ export function DashboardPage() {
         )}
       </section>
     </>
+  )
+}
+
+function LoanStatusBanner({ status }: { status: LoanStatus }) {
+  const meta = LOAN_STATUS_META[status]
+  const Icon = status === 'paid' ? PartyPopper : Info
+
+  return (
+    <div
+      className={`mt-4 flex items-start gap-2.5 rounded-xl border p-3.5 text-sm ${clientStatusBannerClass(meta.tone)}`}
+    >
+      <Icon className="mt-0.5 h-5 w-5 shrink-0" />
+      <div>
+        <p className="font-semibold">{meta.clientTitle}</p>
+        <p className="mt-0.5 leading-relaxed opacity-90">{meta.clientMessage}</p>
+      </div>
+    </div>
   )
 }
 

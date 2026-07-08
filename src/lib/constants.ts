@@ -12,16 +12,26 @@ export const WHATSAPP_NUMBER = (import.meta.env.VITE_WHATSAPP_NUMBER as string) 
 
 export const COMPANY = {
   name: 'Mosasana Capital (PTY) LTD',
+  legalName: 'Mosasana Capital Proprietary Limited',
   shortName: 'Mosasana Capital',
   tagline: 'Short-term relief for daily financial shortfalls',
   meaning:
     'Mosasana is a Setswana word for a temporary structure that relieves and shields people from harsh weather while they make long-term habitat plans.',
   regulator: 'Non Bank Financial Institutions Regulatory Authority (NBFIRA)',
   regulatorShort: 'NBFIRA',
+  nbfiraLicense: 'NBFIRA 11/1/6 (243)',
+  companyRegistration: 'BW00006124414',
   licensedYear: '2026',
   location: 'Gaborone',
   serviceArea: 'the breadth and width of Botswana',
   loanTermRange: '1 to 12 months',
+  loanAmountMin: 500,
+  loanAmountMax: 10000,
+  loanAmountRangeLabel: 'P500 to P10,000',
+  privacyEffectiveDate: '1 January 2026',
+  termsEffectiveDate: '1 January 2026',
+  borrowingCaution:
+    'Caution! Borrowing more than you can afford to repay can lead to severe financial difficulties. Terms and conditions apply.',
   vision:
     'To be the trusted provider of short-term financial relief, empowering our clients with stability and confidence in times of need.',
   mission:

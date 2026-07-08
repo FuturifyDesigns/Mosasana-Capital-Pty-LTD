@@ -60,7 +60,7 @@ const storyTree: TreeNode[] = [
     icon: CalendarClock,
     title: 'Flexible cash loans',
     description:
-      'Short-term loans from 1 to 12 months at a reasonable interest rate, tailored to each customer’s needs.',
+      'Short-term loans from P500 to P10,000, repayable over 1 to 12 months at a reasonable interest rate, tailored to each customer’s needs.',
   },
 ]
 
@@ -126,7 +126,7 @@ export function AboutPage() {
               contentKey="about.who.p2"
               className="mt-4 leading-relaxed text-brand-600"
             >
-              {'We offer short-term loans — commonly known as cash loans — ranging from 1 to 12 months at a reasonable interest rate. We pride ourselves in tailoring our offerings to each customer’s needs while upholding high customer and ethical standards.'}
+              {'We offer short-term loans — commonly known as cash loans — from P500 to P10,000 with repayment terms from 1 to 12 months, depending on customer eligibility. We pride ourselves in tailoring our offerings to each customer’s needs while upholding high customer and ethical standards.'}
             </EditableText>
           </Reveal>
 

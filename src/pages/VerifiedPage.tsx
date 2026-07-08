@@ -1,6 +1,8 @@
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Check } from 'lucide-react'
+import { ArrowRight, Check } from 'lucide-react'
 import { Logo } from '@/components/Logo'
+import { Button } from '@/components/ui/Button'
 
 const confetti = [
   { left: '12%', top: '22%', color: 'bg-brand-400', delay: 0.3, size: 'h-2 w-2' },
@@ -15,7 +17,6 @@ const confetti = [
 export function VerifiedPage() {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-brand-50 via-white to-brand-100 px-4 py-16 text-center">
-      {/* Soft animated glows */}
       <motion.div
         aria-hidden
         className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-200/50 blur-3xl"
@@ -29,7 +30,6 @@ export function VerifiedPage() {
         transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
       />
 
-      {/* Confetti dots */}
       {confetti.map((c, i) => (
         <motion.span
           key={i}
@@ -52,7 +52,6 @@ export function VerifiedPage() {
           <Logo className="h-24 sm:h-28" />
         </div>
 
-        {/* Animated success check with ripple */}
         <div className="relative mt-10 flex justify-center">
           <motion.span
             className="absolute h-24 w-24 rounded-full bg-growth-500/15"
@@ -89,8 +88,8 @@ export function VerifiedPage() {
           transition={{ delay: 0.6 }}
           className="mt-3 leading-relaxed text-brand-600"
         >
-          Your email address has been confirmed. Your account is now active — you can safely close
-          this page and sign in whenever you&apos;re ready.
+          Your email address has been confirmed. Your account is now active — sign in to apply for a
+          loan or track your applications.
         </motion.p>
 
         <motion.div
@@ -101,6 +100,25 @@ export function VerifiedPage() {
         >
           <span className="flex h-2 w-2 rounded-full bg-growth-500" />
           Account activated
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.95 }}
+          className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center"
+        >
+          <Link to="/login">
+            <Button size="lg" className="w-full sm:w-auto">
+              Continue to Sign In
+              <ArrowRight className="h-5 w-5" />
+            </Button>
+          </Link>
+          <Link to="/apply">
+            <Button variant="outline" size="lg" className="w-full sm:w-auto">
+              Apply for a Loan
+            </Button>
+          </Link>
         </motion.div>
       </motion.div>
     </main>

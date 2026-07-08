@@ -3,6 +3,7 @@ import { AuthProvider } from '@/context/AuthContext'
 import { ToastProvider } from '@/context/ToastContext'
 import { ConfirmProvider } from '@/context/ConfirmContext'
 import { NotificationProvider } from '@/context/NotificationContext'
+import { NotificationPopupListener } from '@/components/NotificationPopupListener'
 import { ContentProvider } from '@/context/ContentContext'
 import { Layout } from '@/components/Layout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -16,6 +17,8 @@ import { RegisterPage } from '@/pages/RegisterPage'
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage'
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage'
 import { VerifiedPage } from '@/pages/VerifiedPage'
+import { TermsPage } from '@/pages/TermsPage'
+import { PrivacyPage } from '@/pages/PrivacyPage'
 import { RecoveryHandler } from '@/components/RecoveryHandler'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { AdminPage } from '@/pages/AdminPage'
@@ -26,6 +29,7 @@ export default function App() {
       <ToastProvider>
         <ConfirmProvider>
         <NotificationProvider>
+        <NotificationPopupListener />
         <ContentProvider>
         <HashRouter>
         <RecoveryHandler />
@@ -44,6 +48,8 @@ export default function App() {
               }
             />
             <Route path="contact" element={<ContactPage />} />
+            <Route path="terms" element={<TermsPage />} />
+            <Route path="privacy" element={<PrivacyPage />} />
             <Route path="account" element={<AuthPage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />

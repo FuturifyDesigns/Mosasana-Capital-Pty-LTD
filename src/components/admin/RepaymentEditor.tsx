@@ -306,14 +306,12 @@ export function RepaymentEditor({
     return (
       <div className="mt-5 space-y-4 border-t border-brand-100 pt-5">
         <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-800 ring-1 ring-emerald-100">
-          <p className="font-semibold">Loan marked as fully repaid</p>
+          <p className="font-semibold">Loan fully repaid — record locked</p>
           <p className="mt-1">
             Total received: {formatPula(paidNum)} of {formatPula(loan.total_repayable ?? principal)}.
-            To add late fees or interest for delays, increase the total below and save — the loan will reopen
-            and the customer will be notified.
+            This loan cannot be edited further.
           </p>
         </div>
-        {renderTermsBlock()}
         {loanPayments.length > 0 && <PaymentHistoryList payments={loanPayments} />}
       </div>
     )

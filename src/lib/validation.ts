@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { COMPANY } from './constants'
 
 const phoneRegex = /^(\+?267)?[0-9]{8}$/
 const idNumberRegex = /^[0-9]{9,12}$/
@@ -30,6 +31,9 @@ export const registerSchema = z
       .regex(/[a-z]/, 'Include at least one lowercase letter')
       .regex(/[0-9]/, 'Include at least one number'),
     confirmPassword: z.string(),
+    acceptTerms: z.boolean().refine((val) => val === true, {
+      message: 'You must accept the Terms and Conditions and Privacy Policy',
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -74,7 +78,7 @@ export const loanRequestSchema = z
     loanAmount: z
       .number({ invalid_type_error: 'Enter a valid amount' })
       .min(500, 'Minimum loan amount is P500')
-      .max(50000, 'Maximum loan amount is P50,000')
+      .max(COMPANY.loanAmountMax, `Maximum loan amount is P${COMPANY.loanAmountMax.toLocaleString()}`)
       .refine((v) => Number.isInteger(v), 'Enter a whole number (no decimals)'),
     loanPurpose: z.string().trim().min(5, 'Describe the purpose of the loan').max(500),
     termMonths: z

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Mail, Phone, ArrowUpRight } from 'lucide-react'
 import { BotswanaFlag } from './icons/BotswanaFlag'
+import { RegulatoryNotice } from '@/components/RegulatoryNotice'
 import { COMPANY } from '@/lib/constants'
 
 export function Footer() {
@@ -16,6 +17,8 @@ export function Footer() {
     { to: '/contact', label: 'Contact Us' },
     { to: '/login', label: 'Client Login' },
     { to: '/register', label: 'Create Account' },
+    { to: '/terms', label: 'Terms' },
+    { to: '/privacy', label: 'Privacy' },
   ]
 
   return (
@@ -134,12 +137,19 @@ export function Footer() {
         </div>
       </div>
 
+      <div className="border-t border-brand-700/60 bg-brand-900/40 px-4 py-3 sm:px-6">
+        <div className="mx-auto max-w-6xl">
+          <RegulatoryNotice />
+        </div>
+      </div>
+
       <div className="border-t border-brand-700/60">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-3 text-center text-xs sm:flex-row sm:gap-2 sm:px-6 sm:py-4 sm:text-left sm:text-sm">
           <p className="text-brand-200">
             &copy; {year} {COMPANY.name}
             <span className="mt-0.5 block text-[11px] text-brand-400 sm:text-xs">
-              {COMPANY.regulatorShort} ({COMPANY.licensedYear}) · {COMPANY.location}, Botswana
+              {COMPANY.regulatorShort} {COMPANY.nbfiraLicense} · Reg. {COMPANY.companyRegistration} ·{' '}
+              {COMPANY.location}, Botswana
             </span>
           </p>
           <a

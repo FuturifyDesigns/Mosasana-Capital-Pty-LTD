@@ -28,6 +28,13 @@ import { supabase, type LoanRequest, type ContactEnquiry, type AdminUser, type L
 import { LOAN_STATUSES, ENQUIRY_STATUSES } from '@/lib/constants'
 import { getRepaymentReminder } from '@/lib/loans'
 import { formatPula } from '@/lib/format'
+import {
+  canAdminChangeStatus,
+  getAdminStatusOptions,
+  isLoanLocked,
+  LOAN_STATUS_META,
+  validateStatusChange,
+} from '@/lib/loanStatus'
 import { RepaymentEditor } from '@/components/admin/RepaymentEditor'
 import { useToast } from '@/context/ToastContext'
 import { useConfirm } from '@/context/ConfirmContext'
@@ -72,8 +79,8 @@ export function AdminPage() {
   const [idDocUrls, setIdDocUrls] = useState<Record<string, string>>({})
   const [previewDoc, setPreviewDoc] = useState<{ name: string; url: string } | null>(null)
 
-  const fetchData = useCallback(async () => {
-    setLoading(true)
+  const fetchData = useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) setLoading(true)
     const [loansRes, enquiriesRes, usersRes, remindersRes, paymentsRes] = await Promise.all([
       supabase.from('loan_requests').select('*').order('created_at', { ascending: false }),
       supabase.from('contact_enquiries').select('*').order('created_at', { ascending: false }),
@@ -129,30 +136,24 @@ export function AdminPage() {
       setUsers((usersRes.data as AdminUser[]) || [])
     }
 
-    setLoading(false)
+    if (!options?.silent) setLoading(false)
   }, [showToast])
 
   useEffect(() => {
     fetchData()
   }, [fetchData])
 
-  // Live updates: refetch whenever loans, enquiries or profiles change.
+  // Live updates without full-page loading flicker
   useEffect(() => {
+    const refresh = () => fetchData({ silent: true })
     const channel = supabase
       .channel('admin-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_requests' }, () =>
-        fetchData(),
-      )
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'contact_enquiries' }, () =>
-        fetchData(),
-      )
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_reminder_log' }, () =>
-        fetchData(),
-      )
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_payments' }, () =>
-        fetchData(),
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_requests' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contact_enquiries' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_reminder_log' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_payments' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, refresh)
       .subscribe()
 
     return () => {
@@ -202,14 +203,34 @@ export function AdminPage() {
   }
 
   const updateLoanStatus = async (id: string, status: string) => {
+    const loan = loans.find((l) => l.id === id)
+    if (!loan) return
+
+    const validationError = validateStatusChange(loan, status)
+    if (validationError) {
+      showToast(validationError, 'error')
+      return
+    }
+
+    const previousStatus = loan.status
     setLoans((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)))
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('loan_requests')
       .update({ status })
       .eq('id', id)
       .select()
       .single()
+
+    if (error) {
+      setLoans((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, status: previousStatus } : l)),
+      )
+      showToast(error.message || 'Could not update loan status.', 'error')
+      return
+    }
+
     if (data) setLoans((prev) => prev.map((l) => (l.id === id ? (data as LoanRequest) : l)))
+    showToast(`Loan status updated to ${cap(status)}.`, 'success')
   }
 
   const saveRepaymentTerms = async (
@@ -220,18 +241,35 @@ export function AdminPage() {
       interest_rate: number | null
     },
   ) => {
-    const { data } = await supabase
+    const loan = loans.find((l) => l.id === id)
+    if (loan && isLoanLocked(loan)) {
+      showToast('Paid and rejected loans are locked.', 'error')
+      return
+    }
+
+    const { data, error } = await supabase
       .from('loan_requests')
       .update(fields)
       .eq('id', id)
       .select()
       .single()
+
+    if (error) {
+      showToast(error.message || 'Could not save repayment terms.', 'error')
+      return
+    }
+
     if (data) setLoans((prev) => prev.map((l) => (l.id === id ? (data as LoanRequest) : l)))
   }
 
   const updateEnquiryStatus = async (id: string, status: string) => {
+    const previous = enquiries.find((e) => e.id === id)?.status
     setEnquiries((prev) => prev.map((e) => (e.id === id ? { ...e, status } : e)))
-    await supabase.from('contact_enquiries').update({ status }).eq('id', id)
+    const { error } = await supabase.from('contact_enquiries').update({ status }).eq('id', id)
+    if (error && previous) {
+      setEnquiries((prev) => prev.map((e) => (e.id === id ? { ...e, status: previous } : e)))
+      showToast(error.message || 'Could not update enquiry.', 'error')
+    }
   }
 
   const stats = useMemo(
@@ -386,7 +424,7 @@ export function AdminPage() {
                 />
               </div>
             )}
-            <Button variant="outline" size="sm" onClick={fetchData} className="shrink-0">
+            <Button variant="outline" size="sm" onClick={() => fetchData()} className="shrink-0">
               <RefreshCw className="h-4 w-4" /> Refresh
             </Button>
           </div>
@@ -510,20 +548,39 @@ export function AdminPage() {
                           )}
                         </div>
                         <div className="w-44 shrink-0">
-                          <Select
-                            label="Update status"
-                            hidePlaceholder
-                            options={LOAN_STATUSES.map((s) => ({ value: s, label: cap(s) }))}
-                            value={loan.status}
-                            onChange={(e) => updateLoanStatus(loan.id, e.target.value)}
-                          />
+                          {canAdminChangeStatus(loan) ? (
+                            <>
+                              <Select
+                                label="Update status"
+                                hidePlaceholder
+                                options={getAdminStatusOptions(loan)}
+                                value={loan.status}
+                                onChange={(e) => updateLoanStatus(loan.id, e.target.value)}
+                              />
+                              <p className="mt-2 text-[11px] leading-snug text-brand-500">
+                                {LOAN_STATUS_META[loan.status as keyof typeof LOAN_STATUS_META]?.adminHint}
+                              </p>
+                            </>
+                          ) : (
+                            <div className="rounded-xl border border-brand-100 bg-brand-50/80 p-3">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-brand-500">
+                                Status locked
+                              </p>
+                              <p className="mt-1 text-sm font-semibold capitalize text-brand-900">
+                                {loan.status}
+                              </p>
+                              <p className="mt-1 text-[11px] leading-snug text-brand-500">
+                                {LOAN_STATUS_META[loan.status as keyof typeof LOAN_STATUS_META]?.adminHint}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <RepaymentEditor
                         loan={loan}
                         payments={payments}
                         onSaveTerms={saveRepaymentTerms}
-                        onPaymentRecorded={fetchData}
+                        onPaymentRecorded={() => fetchData({ silent: true })}
                       />
                       </div>
                     </Card>
