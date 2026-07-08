@@ -498,3 +498,86 @@ CREATE POLICY "No direct notification inserts"
   WITH CHECK (false);
 
 NOTIFY pgrst, 'reload schema';
+
+-- ============================================================
+-- 11. Notify customer when interest/fees added; reopen paid loans
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION public.loan_adjust_status_on_terms_change()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NEW.total_repayable IS NOT NULL
+     AND COALESCE(NEW.amount_paid, 0) < NEW.total_repayable
+     AND OLD.status = 'paid' THEN
+    NEW.status := 'disbursed';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS loan_requests_reopen_on_terms ON public.loan_requests;
+CREATE TRIGGER loan_requests_reopen_on_terms
+  BEFORE UPDATE OF total_repayable, interest_rate, due_date ON public.loan_requests
+  FOR EACH ROW EXECUTE FUNCTION public.loan_adjust_status_on_terms_change();
+
+CREATE OR REPLACE FUNCTION public.notify_loan_terms_change()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  added NUMERIC;
+  outstanding NUMERIC;
+  msg TEXT;
+  ntype TEXT;
+BEGIN
+  IF NEW.user_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.total_repayable IS NOT DISTINCT FROM OLD.total_repayable
+     AND NEW.interest_rate IS NOT DISTINCT FROM OLD.interest_rate
+     AND NEW.due_date IS NOT DISTINCT FROM OLD.due_date THEN
+    RETURN NEW;
+  END IF;
+
+  outstanding := GREATEST(COALESCE(NEW.total_repayable, 0) - COALESCE(NEW.amount_paid, 0), 0);
+
+  IF NEW.total_repayable IS NOT NULL
+     AND (OLD.total_repayable IS NULL OR NEW.total_repayable > OLD.total_repayable) THEN
+    added := NEW.total_repayable - COALESCE(OLD.total_repayable, 0);
+    ntype := 'interest_added';
+    msg := 'Additional interest or fees of P' || ROUND(added, 2)::text
+      || ' were added to your loan. Outstanding balance is now P'
+      || ROUND(outstanding, 2)::text || '.';
+  ELSIF NEW.interest_rate IS DISTINCT FROM OLD.interest_rate THEN
+    ntype := 'terms_updated';
+    msg := 'Your loan interest rate was updated to '
+      || COALESCE(NEW.interest_rate::text, '0') || '%. Outstanding: P'
+      || ROUND(outstanding, 2)::text || '.';
+  ELSIF NEW.due_date IS DISTINCT FROM OLD.due_date THEN
+    ntype := 'terms_updated';
+    msg := 'Your loan due date was updated. Outstanding balance: P'
+      || ROUND(outstanding, 2)::text || '.';
+  ELSE
+    RETURN NEW;
+  END IF;
+
+  INSERT INTO public.notifications (user_id, type, title, message, loan_id)
+  VALUES (
+    NEW.user_id,
+    ntype,
+    CASE WHEN ntype = 'interest_added' THEN 'Interest or fees added' ELSE 'Loan terms updated' END,
+    msg,
+    NEW.id
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS loan_requests_notify_terms ON public.loan_requests;
+CREATE TRIGGER loan_requests_notify_terms
+  AFTER UPDATE OF total_repayable, interest_rate, due_date ON public.loan_requests
+  FOR EACH ROW EXECUTE FUNCTION public.notify_loan_terms_change();
+
+NOTIFY pgrst, 'reload schema';

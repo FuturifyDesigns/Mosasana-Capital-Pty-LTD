@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Percent, Wallet, Plus, History } from 'lucide-react'
+import { Percent, Wallet, Plus, History, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { DEFAULT_MONTHLY_INTEREST_RATE } from '@/lib/constants'
 import { formatPula, toNumber } from '@/lib/format'
@@ -69,6 +69,7 @@ export function RepaymentEditor({
   })
   const [paymentAmount, setPaymentAmount] = useState('')
   const [paymentNotes, setPaymentNotes] = useState('')
+  const [additionalFee, setAdditionalFee] = useState('')
   const [savingTerms, setSavingTerms] = useState(false)
   const [recording, setRecording] = useState(false)
 
@@ -98,6 +99,9 @@ export function RepaymentEditor({
 
   const totalNum = total === '' ? null : Number(total)
   const paidNum = toNumber(loan.amount_paid)
+  const hasPayments = paidNum > 0
+  const minTotal = Math.max(principal, paidNum)
+  const savedTotal = loan.total_repayable != null ? toNumber(loan.total_repayable) : null
   const balance = getOutstandingBalance(loan) ?? (totalNum != null ? Math.max(totalNum - paidNum, 0) : null)
   const pct =
     totalNum && totalNum > 0 ? Math.min(Math.round((paidNum / totalNum) * 100), 100) : 0
@@ -111,6 +115,20 @@ export function RepaymentEditor({
   }, [total, rate, due, loan, estimatedTotal])
 
   const applyCalculatedTerms = () => {
+    if (hasPayments && savedTotal != null) {
+      const extra = isZeroInterest ? 0 : previewInterest
+      if (extra <= 0) {
+        showToast('Set an interest rate above 0% to add calculated interest, or use the fee field.', 'info')
+        return
+      }
+      const newTotal = Math.round((savedTotal + extra) * 100) / 100
+      setTotal(String(newTotal))
+      showToast(
+        `Added ${formatPula(extra)} interest/fee for delayed payment. New total: ${formatPula(newTotal)}.`,
+        'info',
+      )
+      return
+    }
     setTotal(String(previewTotal))
     if (isZeroInterest) {
       showToast(`No interest — total is ${formatPula(principal)} (principal only).`, 'info')
@@ -120,6 +138,19 @@ export function RepaymentEditor({
         'info',
       )
     }
+  }
+
+  const addAdditionalFee = () => {
+    const fee = Number(additionalFee)
+    if (!fee || fee <= 0 || !Number.isFinite(fee)) {
+      showToast('Enter a valid additional interest or late fee amount.', 'error')
+      return
+    }
+    const base = totalNum ?? savedTotal ?? previewTotal
+    const newTotal = Math.round((base + fee) * 100) / 100
+    setTotal(String(newTotal))
+    setAdditionalFee('')
+    showToast(`Added ${formatPula(fee)}. New total repayable: ${formatPula(newTotal)}.`, 'info')
   }
 
   const setZeroInterest = () => {
@@ -134,11 +165,11 @@ export function RepaymentEditor({
     if (total === '' || totalNum == null || totalNum <= 0) {
       return 'Total repayable must be greater than zero.'
     }
-    if (totalNum < principal) {
-      return `Total repayable cannot be less than the principal (${formatPula(principal)}).`
+    if (totalNum < minTotal) {
+      return `Total cannot be less than ${formatPula(minTotal)} (principal or amount already paid).`
     }
-    if (parsedRate === 0 && totalNum !== principal) {
-      return `With 0% interest, total repayable must equal the principal (${formatPula(principal)}).`
+    if (parsedRate === 0 && !hasPayments && totalNum !== principal) {
+      return `With 0% interest and no payments yet, total must equal the principal (${formatPula(principal)}).`
     }
     if (due === '') return 'Set a due date before saving repayment terms.'
     return null
@@ -204,6 +235,116 @@ export function RepaymentEditor({
   const loanPayments = payments.filter((p) => p.loan_id === loan.id)
   const paymentsAllowed = canRecordPayments(loan) && loan.status !== 'paid'
 
+  const renderTermsBlock = () => (
+    <div className="rounded-2xl bg-gradient-to-br from-brand-50 to-white p-4 ring-1 ring-brand-100">
+      <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand-800">
+        <Percent className="h-4 w-4 text-brand-500" />
+        Loan terms & interest
+      </p>
+      {hasPayments && (
+        <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            {formatPula(paidNum)} already recorded. You can add <strong>late fees or additional interest</strong>{' '}
+            for delayed payments — increase the total below, then save. The customer will be notified automatically.
+          </p>
+        </div>
+      )}
+      <div className="mb-3 grid grid-cols-3 gap-2 text-center text-xs">
+        <div className="rounded-xl bg-white p-2.5 ring-1 ring-brand-100">
+          <p className="text-brand-500">Principal</p>
+          <p className="mt-1 font-bold text-brand-900">{formatPula(principal)}</p>
+        </div>
+        <div className="rounded-xl bg-white p-2.5 ring-1 ring-brand-100">
+          <p className="text-brand-500">Interest / fees</p>
+          <p className="mt-1 font-bold text-amber-700">
+            {totalNum != null && totalNum > principal
+              ? formatPula(totalNum - principal)
+              : isZeroInterest
+                ? 'None'
+                : formatPula(previewInterest)}
+          </p>
+        </div>
+        <div className="rounded-xl bg-white p-2.5 ring-1 ring-brand-100">
+          <p className="text-brand-500">Total due</p>
+          <p className="mt-1 font-bold text-brand-900">{formatPula(totalNum ?? previewTotal)}</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <label className="text-xs font-medium text-brand-600">
+          Monthly interest (%)
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="0.5"
+            value={rate}
+            onChange={(e) => setRate(e.target.value)}
+            placeholder="0 for no interest"
+            className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+          />
+        </label>
+        <label className="text-xs font-medium text-brand-600">
+          Total repayable
+          <input
+            type="number"
+            min={minTotal}
+            value={total}
+            onChange={(e) => setTotal(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+          />
+        </label>
+        <label className="text-xs font-medium text-brand-600">
+          Due date
+          <input
+            type="date"
+            value={due}
+            onChange={(e) => setDue(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+          />
+        </label>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {!hasPayments && (
+          <Button type="button" variant="outline" size="sm" onClick={setZeroInterest}>
+            No interest (0%)
+          </Button>
+        )}
+        <Button type="button" variant="outline" size="sm" onClick={applyCalculatedTerms}>
+          {hasPayments
+            ? isZeroInterest
+              ? 'Add calculated fee'
+              : `Add ${rateNum}% interest`
+            : isZeroInterest
+              ? 'Apply principal only'
+              : `Apply ${rateNum}% interest`}
+        </Button>
+        <Button type="button" size="sm" onClick={handleSaveTerms} disabled={!termsDirty || savingTerms}>
+          {savingTerms ? 'Saving…' : 'Save terms'}
+        </Button>
+      </div>
+      {hasPayments && (
+        <div className="mt-3 flex flex-wrap items-end gap-2 border-t border-brand-100 pt-3">
+          <label className="flex-1 text-xs font-medium text-brand-600">
+            Additional interest / late fee (P)
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={additionalFee}
+              onChange={(e) => setAdditionalFee(e.target.value)}
+              placeholder="e.g. 500"
+              className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+            />
+          </label>
+          <Button type="button" variant="outline" size="sm" onClick={addAdditionalFee} className="shrink-0">
+            Add to total
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+
   if (['rejected', 'pending', 'reviewing'].includes(loan.status)) {
     return (
       <div className="mt-4 rounded-xl border border-dashed border-brand-200 bg-brand-50/40 p-4 text-sm text-brand-600">
@@ -216,87 +357,22 @@ export function RepaymentEditor({
     return (
       <div className="mt-5 space-y-4 border-t border-brand-100 pt-5">
         <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-800 ring-1 ring-emerald-100">
-          <p className="font-semibold">Loan fully repaid</p>
+          <p className="font-semibold">Loan marked as fully repaid</p>
           <p className="mt-1">
-            Total received: {formatPula(paidNum)} of {formatPula(loan.total_repayable ?? principal)}
+            Total received: {formatPula(paidNum)} of {formatPula(loan.total_repayable ?? principal)}.
+            To add late fees or interest for delays, increase the total below and save — the loan will reopen
+            and the customer will be notified.
           </p>
         </div>
-        {loanPayments.length > 0 && (
-          <PaymentHistoryList payments={loanPayments} />
-        )}
+        {renderTermsBlock()}
+        {loanPayments.length > 0 && <PaymentHistoryList payments={loanPayments} />}
       </div>
     )
   }
 
   return (
     <div className="mt-5 space-y-4 border-t border-brand-100 pt-5">
-      <div className="rounded-2xl bg-gradient-to-br from-brand-50 to-white p-4 ring-1 ring-brand-100">
-        <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand-800">
-          <Percent className="h-4 w-4 text-brand-500" />
-          Loan terms & interest
-        </p>
-        <div className="mb-3 grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="rounded-xl bg-white p-2.5 ring-1 ring-brand-100">
-            <p className="text-brand-500">Principal</p>
-            <p className="mt-1 font-bold text-brand-900">{formatPula(principal)}</p>
-          </div>
-          <div className="rounded-xl bg-white p-2.5 ring-1 ring-brand-100">
-            <p className="text-brand-500">Interest</p>
-            <p className="mt-1 font-bold text-amber-700">
-              {isZeroInterest ? 'None' : formatPula(previewInterest)}
-            </p>
-          </div>
-          <div className="rounded-xl bg-white p-2.5 ring-1 ring-brand-100">
-            <p className="text-brand-500">Total due</p>
-            <p className="mt-1 font-bold text-brand-900">{formatPula(previewTotal)}</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <label className="text-xs font-medium text-brand-600">
-            Monthly interest (%)
-            <input
-              type="number"
-              min="0"
-              max="100"
-              step="0.5"
-              value={rate}
-              onChange={(e) => setRate(e.target.value)}
-              placeholder="0 for no interest"
-              className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
-            />
-          </label>
-          <label className="text-xs font-medium text-brand-600">
-            Total repayable
-            <input
-              type="number"
-              min={principal}
-              value={total}
-              onChange={(e) => setTotal(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
-            />
-          </label>
-          <label className="text-xs font-medium text-brand-600">
-            Due date
-            <input
-              type="date"
-              value={due}
-              onChange={(e) => setDue(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
-            />
-          </label>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={setZeroInterest}>
-            No interest (0%)
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={applyCalculatedTerms}>
-            {isZeroInterest ? 'Apply principal only' : `Apply ${rateNum}% interest`}
-          </Button>
-          <Button type="button" size="sm" onClick={handleSaveTerms} disabled={!termsDirty || savingTerms}>
-            {savingTerms ? 'Saving…' : 'Save terms'}
-          </Button>
-        </div>
-      </div>
+      {renderTermsBlock()}
 
       {totalNum != null && (
         <div className="rounded-2xl bg-emerald-50/60 p-4 ring-1 ring-emerald-100">

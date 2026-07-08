@@ -81,6 +81,15 @@ export function getOutstandingBalance(loan: LoanRequest): number | null {
   return Math.max(total - toNumber(loan.amount_paid), 0)
 }
 
+export function getInterestAndFeesAmount(loan: LoanRequest): number | null {
+  if (loan.total_repayable == null) return null
+  return Math.max(toNumber(loan.total_repayable) - toNumber(loan.loan_amount), 0)
+}
+
+export function getMinimumRepayableTotal(loan: LoanRequest): number {
+  return Math.max(toNumber(loan.loan_amount), toNumber(loan.amount_paid))
+}
+
 export function getEstimatedTotalRepayable(loan: LoanRequest): number {
   const rate = resolveInterestRate(loan.interest_rate)
   return calculateTotalRepayable(toNumber(loan.loan_amount), loan.term_months ?? 1, rate)

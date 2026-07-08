@@ -21,6 +21,7 @@ import { ACTIVE_LOAN_STATUSES } from '@/lib/constants'
 import {
   formatDueDate,
   getEstimatedTotalRepayable,
+  getInterestAndFeesAmount,
   getOutstandingBalance,
   getRepaymentReminder,
 } from '@/lib/loans'
@@ -340,6 +341,7 @@ function RepaymentSummary({
   const balance = getOutstandingBalance(loan) ?? Math.max(total - paid, 0)
   const pct = total > 0 ? Math.min(Math.round((paid / total) * 100), 100) : 0
   const termsSet = loan.total_repayable != null
+  const fees = getInterestAndFeesAmount(loan)
 
   return (
     <div className="mt-4 space-y-3">
@@ -364,6 +366,9 @@ function RepaymentSummary({
               Paid <strong>{formatPula(paid)}</strong>
             </p>
             <p className="text-xs text-brand-500">of {formatPula(total)} total</p>
+            {fees != null && fees > 0 && (
+              <p className="text-xs text-amber-700">Includes {formatPula(fees)} interest/fees</p>
+            )}
           </div>
         </div>
         {(termsSet || paid > 0) && (

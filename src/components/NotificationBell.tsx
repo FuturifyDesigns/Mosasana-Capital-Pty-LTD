@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, CheckCheck, FileText, Wallet, MessageSquare, Info } from 'lucide-react'
+import { Bell, CheckCheck, FileText, Wallet, MessageSquare, Info, Percent } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNotifications } from '@/context/NotificationContext'
 import { useAuth } from '@/context/AuthContext'
@@ -10,6 +10,8 @@ const typeIcon: Record<string, typeof Bell> = {
   new_loan: FileText,
   loan_status: Info,
   payment_received: Wallet,
+  interest_added: Percent,
+  terms_updated: Info,
   new_enquiry: MessageSquare,
 }
 
