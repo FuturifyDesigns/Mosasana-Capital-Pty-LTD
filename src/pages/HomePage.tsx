@@ -10,7 +10,7 @@ import {
   Wallet,
   History,
   TrendingDown,
-  Sparkles,
+  Banknote,
 } from 'lucide-react'
 import { formatPula } from '@/lib/format'
 import { Button } from '@/components/ui/Button'
@@ -414,7 +414,7 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
           <div className="mb-6 sm:mb-8">
             <div className="inline-flex max-w-full items-center gap-3 rounded-2xl border border-brand-200/70 bg-gradient-to-r from-white via-brand-50/90 to-brand-100/70 px-4 py-3 shadow-lg shadow-brand-300/25 ring-1 ring-brand-100/80 sm:gap-4 sm:px-6 sm:py-4">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-500 text-white shadow-md shadow-brand-600/30 sm:h-14 sm:w-14 sm:rounded-2xl">
-                <Sparkles className="h-5 w-5 sm:h-7 sm:w-7" />
+                <Banknote className="h-5 w-5 sm:h-7 sm:w-7" />
               </span>
               <EditableText
                 as="p"
