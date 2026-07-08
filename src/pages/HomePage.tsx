@@ -410,6 +410,13 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
+          <EditableText
+            as="p"
+            contentKey="home.hero.welcome"
+            className="mb-3 text-sm font-semibold uppercase tracking-widest text-brand-500 sm:text-base"
+          >
+            Welcome to Mosasana Capital
+          </EditableText>
           <h1 className="font-display text-4xl font-bold leading-[1.1] text-brand-900 sm:text-5xl lg:text-6xl">
             <EditableText as="span" contentKey="home.hero.title1">
               Cash when life

@@ -128,6 +128,7 @@ CREATE TRIGGER contact_enquiries_notify_new
 ALTER TABLE public.contact_enquiries REPLICA IDENTITY FULL;
 ALTER TABLE public.loan_requests REPLICA IDENTITY FULL;
 ALTER TABLE public.notifications REPLICA IDENTITY FULL;
+ALTER TABLE public.site_content REPLICA IDENTITY FULL;
 
 DO $$
 BEGIN
@@ -136,6 +137,12 @@ BEGIN
     WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'contact_enquiries'
   ) THEN
     ALTER PUBLICATION supabase_realtime ADD TABLE public.contact_enquiries;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'site_content'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.site_content;
   END IF;
 END $$;
 

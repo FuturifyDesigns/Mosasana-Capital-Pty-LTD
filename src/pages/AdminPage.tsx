@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   CalendarClock,
   X,
+  Archive,
 } from 'lucide-react'
 import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
@@ -36,10 +37,12 @@ import {
   validateStatusChange,
 } from '@/lib/loanStatus'
 import { RepaymentEditor } from '@/components/admin/RepaymentEditor'
+import { ClientRecordsPanel } from '@/components/admin/ClientRecordsPanel'
+import { buildClientRecords, filterClientRecords } from '@/lib/clientRecords'
 import { useToast } from '@/context/ToastContext'
 import { useConfirm } from '@/context/ConfirmContext'
 
-type Tab = 'loans' | 'enquiries' | 'users'
+type Tab = 'loans' | 'records' | 'enquiries' | 'users'
 
 interface ReminderLogRow {
   loan_id: string
@@ -279,6 +282,7 @@ export function AdminPage() {
       approved: loans.filter((l) => l.status === 'approved').length,
       disbursed: loans.filter((l) => l.status === 'disbursed').length,
       paid: loans.filter((l) => l.status === 'paid').length,
+      fundedClients: filterClientRecords(buildClientRecords(loans, users), 'funded').length,
       newEnquiries: enquiries.filter((e) => e.status === 'new').length,
       totalUsers: users.length,
     }),
@@ -336,7 +340,9 @@ export function AdminPage() {
   const statusOptions =
     tab === 'loans'
       ? [{ value: 'all', label: 'All statuses' }, ...LOAN_STATUSES.map((s) => ({ value: s, label: cap(s) }))]
-      : [{ value: 'all', label: 'All statuses' }, ...ENQUIRY_STATUSES.map((s) => ({ value: s, label: cap(s) }))]
+      : tab === 'enquiries'
+        ? [{ value: 'all', label: 'All statuses' }, ...ENQUIRY_STATUSES.map((s) => ({ value: s, label: cap(s) }))]
+        : []
 
   const switchTab = (t: Tab) => {
     setTab(t)
@@ -346,22 +352,23 @@ export function AdminPage() {
 
   return (
     <>
-      <PageHero title="Admin Portal" subtitle="Manage loans, repayments, enquiries, and users." />
+      <PageHero title="Admin Portal" subtitle="Manage loans, client records, repayments, enquiries, and users." />
 
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
           <StatCard icon={FileText} label="Total loans" value={stats.totalLoans} tone="brand" />
           <StatCard icon={Clock} label="Pending" value={stats.pending} tone="yellow" highlight={stats.pending > 0} />
           <StatCard icon={CheckCircle2} label="Approved" value={stats.approved} tone="green" />
           <StatCard icon={Wallet} label="Settled" value={stats.paid} tone="emerald" />
-          <StatCard icon={Users} label="Users" value={stats.totalUsers} tone="brand" />
+          <StatCard icon={Archive} label="Funded clients" value={stats.fundedClients} tone="green" />
           <StatCard icon={Inbox} label="New enquiries" value={stats.newEnquiries} tone="blue" highlight={stats.newEnquiries > 0} />
+          <StatCard icon={Users} label="Users" value={stats.totalUsers} tone="brand" />
         </div>
 
         {/* Controls */}
         <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-brand-100 bg-white/80 p-4 shadow-sm backdrop-blur-sm lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => switchTab('loans')}
               className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
@@ -373,6 +380,15 @@ export function AdminPage() {
               {stats.pending > 0 && (
                 <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">{stats.pending}</span>
               )}
+            </button>
+            <button
+              onClick={() => switchTab('records')}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${
+                tab === 'records' ? 'bg-brand-600 text-white shadow-md shadow-brand-600/20' : 'bg-brand-50 text-brand-700 hover:bg-brand-100'
+              }`}
+            >
+              <Archive className="h-4 w-4" />
+              Client Records
             </button>
             <button
               onClick={() => switchTab('enquiries')}
@@ -406,14 +422,16 @@ export function AdminPage() {
                 placeholder={
                   tab === 'loans'
                     ? 'Search name, email, ID…'
-                    : tab === 'users'
-                      ? 'Search name, email, phone…'
-                      : 'Search name, email, subject…'
+                    : tab === 'records'
+                      ? 'Search client name, email, ID…'
+                      : tab === 'users'
+                        ? 'Search name, email, phone…'
+                        : 'Search name, email, subject…'
                 }
                 className="w-full rounded-xl border border-brand-200 bg-white py-2.5 pl-9 pr-3 text-sm text-brand-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               />
             </div>
-            {tab !== 'users' && (
+            {tab === 'loans' || tab === 'enquiries' ? (
               <div className="w-full sm:w-44">
                 <Select
                   options={statusOptions}
@@ -423,7 +441,7 @@ export function AdminPage() {
                   aria-label="Filter by status"
                 />
               </div>
-            )}
+            ) : null}
             <Button variant="outline" size="sm" onClick={() => fetchData()} className="shrink-0">
               <RefreshCw className="h-4 w-4" /> Refresh
             </Button>
@@ -588,6 +606,8 @@ export function AdminPage() {
                 ))
               )}
             </div>
+          ) : tab === 'records' ? (
+            <ClientRecordsPanel loans={loans} users={users} query={query} />
           ) : tab === 'enquiries' ? (
             <div className="space-y-4">
               {filteredEnquiries.length === 0 ? (

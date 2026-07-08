@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Cookie } from 'lucide-react'
 import { Button } from './ui/Button'
+import { EditableText } from '@/components/editable/EditableText'
 import { useToast } from '@/context/ToastContext'
 import { getCookie, setCookie, COOKIE_CONSENT_KEY } from '@/lib/cookies'
+import { COMPANY } from '@/lib/constants'
 
 export function CookieConsent() {
   const { showToast } = useToast()
@@ -33,8 +36,8 @@ export function CookieConsent() {
     setVisible(false)
     showToast(
       choice === 'accepted'
-        ? 'You have accepted cookies. Thank you!'
-        : 'You have declined cookies. Only essential cookies will be used.',
+        ? 'Cookie preferences saved.'
+        : 'Only essential cookies will be used.',
       choice === 'accepted' ? 'success' : 'info',
     )
   }
@@ -57,8 +60,16 @@ export function CookieConsent() {
                 <Cookie className="h-4 w-4 sm:h-5 sm:w-5" />
               </span>
               <p className="min-w-0 break-words text-sm leading-relaxed text-brand-700">
-                We use cookies to keep you signed in and improve your experience. You can accept all
-                cookies or continue with only the essential ones.
+                <EditableText as="span" contentKey="cookie.banner.prefix">
+                  We use essential cookies to keep you signed in and secure our site. Optional cookies are
+                  only used if you accept. See our
+                </EditableText>{' '}
+                <Link to="/privacy" className="font-semibold text-brand-800 underline-offset-2 hover:underline">
+                  Privacy Policy
+                </Link>{' '}
+                <EditableText as="span" contentKey="cookie.banner.suffix">
+                  {`for how we process personal data under Botswana's ${COMPANY.dataProtection.actReference}.`}
+                </EditableText>
               </p>
             </div>
             <div className="flex w-full min-w-0 shrink-0 gap-2 sm:w-auto">
@@ -68,14 +79,14 @@ export function CookieConsent() {
                 className="min-w-0 flex-1 sm:flex-none"
                 onClick={() => handleChoice('declined')}
               >
-                Decline
+                Essential only
               </Button>
               <Button
                 size="sm"
                 className="min-w-0 flex-1 sm:flex-none"
                 onClick={() => handleChoice('accepted')}
               >
-                Accept
+                Accept all
               </Button>
             </div>
           </div>

@@ -37,11 +37,26 @@ export function ContentProvider({ children }: { children: ReactNode }) {
           }
           setContent(map)
         }
-        // Missing table (404) is fine — site uses built-in fallbacks until CMS is set up.
         setLoaded(true)
       })
+
+    const channel = supabase
+      .channel('site-content-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'site_content' }, () => {
+        supabase.from('site_content').select('key,value').then(({ data }) => {
+          if (!data) return
+          const map: Record<string, string> = {}
+          for (const row of data as { key: string; value: string | null }[]) {
+            if (row.value != null) map[row.key] = row.value
+          }
+          setContent(map)
+        })
+      })
+      .subscribe()
+
     return () => {
       active = false
+      supabase.removeChannel(channel)
     }
   }, [])
 

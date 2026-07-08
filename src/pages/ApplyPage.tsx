@@ -8,6 +8,7 @@ import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon'
 import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
@@ -26,7 +27,10 @@ import {
 } from '@/lib/validation'
 import { buildWhatsAppLoanUrl } from '@/lib/whatsapp'
 import { RegulatoryNotice } from '@/components/RegulatoryNotice'
+import { PrivacyConsentField } from '@/components/PrivacyConsentField'
+import { EditableText } from '@/components/editable/EditableText'
 import { formatPula } from '@/lib/format'
+import { normalizeBotswanaPhone } from '@/lib/phone'
 import { getOutstandingBalance } from '@/lib/loans'
 
 type ApplyMode = 'website' | 'whatsapp'
@@ -91,10 +95,11 @@ export function ApplyPage() {
     defaultValues: {
       fullName: profile?.full_name || '',
       email: user?.email || '',
-      phone: profile?.phone || '',
+      phone: normalizeBotswanaPhone(profile?.phone || ''),
       physicalAddress: profile?.physical_address || '',
       idType: 'national_id',
       termMonths: 3,
+      acceptPrivacy: false,
     },
   })
 
@@ -190,7 +195,7 @@ export function ApplyPage() {
         user_id: user.id,
         full_name: sanitizeText(data.fullName),
         email: sanitizeText(data.email).toLowerCase(),
-        phone: sanitizeText(data.phone),
+        phone: normalizeBotswanaPhone(sanitizeText(data.phone)),
         id_number: sanitizeText(data.idNumber),
         id_type: data.idType,
         id_photo_path: filePath,
@@ -355,7 +360,10 @@ export function ApplyPage() {
               mode === 'website' ? 'bg-white text-brand-800 shadow-sm' : 'text-brand-600'
             }`}
           >
-            <Globe className="h-4 w-4" /> Apply via Website
+            <Globe className="h-4 w-4" />{' '}
+            <EditableText as="span" contentKey="apply.mode.website">
+              Apply via Website
+            </EditableText>
           </button>
           <button
             type="button"
@@ -364,7 +372,10 @@ export function ApplyPage() {
               mode === 'whatsapp' ? 'bg-white text-brand-800 shadow-sm' : 'text-brand-600'
             }`}
           >
-            <WhatsAppIcon className="h-4 w-4" /> Apply via WhatsApp
+            <WhatsAppIcon className="h-4 w-4" />{' '}
+            <EditableText as="span" contentKey="apply.mode.whatsapp">
+              Apply via WhatsApp
+            </EditableText>
           </button>
         </div>
 
@@ -394,12 +405,10 @@ export function ApplyPage() {
                 {...register('email')}
                 error={errors.email?.message}
               />
-              <Input
+              <PhoneInput
                 label="Phone"
                 required
-                type="tel"
-                inputMode="tel"
-                hint="Botswana number, 8 digits."
+                hint="Enter your 8-digit mobile number after +267."
                 {...register('phone')}
                 error={errors.phone?.message}
               />
@@ -518,12 +527,10 @@ export function ApplyPage() {
                 {...register('email')}
                 error={errors.email?.message}
               />
-              <Input
+              <PhoneInput
                 label="Phone"
                 required
-                type="tel"
-                inputMode="tel"
-                hint="Botswana number, 8 digits."
+                hint="Enter your 8-digit mobile number after +267."
                 {...register('phone')}
                 error={errors.phone?.message}
               />
@@ -641,6 +648,12 @@ export function ApplyPage() {
                   setValueAs: (v) => (v === '' || v == null ? null : Number(v)),
                 })}
                 error={errors.monthlyIncome?.message}
+              />
+
+              <PrivacyConsentField
+                register={register}
+                error={errors.acceptPrivacy?.message}
+                variant="loan"
               />
 
               <Button type="submit" className="w-full" loading={submitting}>

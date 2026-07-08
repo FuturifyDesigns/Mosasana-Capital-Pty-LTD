@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { COMPANY } from './constants'
 
-const phoneRegex = /^(\+?267)?[0-9]{8}$/
+const phoneRegex = /^[0-9]{8}$/
 const idNumberRegex = /^[0-9]{9,12}$/
 const passportRegex = /^[A-Za-z0-9]{6,15}$/
 
@@ -22,7 +22,7 @@ export const registerSchema = z
     phone: z
       .string()
       .trim()
-      .regex(phoneRegex, 'Enter a valid Botswana phone number (8 digits)'),
+      .regex(phoneRegex, 'Enter a valid 8-digit Botswana mobile number'),
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')
@@ -69,7 +69,7 @@ export const loanRequestSchema = z
       .max(120)
       .regex(/^[a-zA-Z\s'.-]+$/, 'Name contains invalid characters'),
     email: z.string().trim().email('Enter a valid email').max(255),
-    phone: z.string().trim().regex(phoneRegex, 'Enter a valid Botswana phone number'),
+    phone: z.string().trim().regex(phoneRegex, 'Enter a valid 8-digit Botswana mobile number'),
     idType: z.enum(['national_id', 'passport'], {
       errorMap: () => ({ message: 'Select your document type' }),
     }),
@@ -95,6 +95,9 @@ export const loanRequestSchema = z
       .max(1000000)
       .optional()
       .nullable(),
+    acceptPrivacy: z.boolean().refine((val) => val === true, {
+      message: 'You must consent to our Privacy Policy to submit a loan application',
+    }),
   })
   .superRefine((data, ctx) => {
     if (data.idType === 'national_id' && !idNumberRegex.test(data.idNumber)) {
@@ -131,11 +134,14 @@ export const contactSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(phoneRegex, 'Enter a valid phone number')
+    .regex(phoneRegex, 'Enter a valid 8-digit Botswana mobile number')
     .optional()
     .or(z.literal('')),
   subject: z.string().trim().min(3, 'Subject is required').max(200),
   message: z.string().trim().min(10, 'Message must be at least 10 characters').max(2000),
+  acceptPrivacy: z.boolean().refine((val) => val === true, {
+    message: 'You must consent to our Privacy Policy to send an enquiry',
+  }),
 })
 
 export const ALLOWED_ID_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const

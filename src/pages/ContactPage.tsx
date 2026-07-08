@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
-import { CheckCircle, AlertCircle, Mail, Phone, MapPin } from 'lucide-react'
+import { CheckCircle, AlertCircle, MapPin } from 'lucide-react'
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon'
 import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
@@ -14,6 +15,10 @@ import { contactSchema, sanitizeText, type ContactFormData } from '@/lib/validat
 import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import { COMPANY } from '@/lib/constants'
 import { buildWhatsAppContactUrl } from '@/lib/whatsapp'
+import { PrivacyConsentField } from '@/components/PrivacyConsentField'
+import { EditableOfficerCard } from '@/components/editable/EditableOfficerCard'
+import { EditableText } from '@/components/editable/EditableText'
+import { normalizeBotswanaPhone } from '@/lib/phone'
 
 export function ContactPage() {
   const [submitting, setSubmitting] = useState(false)
@@ -28,6 +33,7 @@ export function ContactPage() {
     formState: { errors },
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
+    defaultValues: { acceptPrivacy: false },
   })
 
   const formValues = watch()
@@ -46,7 +52,7 @@ export function ContactPage() {
       const { error: insertError } = await supabase.from('contact_enquiries').insert({
         full_name: sanitizeText(data.fullName),
         email: sanitizeText(data.email).toLowerCase(),
-        phone: data.phone ? sanitizeText(data.phone) : null,
+        phone: data.phone ? normalizeBotswanaPhone(sanitizeText(data.phone)) : null,
         subject: sanitizeText(data.subject),
         message: sanitizeText(data.message),
         status: 'new',
@@ -75,37 +81,19 @@ export function ContactPage() {
         <div className="grid gap-8 lg:grid-cols-5 lg:gap-10">
           <div className="space-y-6 lg:col-span-2">
             <Card>
-              <h3 className="font-semibold text-brand-900">Principal Officer</h3>
-              <p className="mt-1 text-brand-700">{COMPANY.principalOfficer.name}</p>
-              <a
-                href={`tel:${COMPANY.principalOfficer.cell}`}
-                className="mt-3 flex items-center gap-2 text-sm text-brand-600 hover:text-brand-800"
-              >
-                <Phone className="h-4 w-4" /> {COMPANY.principalOfficer.cell}
-              </a>
-              <a
-                href={`mailto:${COMPANY.principalOfficer.email}`}
-                className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-800"
-              >
-                <Mail className="h-4 w-4" /> {COMPANY.principalOfficer.email}
-              </a>
+              <EditableOfficerCard
+                role="Principal Officer"
+                prefix="site.principal"
+                defaults={COMPANY.principalOfficer}
+              />
             </Card>
 
             <Card>
-              <h3 className="font-semibold text-brand-900">Compliance Officer</h3>
-              <p className="mt-1 text-brand-700">{COMPANY.complianceOfficer.name}</p>
-              <a
-                href={`tel:${COMPANY.complianceOfficer.cell}`}
-                className="mt-3 flex items-center gap-2 text-sm text-brand-600 hover:text-brand-800"
-              >
-                <Phone className="h-4 w-4" /> {COMPANY.complianceOfficer.cell}
-              </a>
-              <a
-                href={`mailto:${COMPANY.complianceOfficer.email}`}
-                className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-800"
-              >
-                <Mail className="h-4 w-4" /> {COMPANY.complianceOfficer.email}
-              </a>
+              <EditableOfficerCard
+                role="Compliance Officer"
+                prefix="site.compliance"
+                defaults={COMPANY.complianceOfficer}
+              />
             </Card>
 
             <Card>
@@ -114,7 +102,9 @@ export function ContactPage() {
                 <div>
                   <h3 className="font-semibold text-brand-900">Where we are</h3>
                   <p className="mt-1 text-sm text-brand-600">
-                    Based in {COMPANY.location}, serving clients across {COMPANY.serviceArea}.
+                    <EditableText as="span" multiline contentKey="contact.location.text">
+                      {`Based in ${COMPANY.location}, serving clients across ${COMPANY.serviceArea}.`}
+                    </EditableText>
                   </p>
                 </div>
               </div>
@@ -184,11 +174,9 @@ export function ContactPage() {
                   {...register('email')}
                   error={errors.email?.message}
                 />
-                <Input
+                <PhoneInput
                   label="Phone (optional)"
-                  type="tel"
-                  inputMode="tel"
-                  hint="Botswana number, 8 digits."
+                  hint="Enter your 8-digit mobile number after +267."
                   {...register('phone')}
                   error={errors.phone?.message}
                 />
@@ -206,6 +194,11 @@ export function ContactPage() {
                   hint="Tell us how we can help — at least 10 characters."
                   {...register('message')}
                   error={errors.message?.message}
+                />
+                <PrivacyConsentField
+                  register={register}
+                  error={errors.acceptPrivacy?.message}
+                  variant="contact"
                 />
                 <Button type="submit" className="w-full" loading={submitting}>
                   Send Enquiry

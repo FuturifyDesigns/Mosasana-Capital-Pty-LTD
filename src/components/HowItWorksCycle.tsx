@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { UserPlus, FileText, Wallet, type LucideIcon } from 'lucide-react'
+import { EditableText } from '@/components/editable/EditableText'
 
 interface Step {
   icon: LucideIcon
@@ -38,7 +39,6 @@ export function HowItWorksCycle() {
 
   return (
     <div className="relative grid gap-10 md:grid-cols-3">
-      {/* connector track */}
       <div className="absolute left-0 right-0 top-12 hidden h-1 rounded-full bg-brand-100 md:block">
         <motion.div
           className="h-full rounded-full bg-gradient-to-r from-brand-600 to-brand-400"
@@ -54,7 +54,6 @@ export function HowItWorksCycle() {
         return (
           <div key={step.title} className="relative text-center">
             <div className="relative z-10 mx-auto mb-5 h-24 w-24">
-              {/* progress ring — track always visible, fills while step is active */}
               <svg className="absolute inset-0 h-24 w-24 -rotate-90" viewBox="0 0 96 96">
                 <circle cx="48" cy="48" r={R} fill="none" stroke="#dceef8" strokeWidth="4" />
                 {isActive && (
@@ -75,9 +74,7 @@ export function HowItWorksCycle() {
                 )}
               </svg>
               <motion.div
-                animate={{
-                  scale: isActive ? 1.08 : 1,
-                }}
+                animate={{ scale: isActive ? 1.08 : 1 }}
                 transition={{ type: 'spring', stiffness: 260, damping: 20 }}
                 className={`absolute inset-[14px] flex items-center justify-center rounded-2xl transition-colors duration-500 ${
                   isActive
@@ -95,14 +92,23 @@ export function HowItWorksCycle() {
                 {i + 1}
               </span>
             </div>
-            <h3
+            <EditableText
+              as="h3"
+              contentKey={`home.how.step.${i}.title`}
               className={`text-lg font-semibold transition-colors duration-500 ${
                 isActive ? 'text-brand-900' : 'text-brand-500'
               }`}
             >
               {step.title}
-            </h3>
-            <p className="mx-auto mt-2 max-w-xs text-sm text-brand-600">{step.description}</p>
+            </EditableText>
+            <EditableText
+              as="p"
+              multiline
+              contentKey={`home.how.step.${i}.desc`}
+              className="mx-auto mt-2 max-w-xs text-sm text-brand-600"
+            >
+              {step.description}
+            </EditableText>
           </div>
         )
       })}

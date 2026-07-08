@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, HandHeart } from 'lucide-react'
 import { Button } from './ui/Button'
 import { WhatsAppIcon } from './icons/WhatsAppIcon'
+import { EditableText } from '@/components/editable/EditableText'
 import { buildWhatsAppContactUrl } from '@/lib/whatsapp'
 import { COMPANY } from '@/lib/constants'
 
@@ -69,10 +70,15 @@ export function ExitIntentPopup() {
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-500 text-white shadow-lg shadow-brand-600/30">
               <HandHeart className="h-8 w-8" />
             </div>
-            <h2 className="mt-5 font-display text-2xl font-bold text-brand-900">Leaving so soon?</h2>
+            <h2 className="mt-5 font-display text-2xl font-bold text-brand-900">
+              <EditableText as="span" contentKey="popup.exit.title">
+                Leaving so soon?
+              </EditableText>
+            </h2>
             <p className="mt-3 leading-relaxed text-brand-600">
-              Need short-term relief for a financial shortfall? {COMPANY.shortName} makes it quick and
-              easy — apply online or chat with us on WhatsApp before you go.
+              <EditableText as="span" multiline contentKey="popup.exit.body">
+                {`Need short-term relief for a financial shortfall? ${COMPANY.shortName} makes it quick and easy — apply online or chat with us on WhatsApp before you go.`}
+              </EditableText>
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Link to="/account" className="flex-1" onClick={() => setOpen(false)}>

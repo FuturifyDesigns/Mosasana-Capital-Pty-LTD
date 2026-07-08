@@ -4,10 +4,9 @@ import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal'
 import { BotswanaFlag } from '@/components/icons/BotswanaFlag'
 import { EditableText } from '@/components/editable/EditableText'
 import { EditableImage } from '@/components/editable/EditableImage'
+import { EditableOfficerCard } from '@/components/editable/EditableOfficerCard'
 import { COMPANY } from '@/lib/constants'
 import {
-  Mail,
-  Phone,
   User,
   ShieldCheck,
   Eye,
@@ -46,9 +45,9 @@ const storyTree: TreeNode[] = [
   },
   {
     icon: BadgeCheck,
-    title: 'Licensed in 2026',
+    title: 'NBFIRA licensed',
     description:
-      'Licensed by the Non Bank Financial Institutions Regulatory Authority (NBFIRA) and held to high customer and ethical standards.',
+      `Licensed by the Non Bank Financial Institutions Regulatory Authority (NBFIRA) — ${COMPANY.nbfiraLicense} — and held to high customer and ethical standards.`,
   },
   {
     icon: MapPin,
@@ -92,7 +91,7 @@ export function AboutPage() {
     <>
       <PageHero
         title="About Us"
-        subtitle="A NBFIRA-licensed Botswana lender providing short-term relief for daily financial shortfalls."
+        subtitle={`${COMPANY.nbfiraLicense} · Short-term relief for daily financial shortfalls across Botswana.`}
         titleKey="about.hero.title"
         subtitleKey="about.hero.subtitle"
       />
@@ -118,7 +117,7 @@ export function AboutPage() {
               contentKey="about.who.p1"
               className="mt-4 leading-relaxed text-brand-600"
             >
-              {`${COMPANY.name} was licensed by the Non Bank Financial Institutions Regulatory Authority (NBFIRA) in 2026. Based in Gaborone, we service clients across the breadth and width of Botswana.`}
+              {`${COMPANY.name} is licensed by the Non Bank Financial Institutions Regulatory Authority (NBFIRA) — ${COMPANY.nbfiraLicense}. Based in Gaborone, we service clients across the breadth and width of Botswana.`}
             </EditableText>
             <EditableText
               as="p"
@@ -367,34 +366,20 @@ export function AboutPage() {
           </Reveal>
           <RevealGroup className="grid gap-6 md:grid-cols-2">
             {[
-              { role: 'Principal Officer', ...COMPANY.principalOfficer },
-              { role: 'Compliance Officer', ...COMPANY.complianceOfficer },
+              { role: 'Principal Officer', prefix: 'site.principal', defaults: COMPANY.principalOfficer },
+              { role: 'Compliance Officer', prefix: 'site.compliance', defaults: COMPANY.complianceOfficer },
             ].map((officer) => (
-              <RevealItem key={officer.email}>
+              <RevealItem key={officer.prefix}>
                 <Card hover className="group h-full">
                   <div className="flex items-start gap-4">
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-brand-400 text-white shadow-lg shadow-brand-600/25 transition-transform duration-500 group-hover:scale-110">
                       <User className="h-7 w-7" />
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-500">
-                        {officer.role}
-                      </h3>
-                      <p className="mt-0.5 text-lg font-semibold text-brand-900">{officer.name}</p>
-                      <a
-                        href={`tel:${officer.cell.replace(/\s/g, '')}`}
-                        className="mt-2 flex items-center gap-1.5 text-sm text-brand-600 transition hover:text-brand-800"
-                      >
-                        <Phone className="h-3.5 w-3.5 shrink-0" /> {officer.cell}
-                      </a>
-                      <a
-                        href={`mailto:${officer.email}`}
-                        className="flex items-center gap-1.5 text-sm text-brand-600 transition hover:text-brand-800"
-                      >
-                        <Mail className="h-3.5 w-3.5 shrink-0" />{' '}
-                        <span className="truncate">{officer.email}</span>
-                      </a>
-                    </div>
+                    <EditableOfficerCard
+                      role={officer.role}
+                      prefix={officer.prefix}
+                      defaults={officer.defaults}
+                    />
                   </div>
                 </Card>
               </RevealItem>

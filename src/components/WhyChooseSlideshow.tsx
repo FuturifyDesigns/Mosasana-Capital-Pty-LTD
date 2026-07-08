@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { EditableImage } from '@/components/editable/EditableImage'
+import { EditableText } from '@/components/editable/EditableText'
 
 const BASE = import.meta.env.BASE_URL
 
 const slides = [
-  { src: `${BASE}why-fast.png`, alt: 'Fast processing — quick review and turnaround' },
-  { src: `${BASE}why-secure.png`, alt: 'Secure & trusted — your data is protected' },
-  { src: `${BASE}why-client.png`, alt: 'Client-focused — solutions delivered with care' },
-  { src: `${BASE}why-flexible.png`, alt: 'Flexible solutions — short-term cash loans' },
+  { key: 'home.why.slide.0', src: `${BASE}why-fast.png`, alt: 'Fast processing — quick review and turnaround' },
+  { key: 'home.why.slide.1', src: `${BASE}why-secure.png`, alt: 'Secure & trusted — your data is protected' },
+  { key: 'home.why.slide.2', src: `${BASE}why-client.png`, alt: 'Client-focused — solutions delivered with care' },
+  { key: 'home.why.slide.3', src: `${BASE}why-flexible.png`, alt: 'Flexible solutions — short-term cash loans' },
 ]
 
 const AUTOPLAY_MS = 4500
@@ -27,6 +29,8 @@ export function WhyChooseSlideshow() {
     return () => clearInterval(t)
   }, [paused, index])
 
+  const slide = slides[index]
+
   return (
     <div
       className="relative mx-auto max-w-4xl"
@@ -35,19 +39,24 @@ export function WhyChooseSlideshow() {
     >
       <div className="relative aspect-[16/10] overflow-hidden rounded-3xl border border-white/60 bg-brand-50 shadow-2xl sm:aspect-[16/9]">
         <AnimatePresence mode="wait">
-          <motion.img
+          <motion.div
             key={index}
-            src={slides[index].src}
-            alt={slides[index].alt}
             initial={{ opacity: 0, scale: 1.04 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.99 }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+            className="absolute inset-0"
+          >
+            <EditableImage
+              contentKey={slide.key}
+              src={slide.src}
+              alt={slide.alt}
+              className="absolute inset-0 h-full w-full object-cover"
+              eager={index === 0}
+            />
+          </motion.div>
         </AnimatePresence>
 
-        {/* autoplay progress bar */}
         <div className="absolute inset-x-0 bottom-0 h-1 bg-white/30">
           {!paused && (
             <motion.div
@@ -60,7 +69,6 @@ export function WhyChooseSlideshow() {
           )}
         </div>
 
-        {/* arrows */}
         <button
           type="button"
           onClick={() => go(-1)}
@@ -79,11 +87,18 @@ export function WhyChooseSlideshow() {
         </button>
       </div>
 
-      {/* dots */}
+      <EditableText
+        as="p"
+        contentKey={`${slide.key}.caption`}
+        className="mt-3 text-center text-sm text-brand-600"
+      >
+        {slide.alt}
+      </EditableText>
+
       <div className="mt-5 flex justify-center gap-2.5">
         {slides.map((s, i) => (
           <button
-            key={s.src}
+            key={s.key}
             type="button"
             onClick={() => setIndex(i)}
             aria-label={`Go to slide ${i + 1}`}
