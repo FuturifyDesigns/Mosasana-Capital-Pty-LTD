@@ -12,6 +12,7 @@ import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
+import { useConfirm } from '@/context/ConfirmContext'
 import { supabase, type LoanRequest } from '@/lib/supabase'
 import { ACTIVE_LOAN_STATUSES, LOAN_TERMS } from '@/lib/constants'
 import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
@@ -45,6 +46,7 @@ const termOptions = LOAN_TERMS.map((t) => ({ value: String(t.value), label: t.la
 
 export function ApplyPage() {
   const { user, profile } = useAuth()
+  const { confirm } = useConfirm()
   const [mode, setMode] = useState<ApplyMode>('website')
   const [idFile, setIdFile] = useState<File | null>(null)
   const [idPreview, setIdPreview] = useState<string | null>(null)
@@ -99,7 +101,9 @@ export function ApplyPage() {
   const isPassport = formValues.idType === 'passport'
   const isOtherEmployment = formValues.employmentStatus === 'other'
 
-  const confirmHighBorrowingRisk = (data: Partial<LoanRequestFormData>): boolean => {
+  const confirmHighBorrowingRisk = async (
+    data: Partial<LoanRequestFormData>,
+  ): Promise<boolean> => {
     const income =
       data.monthlyIncome == null || data.monthlyIncome === ('' as unknown as number)
         ? null
@@ -112,9 +116,14 @@ export function ApplyPage() {
     if (!income || !amount || !Number.isFinite(income) || !Number.isFinite(amount)) return true
     if (income <= 0 || amount <= income) return true
 
-    return window.confirm(
-      'Advisory: You are requesting more than your monthly income. Borrowing more than you can comfortably afford may lead to serious financial strain. Are you sure you want to continue?',
-    )
+    return confirm({
+      title: 'Borrowing advisory',
+      message:
+        'You are requesting more than your monthly income. Borrowing more than you can comfortably afford may lead to serious financial strain. Are you sure you want to continue?',
+      confirmLabel: 'Continue anyway',
+      cancelLabel: 'Go back',
+      tone: 'warning',
+    })
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,7 +151,7 @@ export function ApplyPage() {
       return
     }
 
-    if (!confirmHighBorrowingRisk(data)) {
+    if (!(await confirmHighBorrowingRisk(data))) {
       return
     }
 
@@ -463,22 +472,19 @@ export function ApplyPage() {
                   error={errors.employmentOther?.message}
                 />
               )}
-              <a
-                href={buildWhatsAppLoanUrl(formValues)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block"
-                onClick={(e) => {
-                  if (!confirmHighBorrowingRisk(formValues)) {
-                    e.preventDefault()
-                  }
+              <Button
+                variant="whatsapp"
+                className="w-full"
+                type="button"
+                onClick={async () => {
+                  const ok = await confirmHighBorrowingRisk(formValues)
+                  if (!ok) return
+                  window.open(buildWhatsAppLoanUrl(formValues), '_blank', 'noopener,noreferrer')
                 }}
               >
-                <Button variant="whatsapp" className="w-full" type="button">
-                  <WhatsAppIcon className="h-5 w-5" />
-                  Continue on WhatsApp
-                </Button>
-              </a>
+                <WhatsAppIcon className="h-5 w-5" />
+                Continue on WhatsApp
+              </Button>
             </form>
           </Card>
         ) : (

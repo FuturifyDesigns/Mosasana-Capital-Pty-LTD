@@ -30,6 +30,7 @@ import { getRepaymentReminder } from '@/lib/loans'
 import { formatPula } from '@/lib/format'
 import { RepaymentEditor } from '@/components/admin/RepaymentEditor'
 import { useToast } from '@/context/ToastContext'
+import { useConfirm } from '@/context/ConfirmContext'
 
 type Tab = 'loans' | 'enquiries' | 'users'
 
@@ -58,6 +59,7 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export function AdminPage() {
   const { showToast } = useToast()
+  const { confirm } = useConfirm()
   const [tab, setTab] = useState<Tab>('loans')
   const [loans, setLoans] = useState<LoanRequest[]>([])
   const [enquiries, setEnquiries] = useState<ContactEnquiry[]>([])
@@ -160,7 +162,17 @@ export function AdminPage() {
 
   const banUser = async (u: AdminUser) => {
     const next = !u.banned
-    if (next && !window.confirm(`Ban ${u.full_name || u.email}? They won't be able to sign in.`)) return
+    if (next) {
+      const ok = await confirm({
+        title: 'Ban user?',
+        message: `Ban ${u.full_name || u.email}? They won't be able to sign in until you unban them.`,
+        confirmLabel: 'Ban user',
+        cancelLabel: 'Cancel',
+        tone: 'danger',
+        icon: Ban,
+      })
+      if (!ok) return
+    }
     setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, banned: next } : x)))
     const { error } = await supabase.rpc('admin_set_ban', { target: u.id, ban: next })
     if (error) {
@@ -172,12 +184,14 @@ export function AdminPage() {
   }
 
   const deleteUser = async (u: AdminUser) => {
-    if (
-      !window.confirm(
-        `Permanently delete ${u.full_name || u.email}? This removes their account and cannot be undone.`,
-      )
-    )
-      return
+    const ok = await confirm({
+      title: 'Delete user permanently?',
+      message: `Permanently delete ${u.full_name || u.email}? This removes their account and cannot be undone.`,
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      tone: 'danger',
+    })
+    if (!ok) return
     const { error } = await supabase.rpc('admin_delete_user', { target: u.id })
     if (error) {
       showToast(error.message || 'Could not delete user.', 'error')
