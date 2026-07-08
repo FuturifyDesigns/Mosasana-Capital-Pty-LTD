@@ -2,7 +2,8 @@
 
 Professional cash loan services website built with **React**, **Supabase** (free tier), and **GitHub Pages**.
 
-**Live site:** [futurifydesigns.github.io/Mosasana-Capital-Pty-LTD](https://futurifydesigns.github.io/Mosasana-Capital-Pty-LTD/)
+**Live site:** [mosasanacapital.com](https://mosasanacapital.com)  
+**GitHub Pages fallback:** [futurifydesigns.github.io/Mosasana-Capital-Pty-LTD](https://futurifydesigns.github.io/Mosasana-Capital-Pty-LTD/)
 
 Built by [Futurify Designs](https://futurifydesigns.com)
 
@@ -70,7 +71,40 @@ WHERE id = (SELECT id FROM auth.users WHERE email = 'tnkile@mosasanacapital.com'
 2. Add repository secret `VITE_SUPABASE_ANON_KEY` with your Supabase anon key
 3. Push to `main` — the workflow deploys automatically
 
-### 6. Run locally
+### 6. Custom domain (mosasanacapital.com)
+
+The site is configured to serve at **https://mosasanacapital.com** via GitHub Pages (`public/CNAME`).
+
+#### A. Namecheap DNS
+
+In Namecheap → **Domain List** → **Manage** → **Advanced DNS**, add:
+
+| Type | Host | Value | TTL |
+|------|------|-------|-----|
+| A Record | `@` | `185.199.108.153` | Automatic |
+| A Record | `@` | `185.199.109.153` | Automatic |
+| A Record | `@` | `185.199.110.153` | Automatic |
+| A Record | `@` | `185.199.111.153` | Automatic |
+| CNAME | `www` | `futurifydesigns.github.io` | Automatic |
+
+Remove any conflicting parking-page or URL-redirect records for `@` or `www`.
+
+DNS can take up to 24–48 hours to propagate (often much faster).
+
+#### B. GitHub Pages custom domain
+
+1. Repo **Settings** → **Pages** → **Custom domain** → enter `mosasanacapital.com`
+2. Wait for DNS check to pass, then enable **Enforce HTTPS**
+3. Optionally add `www.mosasanacapital.com` as a second domain (redirects to apex)
+
+#### C. Supabase auth redirects
+
+In [Supabase Dashboard](https://supabase.com/dashboard/project/pwcootcdrbnadsbwduxi/auth/url-configuration), add:
+
+- **Site URL:** `https://mosasanacapital.com`
+- **Redirect URLs:** `https://mosasanacapital.com/**` and `https://www.mosasanacapital.com/**`
+
+### 7. Run locally
 
 ```bash
 npm run dev

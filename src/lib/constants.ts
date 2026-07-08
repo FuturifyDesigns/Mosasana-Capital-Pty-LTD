@@ -1,3 +1,5 @@
+export const SITE_URL = 'https://mosasanacapital.com'
+
 // The anon key is a public, RLS-protected key and is safe to ship in the client
 // bundle. Fallback defaults ensure the app never white-screens if a build-time
 // environment variable is missing (e.g. a GitHub Actions secret is not set).
