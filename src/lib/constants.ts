@@ -58,7 +58,7 @@ export type LoanStatus = (typeof LOAN_STATUSES)[number]
 export const ENQUIRY_STATUSES = ['new', 'read', 'responded', 'closed'] as const
 export type EnquiryStatus = (typeof ENQUIRY_STATUSES)[number]
 
-/** Default monthly interest rate (%) applied when admin sets up repayment terms. */
+/** Default monthly interest (%) suggested in admin UI when no rate is saved yet. 0% is valid when saved. */
 export const DEFAULT_MONTHLY_INTEREST_RATE = 10
 
 // Repayment periods clients can choose (in months)

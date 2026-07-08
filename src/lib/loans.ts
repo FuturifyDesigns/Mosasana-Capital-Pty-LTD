@@ -11,7 +11,38 @@ export function addMonths(date: Date, months: number): Date {
 }
 
 /**
+ * Stored rate on the loan, or a UI suggestion when admin has not saved terms yet.
+ * Explicit 0% is preserved — never treated as “use default”.
+ */
+export function resolveInterestRate(
+  stored: number | null | undefined,
+  suggestionIfUnset: number = DEFAULT_MONTHLY_INTEREST_RATE,
+): number {
+  if (stored !== null && stored !== undefined && Number.isFinite(stored)) {
+    return Math.max(0, stored)
+  }
+  return suggestionIfUnset
+}
+
+/** Parse interest % from input; returns null when empty/invalid. 0 is valid. */
+export function parseInterestRateInput(value: string): number | null {
+  const trimmed = value.trim()
+  if (trimmed === '') return null
+  const n = Number(trimmed)
+  if (!Number.isFinite(n) || n < 0 || n > 100) return null
+  return n
+}
+
+/** Statuses where repayments can be tracked and payments recorded. */
+export const REPAYABLE_LOAN_STATUSES = ['approved', 'disbursed'] as const
+
+export function canRecordPayments(loan: LoanRequest): boolean {
+  return (REPAYABLE_LOAN_STATUSES as unknown as string[]).includes(loan.status)
+}
+
+/**
  * Simple interest: principal + (principal × monthly rate × term months).
+ * monthlyRatePercent of 0 means no interest — total equals principal.
  */
 export function calculateTotalRepayable(
   principal: number,
@@ -20,7 +51,7 @@ export function calculateTotalRepayable(
 ): number {
   const p = toNumber(principal)
   const term = Math.max(termMonths, 1)
-  const rate = monthlyRatePercent / 100
+  const rate = Math.max(0, monthlyRatePercent) / 100
   const interest = p * rate * term
   return Math.round((p + interest) * 100) / 100
 }
@@ -50,15 +81,9 @@ export function getOutstandingBalance(loan: LoanRequest): number | null {
   return Math.max(total - toNumber(loan.amount_paid), 0)
 }
 
-export function getEstimatedTotalRepayable(
-  loan: LoanRequest,
-  monthlyRatePercent: number = loan.interest_rate ?? DEFAULT_MONTHLY_INTEREST_RATE,
-): number {
-  return calculateTotalRepayable(
-    toNumber(loan.loan_amount),
-    loan.term_months ?? 1,
-    monthlyRatePercent,
-  )
+export function getEstimatedTotalRepayable(loan: LoanRequest): number {
+  const rate = resolveInterestRate(loan.interest_rate)
+  return calculateTotalRepayable(toNumber(loan.loan_amount), loan.term_months ?? 1, rate)
 }
 
 export function formatDueDate(date: Date | string | null): string {

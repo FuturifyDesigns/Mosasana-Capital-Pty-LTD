@@ -7,6 +7,7 @@ interface AuthContextValue {
   user: User | null
   profile: Profile | null
   isAdmin: boolean
+  isBanned: boolean
   loading: boolean
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
@@ -75,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       profile,
       isAdmin: profile?.role === 'admin',
+      isBanned: profile?.banned === true,
       loading,
       signOut,
       refreshProfile,

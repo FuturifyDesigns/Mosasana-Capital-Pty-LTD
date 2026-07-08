@@ -54,6 +54,21 @@ export function LoginPage() {
       return
     }
 
+    const { data: authUser } = await supabase.auth.getUser()
+    if (authUser.user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('banned, role')
+        .eq('id', authUser.user.id)
+        .single()
+      if (profile?.banned) {
+        await supabase.auth.signOut()
+        setError('Your account has been suspended. Please contact support.')
+        setLoading(false)
+        return
+      }
+    }
+
     navigate(from, { replace: true })
   }
 

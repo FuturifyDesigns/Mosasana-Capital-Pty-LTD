@@ -385,3 +385,116 @@ BEGIN
 END $$;
 
 NOTIFY pgrst, 'reload schema';
+
+-- ============================================================
+-- 10. Hardening: 0% interest, payment integrity, edge cases
+-- ============================================================
+
+ALTER TABLE public.loan_requests DROP CONSTRAINT IF EXISTS loan_requests_interest_rate_check;
+ALTER TABLE public.loan_requests
+  ADD CONSTRAINT loan_requests_interest_rate_check
+  CHECK (interest_rate IS NULL OR (interest_rate >= 0 AND interest_rate <= 100));
+
+CREATE OR REPLACE FUNCTION public.protect_amount_paid()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF TG_OP = 'UPDATE' AND NEW.amount_paid IS DISTINCT FROM OLD.amount_paid THEN
+    NEW.amount_paid := COALESCE(
+      (SELECT SUM(amount) FROM public.loan_payments WHERE loan_id = NEW.id),
+      0
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS loan_requests_protect_amount_paid ON public.loan_requests;
+CREATE TRIGGER loan_requests_protect_amount_paid
+  BEFORE UPDATE ON public.loan_requests
+  FOR EACH ROW EXECUTE FUNCTION public.protect_amount_paid();
+
+CREATE OR REPLACE FUNCTION public.validate_loan_payment()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  loan_row public.loan_requests%ROWTYPE;
+  outstanding NUMERIC;
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
+  SELECT * INTO loan_row FROM public.loan_requests WHERE id = NEW.loan_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Loan not found';
+  END IF;
+
+  IF loan_row.status NOT IN ('approved', 'disbursed') THEN
+    RAISE EXCEPTION 'Payments can only be recorded on approved or disbursed loans';
+  END IF;
+
+  IF loan_row.total_repayable IS NULL OR loan_row.total_repayable <= 0 THEN
+    RAISE EXCEPTION 'Set total repayable before recording payments';
+  END IF;
+
+  outstanding := loan_row.total_repayable - COALESCE(loan_row.amount_paid, 0);
+  IF outstanding <= 0 THEN
+    RAISE EXCEPTION 'Loan is already fully repaid';
+  END IF;
+
+  IF NEW.amount > outstanding THEN
+    RAISE EXCEPTION 'Payment exceeds outstanding balance of %', outstanding;
+  END IF;
+
+  IF NEW.amount <= 0 THEN
+    RAISE EXCEPTION 'Payment amount must be greater than zero';
+  END IF;
+
+  NEW.notes := LEFT(TRIM(COALESCE(NEW.notes, '')), 500);
+  IF NEW.notes = '' THEN
+    NEW.notes := NULL;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS loan_payments_validate ON public.loan_payments;
+CREATE TRIGGER loan_payments_validate
+  BEFORE INSERT ON public.loan_payments
+  FOR EACH ROW EXECUTE FUNCTION public.validate_loan_payment();
+
+CREATE OR REPLACE FUNCTION public.record_loan_payment(
+  p_loan_id UUID,
+  p_amount NUMERIC,
+  p_notes TEXT DEFAULT NULL
+)
+RETURNS public.loan_payments
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  row public.loan_payments;
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
+  INSERT INTO public.loan_payments (loan_id, amount, notes, recorded_by)
+  VALUES (p_loan_id, p_amount, p_notes, auth.uid())
+  RETURNING * INTO row;
+
+  RETURN row;
+END;
+$$;
+
+DROP POLICY IF EXISTS "Users cannot delete loan requests" ON public.loan_requests;
+CREATE POLICY "Users cannot delete loan requests"
+  ON public.loan_requests FOR DELETE
+  USING (public.is_admin());
+
+DROP POLICY IF EXISTS "No direct notification inserts" ON public.notifications;
+CREATE POLICY "No direct notification inserts"
+  ON public.notifications FOR INSERT
+  WITH CHECK (false);
+
+NOTIFY pgrst, 'reload schema';

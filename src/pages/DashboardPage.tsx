@@ -379,6 +379,9 @@ function RepaymentSummary({
             <CalendarClock className="h-3.5 w-3.5" /> Due {formatDueDate(loan.due_date)}
           </p>
         )}
+        {loan.interest_rate === 0 && (
+          <p className="mt-1 text-xs text-brand-500">0% interest — principal only</p>
+        )}
       </div>
 
       {payments.length > 0 && (

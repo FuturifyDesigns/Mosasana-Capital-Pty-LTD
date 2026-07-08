@@ -163,7 +163,7 @@ export function ApplyPage() {
         id_type: data.idType,
         id_photo_path: filePath,
         physical_address: sanitizeText(data.physicalAddress),
-        loan_amount: data.loanAmount,
+        loan_amount: Math.round(data.loanAmount),
         loan_purpose: sanitizeText(data.loanPurpose),
         term_months: data.termMonths,
         employment_status:

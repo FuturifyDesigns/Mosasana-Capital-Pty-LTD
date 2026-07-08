@@ -74,7 +74,8 @@ export const loanRequestSchema = z
     loanAmount: z
       .number({ invalid_type_error: 'Enter a valid amount' })
       .min(500, 'Minimum loan amount is P500')
-      .max(50000, 'Maximum loan amount is P50,000'),
+      .max(50000, 'Maximum loan amount is P50,000')
+      .refine((v) => Number.isInteger(v), 'Enter a whole number (no decimals)'),
     loanPurpose: z.string().trim().min(5, 'Describe the purpose of the loan').max(500),
     termMonths: z
       .number({ invalid_type_error: 'Select a repayment period' })
