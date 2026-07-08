@@ -401,7 +401,20 @@ function RepaymentSummary({
                 key={p.id}
                 className="flex items-center justify-between rounded-lg bg-brand-50/80 px-3 py-2 text-sm"
               >
-                <span className="font-medium text-brand-900">{formatPula(p.amount)}</span>
+                <div>
+                  <span className="font-medium text-brand-900">{formatPula(p.amount)}</span>
+                  {(p.interest_rate_snapshot != null || p.total_repayable_snapshot != null) && (
+                    <p className="text-[11px] text-brand-500">
+                      Terms at payment:
+                      {p.interest_rate_snapshot != null
+                        ? ` ${p.interest_rate_snapshot}% interest`
+                        : ' interest N/A'}
+                      {p.total_repayable_snapshot != null
+                        ? ` · total ${formatPula(p.total_repayable_snapshot)}`
+                        : ''}
+                    </p>
+                  )}
+                </div>
                 <span className="text-xs text-brand-400">
                   {new Date(p.created_at).toLocaleDateString('en-GB', {
                     day: 'numeric',

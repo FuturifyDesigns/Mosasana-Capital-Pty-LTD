@@ -58,6 +58,8 @@ export interface LoanPayment {
   amount: number
   notes: string | null
   recorded_by: string | null
+  interest_rate_snapshot: number | null
+  total_repayable_snapshot: number | null
   created_at: string
 }
 

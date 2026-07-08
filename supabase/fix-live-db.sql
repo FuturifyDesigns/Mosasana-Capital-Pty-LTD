@@ -195,6 +195,10 @@ CREATE TABLE IF NOT EXISTS public.loan_payments (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE public.loan_payments
+  ADD COLUMN IF NOT EXISTS interest_rate_snapshot NUMERIC(5,2),
+  ADD COLUMN IF NOT EXISTS total_repayable_snapshot NUMERIC(12,2);
+
 CREATE INDEX IF NOT EXISTS idx_loan_payments_loan_id ON public.loan_payments(loan_id);
 
 ALTER TABLE public.loan_payments ENABLE ROW LEVEL SECURITY;
@@ -450,6 +454,9 @@ BEGIN
   IF NEW.amount <= 0 THEN
     RAISE EXCEPTION 'Payment amount must be greater than zero';
   END IF;
+
+  NEW.interest_rate_snapshot := loan_row.interest_rate;
+  NEW.total_repayable_snapshot := loan_row.total_repayable;
 
   NEW.notes := LEFT(TRIM(COALESCE(NEW.notes, '')), 500);
   IF NEW.notes = '' THEN

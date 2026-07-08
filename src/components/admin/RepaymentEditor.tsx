@@ -70,7 +70,6 @@ export function RepaymentEditor({
   })
   const [paymentAmount, setPaymentAmount] = useState('')
   const [paymentNotes, setPaymentNotes] = useState('')
-  const [additionalFee, setAdditionalFee] = useState('')
   const [savingTerms, setSavingTerms] = useState(false)
   const [recording, setRecording] = useState(false)
 
@@ -114,20 +113,6 @@ export function RepaymentEditor({
       loan.total_repayable != null ? String(loan.total_repayable) : String(estimatedTotal)
     return total !== expectedTotal || rate !== savedRate || due !== savedDue
   }, [total, rate, due, loan, estimatedTotal])
-
-  const addAdditionalFee = () => {
-    const fee = Number(additionalFee)
-    if (!fee || fee <= 0 || !Number.isFinite(fee)) {
-      showToast('Enter a valid additional interest or late fee amount.', 'error')
-      return
-    }
-    const base = totalNum ?? savedTotal ?? previewTotal
-    const newTotal = Math.round((base + fee) * 100) / 100
-    setTotal(String(newTotal))
-    setTotalEdited(true)
-    setAdditionalFee('')
-    showToast(`Added ${formatPula(fee)}. New total repayable: ${formatPula(newTotal)}.`, 'info')
-  }
 
   const autoTotalFromRate = (parsedRate: number): number => {
     // If payments already exist, applying a new rate should add extra charges to the current total.
@@ -304,25 +289,6 @@ export function RepaymentEditor({
           {savingTerms ? 'Saving…' : 'Save terms'}
         </Button>
       </div>
-      {hasPayments && (
-        <div className="mt-3 flex flex-wrap items-end gap-2 border-t border-brand-100 pt-3">
-          <label className="flex-1 text-xs font-medium text-brand-600">
-            Additional interest / late fee (P)
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={additionalFee}
-              onChange={(e) => setAdditionalFee(e.target.value)}
-              placeholder="e.g. 500"
-              className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
-            />
-          </label>
-          <Button type="button" variant="outline" size="sm" onClick={addAdditionalFee} className="shrink-0">
-            Add to total
-          </Button>
-        </div>
-      )}
     </div>
   )
 
@@ -444,6 +410,15 @@ function PaymentHistoryList({ payments }: { payments: LoanPayment[] }) {
             <div>
               <span className="font-semibold text-brand-900">{formatPula(p.amount)}</span>
               {p.notes && <span className="ml-2 text-brand-500">— {p.notes}</span>}
+              {(p.interest_rate_snapshot != null || p.total_repayable_snapshot != null) && (
+                <p className="text-[11px] text-brand-500">
+                  Terms at payment:
+                  {p.interest_rate_snapshot != null ? ` ${p.interest_rate_snapshot}% interest` : ' interest N/A'}
+                  {p.total_repayable_snapshot != null
+                    ? ` · total ${formatPula(p.total_repayable_snapshot)}`
+                    : ''}
+                </p>
+              )}
             </div>
             <span className="text-xs text-brand-400">
               {new Date(p.created_at).toLocaleDateString('en-GB', {
