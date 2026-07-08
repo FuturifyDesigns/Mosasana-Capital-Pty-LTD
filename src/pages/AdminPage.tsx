@@ -81,12 +81,37 @@ export function AdminPage() {
       supabase.rpc('admin_list_users'),
       supabase.from('loan_reminder_log').select('loan_id, kind, created_at'),
     ])
-    setLoans((loansRes.data as LoanRequest[]) || [])
+
+    const loansData = (loansRes.data as LoanRequest[]) || []
+    setLoans(loansData)
     setEnquiries((enquiriesRes.data as ContactEnquiry[]) || [])
-    setUsers((usersRes.data as AdminUser[]) || [])
     setReminderLog((remindersRes.data as ReminderLogRow[]) || [])
+
+    if (usersRes.error) {
+      // RPC not deployed yet — fall back to profiles (no emails until SQL is run)
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+      setUsers(
+        ((profiles as AdminUser[]) || []).map((p) => ({
+          ...p,
+          email: p.email ?? '—',
+          loan_count: loansData.filter((l) => l.user_id === p.id).length,
+          active_loan_count: loansData.filter(
+            (l) => l.user_id === p.id && !['rejected', 'paid'].includes(l.status),
+          ).length,
+        })),
+      )
+      if (usersRes.error.code === 'PGRST202') {
+        showToast('Run supabase/fix-live-db.sql in Supabase to enable full user management.', 'info')
+      }
+    } else {
+      setUsers((usersRes.data as AdminUser[]) || [])
+    }
+
     setLoading(false)
-  }, [])
+  }, [showToast])
 
   useEffect(() => {
     fetchData()

@@ -155,13 +155,10 @@ VALUES (
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Storage policies
-CREATE POLICY "Users can upload own ID documents"
+CREATE POLICY "Authenticated can upload ID documents"
   ON storage.objects FOR INSERT
   TO authenticated
-  WITH CHECK (
-    bucket_id = 'id-documents'
-    AND (storage.foldername(name))[1] = auth.uid()::text
-  );
+  WITH CHECK (bucket_id = 'id-documents');
 
 CREATE POLICY "Admins can read ID documents"
   ON storage.objects FOR SELECT

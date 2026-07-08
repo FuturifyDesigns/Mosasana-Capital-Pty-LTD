@@ -77,21 +77,88 @@ DROP POLICY IF EXISTS "Authenticated can upload ID documents" ON storage.objects
 DROP POLICY IF EXISTS "Users can upload own ID documents" ON storage.objects;
 DROP POLICY IF EXISTS "Admins can read ID documents" ON storage.objects;
 
--- Users upload into a folder named with their own user id: {user_id}/{filename}
-CREATE POLICY "Users can upload own ID documents"
+-- Users upload ID documents (any authenticated user)
+CREATE POLICY "Authenticated can upload ID documents"
   ON storage.objects FOR INSERT
   TO authenticated
-  WITH CHECK (
-    bucket_id = 'id-documents'
-    AND (storage.foldername(name))[1] = auth.uid()::text
-  );
+  WITH CHECK (bucket_id = 'id-documents');
 
 CREATE POLICY "Admins can read ID documents"
   ON storage.objects FOR SELECT
   TO authenticated
   USING (bucket_id = 'id-documents' AND public.is_admin());
 
--- 6. Reminder log (for admin “reminders sent” + email job)
+-- 6. Admin user management RPCs (fixes 404 on admin_list_users)
+CREATE OR REPLACE FUNCTION public.admin_list_users()
+RETURNS TABLE (
+  id UUID,
+  full_name TEXT,
+  phone TEXT,
+  role TEXT,
+  banned BOOLEAN,
+  created_at TIMESTAMPTZ,
+  email TEXT,
+  loan_count BIGINT,
+  active_loan_count BIGINT
+)
+LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public AS $$
+  SELECT
+    p.id,
+    p.full_name,
+    p.phone,
+    p.role,
+    p.banned,
+    p.created_at,
+    u.email::text,
+    (SELECT count(*) FROM public.loan_requests l WHERE l.user_id = p.id),
+    (SELECT count(*) FROM public.loan_requests l WHERE l.user_id = p.id AND l.status NOT IN ('rejected', 'paid'))
+  FROM public.profiles p
+  JOIN auth.users u ON u.id = p.id
+  WHERE public.is_admin()
+  ORDER BY p.created_at DESC
+$$;
+GRANT EXECUTE ON FUNCTION public.admin_list_users() TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.admin_set_ban(target UUID, ban BOOLEAN)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+  IF target = auth.uid() THEN
+    RAISE EXCEPTION 'You cannot ban your own account';
+  END IF;
+  UPDATE public.profiles SET banned = ban WHERE id = target;
+  UPDATE auth.users
+    SET banned_until = CASE WHEN ban THEN 'infinity'::timestamptz ELSE NULL END
+    WHERE id = target;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.admin_set_ban(UUID, BOOLEAN) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.admin_delete_user(target UUID)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NOT public.is_admin() THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+  IF target = auth.uid() THEN
+    RAISE EXCEPTION 'You cannot delete your own account';
+  END IF;
+  DELETE FROM auth.users WHERE id = target;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.admin_delete_user(UUID) TO authenticated;
+
+-- Admins can list all profiles (fallback if RPC missing)
+DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles;
+CREATE POLICY "Admins can view all profiles"
+  ON public.profiles FOR SELECT
+  USING (auth.uid() = id OR public.is_admin());
+
+-- 7. Reminder log (for admin “reminders sent” + email job)
 CREATE TABLE IF NOT EXISTS public.loan_reminder_log (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   loan_id UUID REFERENCES public.loan_requests(id) ON DELETE CASCADE,
@@ -108,5 +175,5 @@ CREATE POLICY "Admins can view reminder log"
   ON public.loan_reminder_log FOR SELECT
   USING (public.is_admin());
 
--- 7. Reload PostgREST schema cache (so new columns are visible immediately)
+-- 8. Reload PostgREST schema cache (so new columns/functions are visible immediately)
 NOTIFY pgrst, 'reload schema';
