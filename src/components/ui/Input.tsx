@@ -9,11 +9,12 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, hint, className = '', id, required, type, ...props }, ref) => {
+  ({ label, error, hint, className = '', id, required, type, onWheel, ...props }, ref) => {
     const inputId = id || props.name
     const hintId = hint ? `${inputId}-hint` : undefined
     const [show, setShow] = useState(false)
     const isPassword = type === 'password'
+    const isNumber = type === 'number'
     const inputType = isPassword ? (show ? 'text' : 'password') : type
 
     return (
@@ -34,6 +35,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className={`w-full rounded-xl border bg-white px-4 py-3 text-brand-900 shadow-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 disabled:opacity-60 ${
               isPassword ? 'pr-12' : ''
             } ${error ? 'border-red-400' : 'border-brand-200'} ${className}`}
+            onWheel={(e) => {
+              if (isNumber) e.currentTarget.blur()
+              onWheel?.(e)
+            }}
             {...props}
           />
           {isPassword && (

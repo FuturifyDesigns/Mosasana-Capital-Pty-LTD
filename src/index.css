@@ -51,6 +51,18 @@ body {
   @apply bg-brand-200 text-brand-900;
 }
 
+/* Hide number spinners — accidental scroll/clicks can change loan amounts */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
