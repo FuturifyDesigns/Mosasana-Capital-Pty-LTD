@@ -20,6 +20,7 @@ import {
   type ClientRecord,
 } from '@/lib/clientRecords'
 import { statusBadgeClass } from '@/lib/loanStatus'
+import { DisbursementDetails } from '@/components/admin/DisbursementDetails'
 import type { AdminUser, LoanRequest } from '@/lib/supabase'
 
 const FILTER_OPTIONS: { value: ClientRecordsFilter; label: string }[] = [
@@ -268,6 +269,15 @@ function ClientRecordCard({
                   <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-400" />
                   {record.address}
                 </p>
+
+                <DisbursementDetails
+                  disbursementType={record.disbursementType}
+                  bankName={record.bankName}
+                  bankAccountName={record.bankAccountName}
+                  bankAccountNumber={record.bankAccountNumber}
+                  bankBranchCode={record.bankBranchCode}
+                  bankBranchName={record.bankBranchName}
+                />
 
                 <div className="space-y-2">
                   {record.loans.map((loan) => {

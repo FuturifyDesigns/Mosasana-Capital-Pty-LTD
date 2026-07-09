@@ -7,6 +7,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   full_name TEXT NOT NULL DEFAULT '',
   phone TEXT,
   physical_address TEXT,
+  disbursement_type TEXT CHECK (disbursement_type IS NULL OR disbursement_type IN ('bank', 'mobile')),
+  bank_name TEXT,
+  bank_account_name TEXT,
+  bank_account_number TEXT,
+  bank_branch_code TEXT,
+  bank_branch_name TEXT,
   role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
   banned BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -77,7 +83,18 @@ CREATE TRIGGER contact_enquiries_updated_at
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, phone, role)
+  INSERT INTO public.profiles (
+    id,
+    full_name,
+    phone,
+    disbursement_type,
+    bank_name,
+    bank_account_name,
+    bank_account_number,
+    bank_branch_code,
+    bank_branch_name,
+    role
+  )
   VALUES (
     NEW.id,
     COALESCE(
@@ -86,6 +103,12 @@ BEGIN
       split_part(COALESCE(NEW.email, ''), '@', 1)
     ),
     COALESCE(NEW.raw_user_meta_data->>'phone', ''),
+    NULLIF(NEW.raw_user_meta_data->>'disbursement_type', ''),
+    NULLIF(NEW.raw_user_meta_data->>'bank_name', ''),
+    NULLIF(NEW.raw_user_meta_data->>'bank_account_name', ''),
+    NULLIF(NEW.raw_user_meta_data->>'bank_account_number', ''),
+    NULLIF(NEW.raw_user_meta_data->>'bank_branch_code', ''),
+    NULLIF(NEW.raw_user_meta_data->>'bank_branch_name', ''),
     'user'
   );
   RETURN NEW;
@@ -327,6 +350,17 @@ GRANT EXECUTE ON FUNCTION public.phone_taken(TEXT) TO anon, authenticated;
 -- ============================================================
 
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS banned BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS disbursement_type TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_name TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_account_name TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_account_number TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_branch_code TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_branch_name TEXT;
+
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_disbursement_type_check;
+ALTER TABLE public.profiles
+  ADD CONSTRAINT profiles_disbursement_type_check
+  CHECK (disbursement_type IS NULL OR disbursement_type IN ('bank', 'mobile'));
 ALTER TABLE public.loan_requests ADD COLUMN IF NOT EXISTS term_months INTEGER;
 ALTER TABLE public.loan_requests DROP CONSTRAINT IF EXISTS loan_requests_term_months_check;
 ALTER TABLE public.loan_requests
@@ -334,11 +368,19 @@ ALTER TABLE public.loan_requests
 
 -- List every user (admins only) with email + loan counts. Uses the auth schema,
 -- so it must run as a definer with access to auth.users.
+DROP FUNCTION IF EXISTS public.admin_list_users();
+
 CREATE OR REPLACE FUNCTION public.admin_list_users()
 RETURNS TABLE (
   id UUID,
   full_name TEXT,
   phone TEXT,
+  disbursement_type TEXT,
+  bank_name TEXT,
+  bank_account_name TEXT,
+  bank_account_number TEXT,
+  bank_branch_code TEXT,
+  bank_branch_name TEXT,
   role TEXT,
   banned BOOLEAN,
   created_at TIMESTAMPTZ,
@@ -351,6 +393,12 @@ LANGUAGE sql SECURITY DEFINER STABLE SET search_path = public AS $$
     p.id,
     p.full_name,
     p.phone,
+    p.disbursement_type,
+    p.bank_name,
+    p.bank_account_name,
+    p.bank_account_number,
+    p.bank_branch_code,
+    p.bank_branch_name,
     p.role,
     p.banned,
     p.created_at,

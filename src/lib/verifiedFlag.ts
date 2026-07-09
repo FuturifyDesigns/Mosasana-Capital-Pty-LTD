@@ -16,4 +16,29 @@ function detect(): boolean {
   }
 }
 
-export const isEmailVerification = detect()
+let emailVerificationDetected = detect()
+
+export function isEmailVerification(): boolean {
+  return emailVerificationDetected
+}
+
+/** Call after routing to /verified so later navigations (e.g. to /login) are not hijacked. */
+export function clearEmailVerificationFlag(): void {
+  emailVerificationDetected = false
+}
+
+export function cleanVerificationFromUrl(): void {
+  try {
+    const url = new URL(window.location.href)
+    url.searchParams.delete('verified')
+    const nextSearch = url.searchParams.toString()
+    const searchPart = nextSearch ? `?${nextSearch}` : ''
+    window.history.replaceState(
+      {},
+      '',
+      `${url.pathname}${searchPart}${url.hash || '#/verified'}`,
+    )
+  } catch {
+    // ignore
+  }
+}

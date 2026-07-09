@@ -98,3 +98,79 @@ export const LOAN_TERMS = [
   { value: 9, label: '9 months' },
   { value: 12, label: '12 months' },
 ] as const
+
+/** Licensed commercial banks operating in Botswana (for registration / disbursement). */
+export const BOTSWANA_BANKS = [
+  { value: 'absa', label: 'Absa Bank Botswana' },
+  { value: 'access', label: 'Access Bank Botswana' },
+  { value: 'bancabc', label: 'BancABC Botswana' },
+  { value: 'bank-gaborone', label: 'Bank Gaborone' },
+  { value: 'bank-of-baroda', label: 'Bank of Baroda (Botswana)' },
+  { value: 'bank-of-india', label: 'Bank of India (Botswana)' },
+  { value: 'bbs', label: 'Botswana Building Society (BBS)' },
+  { value: 'first-capital', label: 'First Capital Bank' },
+  { value: 'fnb', label: 'First National Bank Botswana (FNB)' },
+  { value: 'stanbic', label: 'Stanbic Bank Botswana' },
+  { value: 'standard-chartered', label: 'Standard Chartered Bank Botswana' },
+] as const
+
+export type BotswanaBankValue = (typeof BOTSWANA_BANKS)[number]['value']
+
+const bankValueTuple = BOTSWANA_BANKS.map((b) => b.value) as [BotswanaBankValue, ...BotswanaBankValue[]]
+
+export const BOTSWANA_BANK_VALUES = bankValueTuple
+
+export function getBotswanaBankLabel(value: string | null | undefined): string {
+  if (!value) return '—'
+  return BOTSWANA_BANKS.find((b) => b.value === value)?.label ?? value
+}
+
+/** Mobile money wallets used for loan disbursement in Botswana. */
+export const MOBILE_WALLET_PROVIDERS = [
+  { value: 'orange-money', label: 'Orange Money' },
+  { value: 'myzaka', label: 'MyZaka' },
+] as const
+
+export type MobileWalletValue = (typeof MOBILE_WALLET_PROVIDERS)[number]['value']
+
+export const MOBILE_WALLET_VALUES = MOBILE_WALLET_PROVIDERS.map((p) => p.value) as [
+  MobileWalletValue,
+  ...MobileWalletValue[],
+]
+
+export type DisbursementKind = 'bank' | 'mobile'
+
+export const DISBURSEMENT_PROVIDERS = [
+  ...BOTSWANA_BANKS.map((b) => ({ ...b, kind: 'bank' as DisbursementKind })),
+  ...MOBILE_WALLET_PROVIDERS.map((p) => ({ ...p, kind: 'mobile' as DisbursementKind })),
+] as const
+
+export type DisbursementProviderValue = (typeof DISBURSEMENT_PROVIDERS)[number]['value']
+
+const disbursementValueTuple = DISBURSEMENT_PROVIDERS.map((p) => p.value) as [
+  DisbursementProviderValue,
+  ...DisbursementProviderValue[],
+]
+
+export const DISBURSEMENT_PROVIDER_VALUES = disbursementValueTuple
+
+export function isMobileWalletProvider(value: string | null | undefined): boolean {
+  if (!value) return false
+  return MOBILE_WALLET_VALUES.includes(value as MobileWalletValue)
+}
+
+export function getDisbursementKind(value: string | null | undefined): DisbursementKind {
+  return isMobileWalletProvider(value) ? 'mobile' : 'bank'
+}
+
+export function getDisbursementProviderLabel(value: string | null | undefined): string {
+  if (!value) return '—'
+  const match = DISBURSEMENT_PROVIDERS.find((p) => p.value === value)
+  return match?.label ?? value
+}
+
+export function getDisbursementTypeLabel(type: string | null | undefined): string {
+  if (type === 'mobile') return 'Mobile money'
+  if (type === 'bank') return 'Bank account'
+  return '—'
+}

@@ -8,6 +8,12 @@ export interface Profile {
   full_name: string
   phone: string | null
   physical_address: string | null
+  bank_name: string | null
+  disbursement_type: 'bank' | 'mobile' | null
+  bank_account_name: string | null
+  bank_account_number: string | null
+  bank_branch_code: string | null
+  bank_branch_name: string | null
   role: UserRole
   banned: boolean
   created_at: string
@@ -18,6 +24,12 @@ export interface AdminUser {
   id: string
   full_name: string
   phone: string | null
+  bank_name: string | null
+  disbursement_type: 'bank' | 'mobile' | null
+  bank_account_name: string | null
+  bank_account_number: string | null
+  bank_branch_code: string | null
+  bank_branch_name: string | null
   role: UserRole
   banned: boolean
   created_at: string

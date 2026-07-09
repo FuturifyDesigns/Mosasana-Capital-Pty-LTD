@@ -1,5 +1,9 @@
 import { z } from 'zod'
-import { COMPANY } from './constants'
+import {
+  DISBURSEMENT_PROVIDER_VALUES,
+  isMobileWalletProvider,
+  COMPANY,
+} from './constants'
 
 const phoneRegex = /^[0-9]{8}$/
 const idNumberRegex = /^[0-9]{9,12}$/
@@ -23,6 +27,18 @@ export const registerSchema = z
       .string()
       .trim()
       .regex(phoneRegex, 'Enter a valid 8-digit Botswana mobile number'),
+    disbursementProvider: z.enum(DISBURSEMENT_PROVIDER_VALUES, {
+      errorMap: () => ({ message: 'Select where we should send your loan' }),
+    }),
+    bankAccountHolderName: z
+      .string()
+      .trim()
+      .min(2, 'Name on account is required')
+      .max(120, 'Name is too long')
+      .regex(/^[a-zA-Z\s'.-]+$/, 'Name contains invalid characters'),
+    bankAccountNumber: z.string().trim().min(1, 'Account or wallet number is required'),
+    bankBranchCode: z.string().trim().optional().or(z.literal('')),
+    bankBranchName: z.string().trim().optional().or(z.literal('')),
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')
@@ -38,6 +54,42 @@ export const registerSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
+  })
+  .superRefine((data, ctx) => {
+    const mobile = isMobileWalletProvider(data.disbursementProvider)
+
+    if (mobile) {
+      if (!phoneRegex.test(data.bankAccountNumber)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['bankAccountNumber'],
+          message: 'Enter the 8-digit mobile number linked to this wallet',
+        })
+      }
+      return
+    }
+
+    if (!/^[0-9]{6,20}$/.test(data.bankAccountNumber)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['bankAccountNumber'],
+        message: 'Enter a valid bank account number (6–20 digits)',
+      })
+    }
+    if (!data.bankBranchCode || !/^[0-9]{3,6}$/.test(data.bankBranchCode)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['bankBranchCode'],
+        message: 'Enter a valid branch code (3–6 digits)',
+      })
+    }
+    if (!data.bankBranchName || data.bankBranchName.trim().length < 2) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['bankBranchName'],
+        message: 'Branch name is required',
+      })
+    }
   })
 
 export const forgotPasswordSchema = z.object({

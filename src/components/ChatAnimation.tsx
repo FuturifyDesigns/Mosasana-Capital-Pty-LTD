@@ -16,12 +16,17 @@ const CONVERSATION: Message[] = [
   { from: 'customer', text: "Hi Mosasana 👋 I'd like to apply for a loan of P3,000.", time: '19:38' },
   {
     from: 'mosasana',
-    text: 'Hello Thabo! 😊 Please share full name, email, phone, ID type/number, address, repayment period, purpose, employment status, and income.',
+    text: 'Hello Thabo! 😊 Please share: full name, email, phone, ID type/number, address, repayment period, purpose, employment, income — and where we should pay you (bank account, Orange Money, or MyZaka).',
     time: '19:38',
   },
   {
     from: 'customer',
     text: 'Thabo Nkile • thabo@example.com • 71 234 567 • Omang 123456789 • Plot 456, Gaborone • 3 months • Rent • Employed • P12,000',
+    time: '19:39',
+  },
+  {
+    from: 'customer',
+    text: 'Payout: Orange Money • 71234567 • Thabo Nkile',
     time: '19:39',
   },
   { from: 'customer', image: true, time: '19:39' },

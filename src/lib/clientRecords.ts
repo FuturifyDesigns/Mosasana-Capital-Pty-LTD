@@ -13,6 +13,12 @@ export interface ClientRecord {
   phone: string
   idNumber: string
   address: string
+  disbursementType: string | null
+  bankName: string | null
+  bankAccountName: string | null
+  bankAccountNumber: string | null
+  bankBranchCode: string | null
+  bankBranchName: string | null
   loans: LoanRequest[]
   loanCount: number
   fundedCount: number
@@ -75,6 +81,12 @@ export function buildClientRecords(loans: LoanRequest[], users: AdminUser[] = []
       phone: profile?.phone || latest.phone,
       idNumber: latest.id_number,
       address: latest.physical_address,
+      disbursementType: profile?.disbursement_type ?? null,
+      bankName: profile?.bank_name ?? null,
+      bankAccountName: profile?.bank_account_name ?? null,
+      bankAccountNumber: profile?.bank_account_number ?? null,
+      bankBranchCode: profile?.bank_branch_code ?? null,
+      bankBranchName: profile?.bank_branch_name ?? null,
       loans: sorted,
       loanCount: sorted.length,
       fundedCount,

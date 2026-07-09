@@ -83,9 +83,9 @@ export function HomePage() {
               contentKey="home.apply.text"
               className="mt-4 leading-relaxed text-brand-600"
             >
-              Prefer a guided online form? Apply securely on our website. Prefer to chat? Send your
-              application straight to us on WhatsApp. Both channels run in parallel, so you choose
-              whatever feels easiest.
+              Prefer a guided online form? Register on our website with your bank, Orange Money, or
+              MyZaka details, then apply securely. Prefer to chat? Send your application straight to
+              us on WhatsApp. Both channels run in parallel, so you choose whatever feels easiest.
             </EditableText>
           </Reveal>
 

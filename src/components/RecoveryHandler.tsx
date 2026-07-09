@@ -1,7 +1,11 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { isEmailVerification } from '@/lib/verifiedFlag'
+import {
+  cleanVerificationFromUrl,
+  clearEmailVerificationFlag,
+  isEmailVerification,
+} from '@/lib/verifiedFlag'
 import { useToast } from '@/context/ToastContext'
 import {
   cleanAuthCallbackFromUrl,
@@ -30,9 +34,10 @@ export function RecoveryHandler() {
   const { showToast } = useToast()
 
   useEffect(() => {
-    if (isEmailVerification) {
+    if (isEmailVerification()) {
+      clearEmailVerificationFlag()
+      cleanVerificationFromUrl()
       navigate('/verified', { replace: true })
-      window.history.replaceState({}, '', window.location.pathname + window.location.hash)
     }
 
     const callbackParams = getAuthCallbackParams()

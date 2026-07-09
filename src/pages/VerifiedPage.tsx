@@ -1,8 +1,9 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, Check } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/Button'
+import { cleanVerificationFromUrl, clearEmailVerificationFlag } from '@/lib/verifiedFlag'
 
 const confetti = [
   { left: '12%', top: '22%', color: 'bg-brand-400', delay: 0.3, size: 'h-2 w-2' },
@@ -15,6 +16,14 @@ const confetti = [
 ]
 
 export function VerifiedPage() {
+  const navigate = useNavigate()
+
+  const goToSignIn = () => {
+    clearEmailVerificationFlag()
+    cleanVerificationFromUrl()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-brand-50 via-white to-brand-100 px-4 py-16 text-center">
       <motion.div
@@ -106,19 +115,12 @@ export function VerifiedPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.95 }}
-          className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center"
+          className="mt-8 flex justify-center"
         >
-          <Link to="/login">
-            <Button size="lg" className="w-full sm:w-auto">
-              Continue to Sign In
-              <ArrowRight className="h-5 w-5" />
-            </Button>
-          </Link>
-          <Link to="/apply">
-            <Button variant="outline" size="lg" className="w-full sm:w-auto">
-              Apply for a Loan
-            </Button>
-          </Link>
+          <Button type="button" size="lg" onClick={goToSignIn}>
+            Continue to Sign In
+            <ArrowRight className="h-5 w-5" />
+          </Button>
         </motion.div>
       </motion.div>
     </main>

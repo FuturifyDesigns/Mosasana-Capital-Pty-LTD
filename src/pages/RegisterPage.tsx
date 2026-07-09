@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
 import { AlertCircle, Mail } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { PhoneInput } from '@/components/ui/PhoneInput'
+import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
 import { registerSchema, sanitizeText, type RegisterFormData } from '@/lib/validation'
@@ -15,8 +16,30 @@ import { AuthDivider, GoogleSignInButton } from '@/components/auth/GoogleSignInB
 import { Logo } from '@/components/Logo'
 import { PrivacyConsentField } from '@/components/PrivacyConsentField'
 import { normalizeBotswanaPhone } from '@/lib/phone'
+import {
+  DISBURSEMENT_PROVIDERS,
+  getDisbursementKind,
+  isMobileWalletProvider,
+} from '@/lib/constants'
 
 const BASE = import.meta.env.BASE_URL
+
+const DISBURSEMENT_OPTIONS = DISBURSEMENT_PROVIDERS.map((p) => ({
+  value: p.value,
+  label: p.label,
+}))
+
+function walletNumberHint(provider: string | undefined): string {
+  if (provider === 'orange-money') return 'Enter the 8-digit mobile number registered with Orange Money.'
+  if (provider === 'myzaka') return 'Enter the 8-digit mobile number linked to your MyZaka wallet.'
+  return 'Enter your bank account number (digits only).'
+}
+
+function walletNumberLabel(provider: string | undefined): string {
+  if (provider === 'orange-money') return 'Orange Money Number'
+  if (provider === 'myzaka') return 'MyZaka Mobile Number'
+  return 'Bank Account Number'
+}
 
 export function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
@@ -26,11 +49,15 @@ export function RegisterPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: { acceptTerms: false },
   })
+
+  const disbursementProvider = useWatch({ control, name: 'disbursementProvider' })
+  const isMobileWallet = isMobileWalletProvider(disbursementProvider)
 
   const onSubmit = async (data: RegisterFormData) => {
     const limit = checkRateLimit('register', 5, 10 * 60 * 1000)
@@ -42,7 +69,6 @@ export function RegisterPage() {
     setLoading(true)
     setError(null)
 
-    // Block duplicate phone numbers (one account per phone number)
     const { data: phoneTaken, error: phoneErr } = await supabase.rpc('phone_taken', {
       p_phone: normalizeBotswanaPhone(sanitizeText(data.phone)),
     })
@@ -52,6 +78,8 @@ export function RegisterPage() {
       return
     }
 
+    const mobile = isMobileWalletProvider(data.disbursementProvider)
+
     const { error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
@@ -59,6 +87,12 @@ export function RegisterPage() {
         data: {
           full_name: sanitizeText(data.fullName),
           phone: normalizeBotswanaPhone(sanitizeText(data.phone)),
+          disbursement_type: getDisbursementKind(data.disbursementProvider),
+          bank_name: data.disbursementProvider,
+          bank_account_name: sanitizeText(data.bankAccountHolderName),
+          bank_account_number: sanitizeText(data.bankAccountNumber),
+          bank_branch_code: mobile ? '' : sanitizeText(data.bankBranchCode || ''),
+          bank_branch_name: mobile ? '' : sanitizeText(data.bankBranchName || ''),
         },
         emailRedirectTo: `${window.location.origin}${import.meta.env.BASE_URL}?verified=1`,
       },
@@ -152,6 +186,58 @@ export function RegisterPage() {
           {...register('phone')}
           error={errors.phone?.message}
         />
+        <div className="rounded-xl border border-brand-100 bg-brand-50/50 p-4">
+          <p className="mb-1 text-sm font-semibold text-brand-800">Loan disbursement details</p>
+          <p className="mb-3 text-xs text-brand-500">
+            Choose your bank, Orange Money, or MyZaka — wherever you want the loan paid to.
+          </p>
+          <div className="space-y-4">
+            <Select
+              label="Bank / Wallet"
+              required
+              hint="Banks and mobile money (Orange Money, MyZaka) are listed here."
+              options={DISBURSEMENT_OPTIONS}
+              {...register('disbursementProvider')}
+              error={errors.disbursementProvider?.message}
+            />
+            <Input
+              label="Name on Account"
+              required
+              hint="Your name as registered with this bank or wallet."
+              {...register('bankAccountHolderName')}
+              error={errors.bankAccountHolderName?.message}
+            />
+            <Input
+              label={walletNumberLabel(disbursementProvider)}
+              required
+              inputMode="numeric"
+              autoComplete="off"
+              hint={walletNumberHint(disbursementProvider)}
+              {...register('bankAccountNumber')}
+              error={errors.bankAccountNumber?.message}
+            />
+            {!isMobileWallet && (
+              <>
+                <Input
+                  label="Branch Code"
+                  required
+                  inputMode="numeric"
+                  autoComplete="off"
+                  hint="Your bank branch code (3–6 digits)."
+                  {...register('bankBranchCode')}
+                  error={errors.bankBranchCode?.message}
+                />
+                <Input
+                  label="Branch Name"
+                  required
+                  hint="The name of your bank branch."
+                  {...register('bankBranchName')}
+                  error={errors.bankBranchName?.message}
+                />
+              </>
+            )}
+          </div>
+        </div>
         <Input
           label="Password"
           type="password"
