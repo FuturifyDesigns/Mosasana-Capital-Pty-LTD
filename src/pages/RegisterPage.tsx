@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,27 +8,31 @@ import { Input } from '@/components/ui/Input'
 import { PhoneInput } from '@/components/ui/PhoneInput'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
-import { registerSchema, sanitizeText, type RegisterFormData } from '@/lib/validation'
+import { createRegisterSchema, sanitizeText, type RegisterFormData } from '@/lib/validation'
 import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { AuthDivider, GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 import { Logo } from '@/components/Logo'
 import { PrivacyConsentField } from '@/components/PrivacyConsentField'
 import { normalizeBotswanaPhone } from '@/lib/phone'
+import { useLanguage } from '@/context/LanguageContext'
 
 const BASE = import.meta.env.BASE_URL
 
 export function RegisterPage() {
+  const { t } = useLanguage()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+
+  const schema = useMemo(() => createRegisterSchema(t), [t])
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(schema),
     defaultValues: { acceptTerms: false },
   })
 
@@ -46,7 +50,7 @@ export function RegisterPage() {
       p_phone: normalizeBotswanaPhone(sanitizeText(data.phone)),
     })
     if (!phoneErr && phoneTaken) {
-      setError('This phone number is already registered. Please sign in or use a different number.')
+      setError(t('auth.register.phoneTaken'))
       setLoading(false)
       return
     }
@@ -66,7 +70,7 @@ export function RegisterPage() {
     if (authError) {
       const msg = authError.message || ''
       const friendly = /phone|duplicate|unique/i.test(msg)
-        ? 'This phone number is already registered. Please sign in or use a different number.'
+        ? t('auth.register.phoneTaken')
         : msg
       setError(friendly)
       setLoading(false)
@@ -89,13 +93,12 @@ export function RegisterPage() {
             <Logo className="h-20" />
           </div>
           <Mail className="mx-auto mt-8 h-16 w-16 text-brand-500" />
-          <h2 className="mt-6 font-display text-2xl font-bold text-brand-900">Verify Your Email</h2>
-          <p className="mt-3 text-brand-600">
-            Please check your inbox and click the verification link to activate your account. Once
-            verified, you can sign in and submit loan applications.
-          </p>
+          <h2 className="mt-6 font-display text-2xl font-bold text-brand-900">
+            {t('auth.register.success.title')}
+          </h2>
+          <p className="mt-3 text-brand-600">{t('auth.register.success.body')}</p>
           <Link to="/login" className="mt-8 inline-block">
-            <Button>Go to Sign In</Button>
+            <Button>{t('auth.register.success.cta')}</Button>
           </Link>
         </motion.div>
       </section>
@@ -105,17 +108,17 @@ export function RegisterPage() {
   return (
     <AuthLayout
       className="page-zoom-out"
-      title="Create your account"
-      subtitle="Register to apply for loans and track your applications."
+      title={t('auth.register.title')}
+      subtitle={t('auth.register.subtitle')}
       image={`${BASE}auth-signup.png`}
-      panelHeading="A loan is just a message away"
-      panelText="Join Mosasana Capital and get access to fast, secure short-term cash loans — on the web or WhatsApp."
-      points={['Quick, secure sign-up', 'Apply on web or WhatsApp', 'Verified by email']}
+      panelHeading={t('auth.register.panelHeading')}
+      panelText={t('auth.register.panelText')}
+      points={[t('auth.register.point1'), t('auth.register.point2'), t('auth.register.point3')]}
       footer={
         <>
-          Already have an account?{' '}
+          {t('auth.register.footer')}{' '}
           <Link to="/login" className="font-semibold text-brand-700 hover:text-brand-900">
-            Sign in here
+            {t('auth.register.footerLink')}
           </Link>
         </>
       }
@@ -129,43 +132,43 @@ export function RegisterPage() {
 
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
         <Input
-          label="Full Name"
+          label={t('auth.register.fullName')}
           required
-          hint="Letters only — as it appears on your ID (no numbers)."
+          hint={t('auth.register.fullNameHint')}
           {...register('fullName')}
           error={errors.fullName?.message}
         />
         <Input
-          label="Email"
+          label={t('auth.register.email')}
           type="email"
           required
           autoComplete="email"
-          hint="We'll send a verification link to this address."
+          hint={t('auth.register.emailHint')}
           {...register('email')}
           error={errors.email?.message}
         />
         <PhoneInput
-          label="Phone"
+          label={t('auth.register.phone')}
           required
-          hint="Enter your 8-digit mobile number after +267."
+          hint={t('auth.register.phoneHint')}
           {...register('phone')}
           error={errors.phone?.message}
         />
         <Input
-          label="Password"
+          label={t('auth.register.password')}
           type="password"
           required
           autoComplete="new-password"
-          hint="At least 8 characters with an uppercase, lowercase and a number."
+          hint={t('auth.register.passwordHint')}
           {...register('password')}
           error={errors.password?.message}
         />
         <Input
-          label="Confirm Password"
+          label={t('auth.register.confirmPassword')}
           type="password"
           required
           autoComplete="new-password"
-          hint="Re-enter your password to confirm."
+          hint={t('auth.register.confirmPasswordHint')}
           {...register('confirmPassword')}
           error={errors.confirmPassword?.message}
         />
@@ -176,12 +179,12 @@ export function RegisterPage() {
           variant="register"
         />
         <Button type="submit" className="w-full" loading={loading}>
-          Create Account
+          {t('auth.register.submit')}
         </Button>
       </form>
 
       <AuthDivider />
-      <GoogleSignInButton returnTo="/register" label="Sign up with Google" />
+      <GoogleSignInButton returnTo="/register" label={t('auth.register.google')} />
     </AuthLayout>
   )
 }

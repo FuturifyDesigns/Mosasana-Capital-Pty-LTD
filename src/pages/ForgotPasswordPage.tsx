@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,19 +8,23 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/Logo'
 import { supabase } from '@/lib/supabase'
-import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/lib/validation'
+import { createForgotPasswordSchema, type ForgotPasswordFormData } from '@/lib/validation'
+import { useLanguage } from '@/context/LanguageContext'
 
 export function ForgotPasswordPage() {
+  const { t } = useLanguage()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
+
+  const schema = useMemo(() => createForgotPasswordSchema(t), [t])
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(forgotPasswordSchema),
+    resolver: zodResolver(schema),
   })
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
@@ -54,23 +58,20 @@ export function ForgotPasswordPage() {
         {sent ? (
           <div className="mt-8 text-center">
             <MailCheck className="mx-auto h-16 w-16 text-brand-500" />
-            <h1 className="mt-6 font-display text-2xl font-bold text-brand-900">Check your email</h1>
-            <p className="mt-3 text-brand-600">
-              If an account exists for that address, we&apos;ve sent a link to reset your password.
-              Follow the link to choose a new password.
-            </p>
+            <h1 className="mt-6 font-display text-2xl font-bold text-brand-900">
+              {t('auth.forgot.sent.title')}
+            </h1>
+            <p className="mt-3 text-brand-600">{t('auth.forgot.sent.body')}</p>
             <Link to="/login" className="mt-8 inline-block">
-              <Button>Back to Sign In</Button>
+              <Button>{t('auth.forgot.backToSignIn')}</Button>
             </Link>
           </div>
         ) : (
           <>
             <h1 className="mt-6 text-center font-display text-2xl font-bold text-brand-900">
-              Forgot your password?
+              {t('auth.forgot.title')}
             </h1>
-            <p className="mt-2 text-center text-sm text-brand-600">
-              Enter your email and we&apos;ll send you a link to reset it.
-            </p>
+            <p className="mt-2 text-center text-sm text-brand-600">{t('auth.forgot.subtitle')}</p>
 
             {error && (
               <div className="mt-6 flex items-center gap-2 rounded-xl bg-red-50 p-4 text-red-700">
@@ -81,16 +82,16 @@ export function ForgotPasswordPage() {
 
             <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
               <Input
-                label="Email"
+                label={t('auth.forgot.email')}
                 type="email"
                 required
                 autoComplete="email"
-                hint="Enter the email linked to your account."
+                hint={t('auth.forgot.emailHint')}
                 {...register('email')}
                 error={errors.email?.message}
               />
               <Button type="submit" className="w-full" loading={loading}>
-                Send reset link
+                {t('auth.forgot.submit')}
               </Button>
             </form>
 
@@ -99,7 +100,7 @@ export function ForgotPasswordPage() {
               className="mt-6 flex items-center justify-center gap-2 text-sm font-medium text-brand-600 transition hover:text-brand-900"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Sign In
+              {t('auth.forgot.backToSignIn')}
             </Link>
           </>
         )}

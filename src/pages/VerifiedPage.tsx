@@ -4,6 +4,7 @@ import { ArrowRight, Check } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/Button'
 import { cleanVerificationFromUrl, clearEmailVerificationFlag } from '@/lib/verifiedFlag'
+import { useLanguage } from '@/context/LanguageContext'
 
 const confetti = [
   { left: '12%', top: '22%', color: 'bg-brand-400', delay: 0.3, size: 'h-2 w-2' },
@@ -17,6 +18,7 @@ const confetti = [
 
 export function VerifiedPage() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   const goToSignIn = () => {
     clearEmailVerificationFlag()
@@ -89,7 +91,7 @@ export function VerifiedPage() {
           transition={{ delay: 0.5 }}
           className="mt-8 font-display text-3xl font-bold text-brand-900"
         >
-          Email verified!
+          {t('auth.verified.title')}
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 10 }}
@@ -97,8 +99,7 @@ export function VerifiedPage() {
           transition={{ delay: 0.6 }}
           className="mt-3 leading-relaxed text-brand-600"
         >
-          Your email address has been confirmed. Your account is now active — sign in to apply for a
-          loan or track your applications.
+          {t('auth.verified.body')}
         </motion.p>
 
         <motion.div
@@ -108,7 +109,7 @@ export function VerifiedPage() {
           className="mt-8 inline-flex items-center gap-2 rounded-full bg-growth-500/10 px-4 py-2 text-sm font-medium text-growth-600"
         >
           <span className="flex h-2 w-2 rounded-full bg-growth-500" />
-          Account activated
+          {t('auth.verified.badge')}
         </motion.div>
 
         <motion.div
@@ -118,7 +119,7 @@ export function VerifiedPage() {
           className="mt-8 flex justify-center"
         >
           <Button type="button" size="lg" onClick={goToSignIn}>
-            Continue to Sign In
+            {t('auth.verified.cta')}
             <ArrowRight className="h-5 w-5" />
           </Button>
         </motion.div>

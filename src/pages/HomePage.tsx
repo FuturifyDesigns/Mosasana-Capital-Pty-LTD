@@ -10,7 +10,6 @@ import {
   Wallet,
   History,
   TrendingDown,
-  Banknote,
 } from 'lucide-react'
 import { formatPula } from '@/lib/format'
 import { Button } from '@/components/ui/Button'
@@ -22,14 +21,17 @@ import { WhyChooseSlideshow } from '@/components/WhyChooseSlideshow'
 import { Reveal } from '@/components/Reveal'
 import { EditableText } from '@/components/editable/EditableText'
 import { EditableImage } from '@/components/editable/EditableImage'
+import { TranslatedText } from '@/components/TranslatedText'
 import { COMPANY } from '@/lib/constants'
 import { useAuth } from '@/context/AuthContext'
+import { useLanguage } from '@/context/LanguageContext'
 import { useIsMobile } from '@/lib/useMediaQuery'
 
 const BASE = import.meta.env.BASE_URL
 
 export function HomePage() {
   const { user, isAdmin } = useAuth()
+  const { t } = useLanguage()
   const applyTarget = user ? (isAdmin ? '/admin' : '/apply') : '/register'
 
   return (
@@ -94,7 +96,7 @@ export function HomePage() {
               <WebsiteFormAnimation />
               <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm">
                 <Globe className="h-4 w-4 text-brand-600" />
-                Apply on the website
+                {t('home.cta.applyWebsite')}
               </div>
             </Reveal>
 
@@ -102,7 +104,7 @@ export function HomePage() {
               <ChatAnimation />
               <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm">
                 <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
-                Apply on WhatsApp
+                {t('home.cta.applyWhatsapp')}
               </div>
             </Reveal>
           </div>
@@ -112,8 +114,7 @@ export function HomePage() {
       {/* Tailored solutions — image left */}
       <section className="overflow-x-clip">
         <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 py-8 sm:gap-8 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
-          <Reveal direction="right" className="relative overflow-hidden">
-            <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
+          <Reveal direction="right" className="overflow-hidden">
             <EditableImage
               contentKey="home.tailored.image"
               src={`${BASE}consultation.png`}
@@ -203,7 +204,7 @@ export function HomePage() {
             <div className="mt-8">
               <Link to={applyTarget}>
                 <Button size="lg">
-                  Get started <ArrowRight className="h-5 w-5" />
+                  {t('home.cta.getStarted')} <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
             </div>
@@ -217,8 +218,7 @@ export function HomePage() {
       {/* Testimonial — image left */}
       <section className="overflow-x-clip">
         <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 py-8 sm:gap-8 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
-          <Reveal direction="right" className="relative order-2 overflow-hidden lg:order-1">
-            <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-gold-400/20 to-brand-300/25 blur-2xl" />
+          <Reveal direction="right" className="order-2 overflow-hidden lg:order-1">
             <EditableImage
               contentKey="home.testimonial.image"
               src={`${BASE}testimonial-client.png`}
@@ -334,34 +334,37 @@ export function HomePage() {
         <div className="absolute inset-0 bg-brand-900/80" />
         <div className="relative mx-auto max-w-6xl px-4 py-16 text-center sm:px-6 sm:py-24">
           <Reveal>
-            <EditableText
-              as="h2"
+            <TranslatedText
+              tnKey="home.cta.readyTitle"
               contentKey="home.cta.title"
+              as="h2"
               className="font-display text-3xl font-bold text-white sm:text-4xl"
             >
               Ready to get started?
-            </EditableText>
+            </TranslatedText>
             <p className="mx-auto mt-4 max-w-xl text-brand-100">
-              {user
-                ? isAdmin
-                  ? 'Manage loan applications, enquiries, and users from the admin portal.'
-                  : 'Submit a new loan request or track your existing applications from your dashboard.'
-                : 'Create an account to apply for a loan and track your applications. You can also reach us on WhatsApp.'}
+              {t(
+                user
+                  ? isAdmin
+                    ? 'home.cta.adminBody'
+                    : 'home.cta.userBody'
+                  : 'home.cta.guestBody',
+              )}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               {user ? (
                 isAdmin ? (
                   <Link to="/admin">
-                    <Button size="lg">Go to Admin Portal</Button>
+                    <Button size="lg">{t('home.cta.goToAdmin')}</Button>
                   </Link>
                 ) : (
                   <>
                     <Link to="/apply">
-                      <Button size="lg">Apply for a Loan</Button>
+                      <Button size="lg">{t('home.cta.applyForLoan')}</Button>
                     </Link>
                     <Link to="/dashboard">
                       <Button variant="gold" size="lg">
-                        Go to Dashboard
+                        {t('home.cta.goToDashboard')}
                       </Button>
                     </Link>
                   </>
@@ -369,7 +372,7 @@ export function HomePage() {
               ) : (
                 <Link to="/account">
                   <Button size="lg">
-                    Get Started <ArrowRight className="h-5 w-5" />
+                    {t('home.cta.getStarted')} <ArrowRight className="h-5 w-5" />
                   </Button>
                 </Link>
               )}
@@ -382,6 +385,7 @@ export function HomePage() {
 }
 
 function HeroSection({ applyTarget }: { applyTarget: string }) {
+  const { t } = useLanguage()
   const mobile = useIsMobile()
   const mx = useMotionValue(0)
   const my = useMotionValue(0)
@@ -412,18 +416,13 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className="mb-6 sm:mb-8">
-            <div className="inline-flex max-w-full items-center gap-3 rounded-2xl border border-brand-200/70 bg-gradient-to-r from-white via-brand-50/90 to-brand-100/70 px-4 py-3 shadow-lg shadow-brand-300/25 ring-1 ring-brand-100/80 sm:gap-4 sm:px-6 sm:py-4">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-500 text-white shadow-md shadow-brand-600/30 sm:h-14 sm:w-14 sm:rounded-2xl">
-                <Banknote className="h-5 w-5 sm:h-7 sm:w-7" />
-              </span>
-              <EditableText
-                as="p"
-                contentKey="home.hero.welcome"
-                className="font-display text-xl font-bold leading-tight text-brand-900 sm:text-2xl lg:text-3xl"
-              >
-                Welcome to Mosasana Capital
-              </EditableText>
-            </div>
+            <EditableText
+              as="p"
+              contentKey="home.hero.welcome"
+              className="font-display text-xl font-bold leading-tight text-brand-900 sm:text-2xl lg:text-3xl"
+            >
+              Welcome to Mosasana Capital
+            </EditableText>
           </div>
           <h1 className="font-display text-4xl font-bold leading-[1.1] text-brand-900 sm:text-5xl lg:text-6xl">
             <EditableText as="span" contentKey="home.hero.title1">
@@ -445,12 +444,12 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
           <div className="mt-8 flex flex-wrap gap-4">
             <Link to={applyTarget}>
               <Button size="lg">
-                Apply for a Loan <ArrowRight className="h-5 w-5" />
+                {t('home.cta.applyForLoan')} <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>
             <Link to="/about">
               <Button variant="outline" size="lg">
-                Learn More
+                {t('home.cta.learnMore')}
               </Button>
             </Link>
           </div>
@@ -465,7 +464,6 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
           className="relative overflow-hidden [perspective:1000px]"
         >
           <motion.div style={mobile ? undefined : { rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}>
-            <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/30 to-gold-400/20 blur-2xl" />
             <EditableImage
               contentKey="home.hero.image"
               src={`${BASE}hero-money.png`}
@@ -524,7 +522,6 @@ function DashboardMock() {
 
   return (
     <div className="relative w-full max-w-md overflow-hidden">
-      <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
       <div className="relative overflow-hidden rounded-3xl border border-brand-100 bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-brand-50 px-5 py-3.5">
           <div>

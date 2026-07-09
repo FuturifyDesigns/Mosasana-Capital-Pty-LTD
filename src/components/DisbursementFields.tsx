@@ -1,25 +1,9 @@
 import { useWatch, type Control, type FieldErrors, type UseFormRegister } from 'react-hook-form'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { useLanguage } from '@/context/LanguageContext'
 import { DISBURSEMENT_PROVIDERS, isMobileWalletProvider } from '@/lib/constants'
 import type { LoanRequestFormData } from '@/lib/validation'
-
-const DISBURSEMENT_OPTIONS = DISBURSEMENT_PROVIDERS.map((p) => ({
-  value: p.value,
-  label: p.label,
-}))
-
-function walletNumberHint(provider: string | undefined): string {
-  if (provider === 'orange-money') return 'Enter the 8-digit mobile number registered with Orange Money.'
-  if (provider === 'myzaka') return 'Enter the 8-digit mobile number linked to your MyZaka wallet.'
-  return 'Enter your bank account number (digits only).'
-}
-
-function walletNumberLabel(provider: string | undefined): string {
-  if (provider === 'orange-money') return 'Orange Money Number'
-  if (provider === 'myzaka') return 'MyZaka Mobile Number'
-  return 'Bank Account Number'
-}
 
 interface DisbursementFieldsProps {
   register: UseFormRegister<LoanRequestFormData>
@@ -28,55 +12,73 @@ interface DisbursementFieldsProps {
 }
 
 export function DisbursementFields({ register, control, errors }: DisbursementFieldsProps) {
+  const { t } = useLanguage()
   const disbursementProvider = useWatch({ control, name: 'disbursementProvider' })
   const isMobileWallet = isMobileWalletProvider(disbursementProvider)
 
+  const disbursementOptions = DISBURSEMENT_PROVIDERS.map((p) => ({
+    value: p.value,
+    label: p.label,
+  }))
+
+  const accountNumberLabel =
+    disbursementProvider === 'orange-money'
+      ? t('apply.disbursement.orangeNumber')
+      : disbursementProvider === 'myzaka'
+        ? t('apply.disbursement.myzakaNumber')
+        : t('apply.disbursement.bankNumber')
+
+  const accountNumberHint =
+    disbursementProvider === 'orange-money'
+      ? t('apply.disbursement.orangeHint')
+      : disbursementProvider === 'myzaka'
+        ? t('apply.disbursement.myzakaHint')
+        : t('apply.disbursement.bankHint')
+
   return (
     <div className="rounded-xl border border-brand-100 bg-brand-50/50 p-4">
-      <p className="mb-1 text-sm font-semibold text-brand-800">Loan disbursement details</p>
-      <p className="mb-3 text-xs text-brand-500">
-        Where should we pay your loan? Choose your bank, Orange Money, or MyZaka.
-      </p>
+      <p className="mb-1 text-sm font-semibold text-brand-800">{t('apply.disbursement.title')}</p>
+      <p className="mb-3 text-xs text-brand-500">{t('apply.disbursement.intro')}</p>
       <div className="space-y-4">
         <Select
-          label="Bank / Wallet"
+          label={t('apply.disbursement.provider')}
           required
-          hint="Banks and mobile money (Orange Money, MyZaka) are listed here."
-          options={DISBURSEMENT_OPTIONS}
+          hint={t('apply.disbursement.providerHint')}
+          options={disbursementOptions}
           {...register('disbursementProvider')}
           error={errors.disbursementProvider?.message}
         />
         <Input
-          label="Name on Account"
+          label={t('apply.disbursement.accountName')}
           required
-          hint="Your name as registered with this bank or wallet."
+          hint={t('apply.disbursement.accountNameHint')}
           {...register('bankAccountHolderName')}
           error={errors.bankAccountHolderName?.message}
         />
         <Input
-          label={walletNumberLabel(disbursementProvider)}
+          label={accountNumberLabel}
           required
           inputMode="numeric"
           autoComplete="off"
-          hint={walletNumberHint(disbursementProvider)}
+          hint={accountNumberHint}
           {...register('bankAccountNumber')}
           error={errors.bankAccountNumber?.message}
         />
         {!isMobileWallet && (
           <>
             <Input
-              label="Branch Code"
+              label={t('apply.disbursement.branchCode')}
               required
               inputMode="numeric"
               autoComplete="off"
-              hint="Your bank branch code (3–6 digits)."
+              hint={t('apply.disbursement.branchCodeHint')}
               {...register('bankBranchCode')}
               error={errors.bankBranchCode?.message}
             />
             <Input
-              label="Branch Name"
+              label={t('apply.disbursement.branchName')}
               required
-              hint="The name of your bank branch."
+              hint={t('apply.disbursement.branchNameHint')}
               {...register('bankBranchName')}
               error={errors.bankBranchName?.message}
             />

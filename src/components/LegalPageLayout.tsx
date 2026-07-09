@@ -4,6 +4,7 @@ import { FileText, ShieldCheck, ChevronRight } from 'lucide-react'
 import { PageHero } from '@/components/ui/PageHero'
 import { EditableLegalSection } from '@/components/editable/EditableLegalSection'
 import { RegulatoryNotice } from '@/components/RegulatoryNotice'
+import { useLanguage } from '@/context/LanguageContext'
 
 export interface LegalSectionItem {
   id: string
@@ -23,15 +24,13 @@ interface LegalPageLayoutProps {
 const variantMeta = {
   privacy: {
     icon: ShieldCheck,
-    badge: 'Privacy & data protection',
-    intro:
-      'We explain how Mosasana Capital collects, uses, and protects your personal information in line with Botswana law.',
+    badgeKey: 'legal.privacy.badge' as const,
+    introKey: 'legal.privacy.intro' as const,
   },
   terms: {
     icon: FileText,
-    badge: 'Terms of service',
-    intro:
-      'Please read these terms carefully before applying for a loan or using our website and client services.',
+    badgeKey: 'legal.terms.badge' as const,
+    introKey: 'legal.terms.intro' as const,
   },
 } as const
 
@@ -48,6 +47,7 @@ export function LegalPageLayout({
   sections = [],
   children,
 }: LegalPageLayoutProps) {
+  const { t } = useLanguage()
   const meta = variantMeta[variant]
   const Icon = meta.icon
   const accent =
@@ -60,7 +60,7 @@ export function LegalPageLayout({
       <PageHero title={title} subtitle={subtitle} titleKey={titleKey} subtitleKey={subtitleKey}>
         <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
           <Icon className="h-4 w-4 text-gold-300" />
-          {meta.badge}
+          {t(meta.badgeKey)}
         </div>
       </PageHero>
 
@@ -73,7 +73,7 @@ export function LegalPageLayout({
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-700 text-white shadow-md">
                 <Icon className="h-5 w-5" />
               </span>
-              <p className="text-sm leading-relaxed text-brand-700 sm:text-base">{meta.intro}</p>
+              <p className="text-sm leading-relaxed text-brand-700 sm:text-base">{t(meta.introKey)}</p>
             </div>
           </div>
 
@@ -81,11 +81,11 @@ export function LegalPageLayout({
             {sections.length > 0 && (
               <aside className="mb-8 lg:mb-0">
                 <nav
-                  aria-label="On this page"
+                  aria-label={t('legal.onThisPage')}
                   className="lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:rounded-2xl lg:border lg:border-brand-100 lg:bg-white lg:p-4 lg:shadow-sm"
                 >
                   <p className="mb-3 hidden text-[11px] font-semibold uppercase tracking-widest text-brand-500 lg:block">
-                    On this page
+                    {t('legal.onThisPage')}
                   </p>
                   <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:pb-0">
                     {sections.map((section) => (
@@ -110,21 +110,21 @@ export function LegalPageLayout({
 
           <div className="mt-10 rounded-2xl border border-brand-100 bg-white p-5 shadow-sm sm:p-6">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-brand-500">
-              Regulatory notice
+              {t('legal.regulatoryNotice')}
             </p>
             <RegulatoryNotice className="mt-3 !text-brand-600" />
           </div>
 
           <div className="mt-8 rounded-2xl border border-brand-100 bg-brand-800 px-6 py-8 text-center text-white shadow-lg sm:px-10">
-            <h2 className="font-display text-xl font-bold sm:text-2xl">Questions about this page?</h2>
+            <h2 className="font-display text-xl font-bold sm:text-2xl">{t('legal.questions.title')}</h2>
             <p className="mx-auto mt-2 max-w-lg text-sm text-brand-100 sm:text-base">
-              Our team is happy to explain anything in plain language — no legal jargon required.
+              {t('legal.questions.body')}
             </p>
             <Link
               to="/contact"
               className="mt-5 inline-flex items-center justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-brand-800 transition hover:bg-brand-50"
             >
-              Contact us
+              {t('legal.contactUs')}
             </Link>
           </div>
         </div>

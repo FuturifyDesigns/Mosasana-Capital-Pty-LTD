@@ -5,43 +5,112 @@ import {
   isMobileWalletProvider,
   COMPANY,
 } from './constants'
+import type { TranslationKey } from './i18n'
+import { en as validationEn } from './i18n/validation'
+import { formatTranslation } from './i18n/format'
 
 const phoneRegex = /^[0-9]{8}$/
 const idNumberRegex = /^[0-9]{9,12}$/
 const passportRegex = /^[A-Za-z0-9]{6,15}$/
+const LOAN_TERM_MONTHS = [1, 2, 3, 6, 9, 12] as const
+const INVALID_ACCOUNT_CHARS = /[-+eE.]/
 
-export const loginSchema = z.object({
-  email: z.string().trim().email('Enter a valid email address').max(255),
-  password: z.string().min(8, 'Password must be at least 8 characters').max(128),
-})
+export type TranslateFn = (key: TranslationKey, vars?: Record<string, string | number>) => string
 
-const disbursementFieldsSchema = z.object({
-  disbursementProvider: z.enum(DISBURSEMENT_PROVIDER_VALUES, {
-    errorMap: () => ({ message: 'Select where we should send your loan' }),
-  }),
-  bankAccountHolderName: z
-    .string()
-    .trim()
-    .min(2, 'Name on account is required')
-    .max(120, 'Name is too long')
-    .regex(/^[a-zA-Z\s'.-]+$/, 'Name contains invalid characters'),
-  bankAccountNumber: z.string().trim().min(1, 'Account or wallet number is required'),
-  bankBranchCode: z.string().trim().optional().or(z.literal('')),
-  bankBranchName: z.string().trim().optional().or(z.literal('')),
-})
+function defaultTranslate(key: TranslationKey, vars?: Record<string, string | number>): string {
+  const template = validationEn[key as keyof typeof validationEn]
+  if (!template) return String(key)
+  return formatTranslation(template, vars)
+}
+
+function preprocessRequiredNumber(val: unknown): number | undefined {
+  if (val === '' || val === null || val === undefined) return undefined
+  const n = typeof val === 'number' ? val : Number(val)
+  return Number.isFinite(n) ? n : undefined
+}
+
+function preprocessOptionalIncome(val: unknown): number | null | undefined {
+  if (val === '' || val === null || val === undefined) return null
+  const n = typeof val === 'number' ? val : Number(val)
+  if (!Number.isFinite(n)) return undefined
+  return n
+}
+
+function requiredLoanAmount(t: TranslateFn) {
+  return z
+    .number({
+      required_error: t('validation.amount.required'),
+      invalid_type_error: t('validation.amount.invalid'),
+    })
+    .min(COMPANY.loanAmountMin, t('validation.amount.minLoan', { min: COMPANY.loanAmountMin }))
+    .max(COMPANY.loanAmountMax, t('validation.amount.maxLoan', { max: COMPANY.loanAmountMax }))
+    .refine((v) => Number.isInteger(v), t('validation.amount.wholeNumber'))
+    .refine((v) => v > 0, t('validation.amount.positive'))
+}
+
+function requiredTermMonths(t: TranslateFn) {
+  return z
+    .number({
+      required_error: t('validation.term.required'),
+      invalid_type_error: t('validation.term.invalid'),
+    })
+    .int()
+    .positive(t('validation.term.invalid'))
+    .refine((v) => LOAN_TERM_MONTHS.includes(v as (typeof LOAN_TERM_MONTHS)[number]), {
+      message: t('validation.term.invalid'),
+    })
+}
+
+function optionalMonthlyIncome(t: TranslateFn) {
+  return z.union([
+    z.null(),
+    z
+      .number({ invalid_type_error: t('validation.income.invalid') })
+      .min(0, t('validation.income.negative'))
+      .max(1000000)
+      .refine((v) => Number.isInteger(v), t('validation.income.wholeNumber')),
+  ])
+}
+
+function createDisbursementFieldsSchema(t: TranslateFn) {
+  return z.object({
+    disbursementProvider: z.enum(DISBURSEMENT_PROVIDER_VALUES, {
+      errorMap: () => ({ message: t('validation.disbursement.provider') }),
+    }),
+    bankAccountHolderName: z
+      .string()
+      .trim()
+      .min(2, t('validation.disbursement.accountName.required'))
+      .max(120, t('validation.disbursement.accountName.max'))
+      .regex(/^[a-zA-Z\s'.-]+$/, t('validation.disbursement.accountName.invalid')),
+    bankAccountNumber: z.string().trim().min(1, t('validation.disbursement.accountNumber.required')),
+    bankBranchCode: z.string().trim().optional().or(z.literal('')),
+    bankBranchName: z.string().trim().optional().or(z.literal('')),
+  })
+}
 
 function validateDisbursementFields(
-  data: z.infer<typeof disbursementFieldsSchema>,
+  data: z.infer<ReturnType<typeof createDisbursementFieldsSchema>>,
   ctx: z.RefinementCtx,
+  t: TranslateFn,
 ) {
   const mobile = isMobileWalletProvider(data.disbursementProvider)
+
+  if (INVALID_ACCOUNT_CHARS.test(data.bankAccountNumber)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['bankAccountNumber'],
+      message: t('validation.disbursement.noNegative'),
+    })
+    return
+  }
 
   if (mobile) {
     if (!phoneRegex.test(data.bankAccountNumber)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['bankAccountNumber'],
-        message: 'Enter the 8-digit mobile number linked to this wallet',
+        message: t('validation.disbursement.walletPhone'),
       })
     }
     return
@@ -51,168 +120,201 @@ function validateDisbursementFields(
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['bankAccountNumber'],
-      message: 'Enter a valid bank account number (6–20 digits)',
+      message: t('validation.disbursement.bankAccount'),
     })
   }
   if (!data.bankBranchCode || !/^[0-9]{3,6}$/.test(data.bankBranchCode)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['bankBranchCode'],
-      message: 'Enter a valid branch code (3–6 digits)',
+      message: t('validation.disbursement.branchCode'),
     })
   }
   if (!data.bankBranchName || data.bankBranchName.trim().length < 2) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['bankBranchName'],
-      message: 'Branch name is required',
+      message: t('validation.disbursement.branchName'),
     })
   }
 }
 
-export const registerSchema = z
-  .object({
+export function createLoginSchema(t: TranslateFn = defaultTranslate) {
+  return z.object({
+    email: z.string().trim().email(t('validation.email.invalid')).max(255),
+    password: z.string().min(8, t('validation.password.min')).max(128, t('validation.password.max')),
+  })
+}
+
+export function createRegisterSchema(t: TranslateFn = defaultTranslate) {
+  return z
+    .object({
+      fullName: z
+        .string()
+        .trim()
+        .min(2, t('validation.fullName.required'))
+        .max(120, t('validation.fullName.max'))
+        .regex(/^[a-zA-Z\s'.-]+$/, t('validation.fullName.invalid')),
+      email: z.string().trim().email(t('validation.email.invalid')).max(255),
+      phone: z.string().trim().regex(phoneRegex, t('validation.phone.invalid')),
+      password: z
+        .string()
+        .min(8, t('validation.password.min'))
+        .max(128, t('validation.password.max'))
+        .regex(/[A-Z]/, t('validation.password.uppercase'))
+        .regex(/[a-z]/, t('validation.password.lowercase'))
+        .regex(/[0-9]/, t('validation.password.number')),
+      confirmPassword: z.string(),
+      acceptTerms: z.boolean().refine((val) => val === true, {
+        message: t('validation.terms.required'),
+      }),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('validation.password.mismatch'),
+      path: ['confirmPassword'],
+    })
+}
+
+export function createForgotPasswordSchema(t: TranslateFn = defaultTranslate) {
+  return z.object({
+    email: z.string().trim().email(t('validation.email.invalid')).max(255),
+  })
+}
+
+export function createResetPasswordSchema(t: TranslateFn = defaultTranslate) {
+  return z
+    .object({
+      password: z
+        .string()
+        .min(8, t('validation.password.min'))
+        .max(128, t('validation.password.max'))
+        .regex(/[A-Z]/, t('validation.password.uppercase'))
+        .regex(/[a-z]/, t('validation.password.lowercase'))
+        .regex(/[0-9]/, t('validation.password.number')),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('validation.password.mismatch'),
+      path: ['confirmPassword'],
+    })
+}
+
+export function createLoanRequestSchema(t: TranslateFn = defaultTranslate) {
+  const disbursementFieldsSchema = createDisbursementFieldsSchema(t)
+
+  return disbursementFieldsSchema
+    .merge(
+      z.object({
+        fullName: z
+          .string()
+          .trim()
+          .min(2, t('validation.fullName.required'))
+          .max(120, t('validation.fullName.max'))
+          .regex(/^[a-zA-Z\s'.-]+$/, t('validation.fullName.invalid')),
+        email: z.string().trim().email(t('validation.email.invalid')).max(255),
+        phone: z.string().trim().regex(phoneRegex, t('validation.phone.invalid')),
+        idType: z.enum(['national_id', 'passport'], {
+          errorMap: () => ({ message: t('validation.idType.required') }),
+        }),
+        idNumber: z.string().trim().min(5, t('validation.idNumber.required')).max(20),
+        physicalAddress: z
+          .string()
+          .trim()
+          .min(10, t('validation.address.min'))
+          .max(500, t('validation.address.required')),
+        loanAmount: z.preprocess(
+          preprocessRequiredNumber,
+          requiredLoanAmount(t),
+        ) as z.ZodType<number>,
+        loanPurpose: z.string().trim().min(5, t('validation.purpose.required')).max(500),
+        termMonths: z.preprocess(
+          preprocessRequiredNumber,
+          requiredTermMonths(t),
+        ) as z.ZodType<number>,
+        employmentStatus: z.enum(['employed', 'self-employed', 'contract', 'other'], {
+          errorMap: () => ({ message: t('validation.employment.required') }),
+        }),
+        employmentOther: z.string().trim().max(100).optional().or(z.literal('')),
+        monthlyIncome: z.preprocess(
+          preprocessOptionalIncome,
+          optionalMonthlyIncome(t),
+        ) as z.ZodType<number | null | undefined>,
+        acceptPrivacy: z.boolean().refine((val) => val === true, {
+          message: t('validation.privacy.loan'),
+        }),
+      }),
+    )
+    .superRefine((data, ctx) => {
+      validateDisbursementFields(data, ctx, t)
+
+      if (data.idType === 'national_id' && !idNumberRegex.test(data.idNumber)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['idNumber'],
+          message: t('validation.idNumber.nationalId'),
+        })
+      }
+      if (data.idType === 'passport' && !passportRegex.test(data.idNumber)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['idNumber'],
+          message: t('validation.idNumber.passport'),
+        })
+      }
+      if (
+        data.employmentStatus === 'other' &&
+        (!data.employmentOther || data.employmentOther.trim().length < 2)
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['employmentOther'],
+          message: t('validation.employment.other'),
+        })
+      }
+    })
+}
+
+export function createContactSchema(t: TranslateFn = defaultTranslate) {
+  return z.object({
     fullName: z
       .string()
       .trim()
-      .min(2, 'Full name is required')
-      .max(120, 'Name is too long')
-      .regex(/^[a-zA-Z\s'.-]+$/, 'Name contains invalid characters'),
-    email: z.string().trim().email('Enter a valid email address').max(255),
+      .min(2, t('validation.fullName.required'))
+      .max(120, t('validation.fullName.max'))
+      .regex(/^[a-zA-Z\s'.-]+$/, t('validation.fullName.invalid')),
+    email: z.string().trim().email(t('validation.email.invalid')).max(255),
     phone: z
       .string()
       .trim()
-      .regex(phoneRegex, 'Enter a valid 8-digit Botswana mobile number'),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .max(128)
-      .regex(/[A-Z]/, 'Include at least one uppercase letter')
-      .regex(/[a-z]/, 'Include at least one lowercase letter')
-      .regex(/[0-9]/, 'Include at least one number'),
-    confirmPassword: z.string(),
-    acceptTerms: z.boolean().refine((val) => val === true, {
-      message: 'You must accept the Terms and Conditions and Privacy Policy',
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  })
-
-export const forgotPasswordSchema = z.object({
-  email: z.string().trim().email('Enter a valid email address').max(255),
-})
-
-export const resetPasswordSchema = z
-  .object({
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .max(128)
-      .regex(/[A-Z]/, 'Include at least one uppercase letter')
-      .regex(/[a-z]/, 'Include at least one lowercase letter')
-      .regex(/[0-9]/, 'Include at least one number'),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
-  })
-
-export const loanRequestSchema = disbursementFieldsSchema
-  .merge(
-    z.object({
-    fullName: z
-      .string()
-      .trim()
-      .min(2, 'Full name is required')
-      .max(120)
-      .regex(/^[a-zA-Z\s'.-]+$/, 'Name contains invalid characters'),
-    email: z.string().trim().email('Enter a valid email').max(255),
-    phone: z.string().trim().regex(phoneRegex, 'Enter a valid 8-digit Botswana mobile number'),
-    idType: z.enum(['national_id', 'passport'], {
-      errorMap: () => ({ message: 'Select your document type' }),
-    }),
-    idNumber: z.string().trim().min(5, 'Enter your document number').max(20),
-    physicalAddress: z.string().trim().min(10, 'Enter your full physical address').max(500),
-    loanAmount: z
-      .number({ invalid_type_error: 'Enter a valid amount' })
-      .min(500, 'Minimum loan amount is P500')
-      .max(COMPANY.loanAmountMax, `Maximum loan amount is P${COMPANY.loanAmountMax.toLocaleString()}`)
-      .refine((v) => Number.isInteger(v), 'Enter a whole number (no decimals)'),
-    loanPurpose: z.string().trim().min(5, 'Describe the purpose of the loan').max(500),
-    termMonths: z
-      .number({ invalid_type_error: 'Select a repayment period' })
-      .int()
-      .refine((v) => [1, 2, 3, 6, 9, 12].includes(v), 'Select a repayment period'),
-    employmentStatus: z.enum(['employed', 'self-employed', 'contract', 'other'], {
-      errorMap: () => ({ message: 'Select your employment status' }),
-    }),
-    employmentOther: z.string().trim().max(100).optional().or(z.literal('')),
-    monthlyIncome: z
-      .number({ invalid_type_error: 'Enter a valid income' })
-      .min(0)
-      .max(1000000)
+      .regex(phoneRegex, t('validation.phone.invalid'))
       .optional()
-      .nullable(),
+      .or(z.literal('')),
+    subject: z.string().trim().min(3, t('validation.subject.required')).max(200),
+    message: z.string().trim().min(10, t('validation.message.min')).max(2000),
     acceptPrivacy: z.boolean().refine((val) => val === true, {
-      message: 'You must consent to our Privacy Policy to submit a loan application',
+      message: t('validation.privacy.contact'),
     }),
-  }),
-  )
-  .superRefine((data, ctx) => {
-    validateDisbursementFields(data, ctx)
-
-    if (data.idType === 'national_id' && !idNumberRegex.test(data.idNumber)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['idNumber'],
-        message: 'Enter a valid Omang / National ID (9–12 digits)',
-      })
-    }
-    if (data.idType === 'passport' && !passportRegex.test(data.idNumber)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['idNumber'],
-        message: 'Enter a valid passport number (6–15 letters/digits)',
-      })
-    }
-    if (data.employmentStatus === 'other' && (!data.employmentOther || data.employmentOther.trim().length < 2)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['employmentOther'],
-        message: 'Please describe your employment',
-      })
-    }
+    companyWebsite: z.string().max(0, t('validation.honeypot')).optional().or(z.literal('')),
   })
+}
 
-export const contactSchema = z.object({
-  fullName: z
-    .string()
-    .trim()
-    .min(2, 'Full name is required')
-    .max(120)
-    .regex(/^[a-zA-Z\s'.-]+$/, 'Name contains invalid characters'),
-  email: z.string().trim().email('Enter a valid email').max(255),
-  phone: z
-    .string()
-    .trim()
-    .regex(phoneRegex, 'Enter a valid 8-digit Botswana mobile number')
-    .optional()
-    .or(z.literal('')),
-  subject: z.string().trim().min(3, 'Subject is required').max(200),
-  message: z.string().trim().min(10, 'Message must be at least 10 characters').max(2000),
-  acceptPrivacy: z.boolean().refine((val) => val === true, {
-    message: 'You must consent to our Privacy Policy to send an enquiry',
-  }),
-  companyWebsite: z.string().max(0, 'Invalid submission').optional().or(z.literal('')),
-})
+/** @deprecated Use createLoginSchema(t) with useLanguage().t */
+export const loginSchema = createLoginSchema()
+/** @deprecated Use createRegisterSchema(t) with useLanguage().t */
+export const registerSchema = createRegisterSchema()
+/** @deprecated Use createForgotPasswordSchema(t) with useLanguage().t */
+export const forgotPasswordSchema = createForgotPasswordSchema()
+/** @deprecated Use createResetPasswordSchema(t) with useLanguage().t */
+export const resetPasswordSchema = createResetPasswordSchema()
+/** @deprecated Use createLoanRequestSchema(t) with useLanguage().t */
+export const loanRequestSchema = createLoanRequestSchema()
+/** @deprecated Use createContactSchema(t) with useLanguage().t */
+export const contactSchema = createContactSchema()
 
 export const ALLOWED_ID_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const
 export const MAX_ID_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
-export function validateIdFile(file: File): string | null {
+export function validateIdFile(file: File, t: TranslateFn = defaultTranslate): string | null {
   const ext = file.name.split('.').pop()?.toLowerCase()
   const allowedByExt = ext === 'jpg' || ext === 'jpeg' || ext === 'png' || ext === 'webp'
   const allowedByType =
@@ -221,10 +323,10 @@ export function validateIdFile(file: File): string | null {
     file.type === 'image/jpg'
 
   if (!allowedByType && !allowedByExt) {
-    return 'ID photo must be JPEG, PNG, or WebP'
+    return t('validation.idFile.type')
   }
   if (file.size > MAX_ID_FILE_SIZE) {
-    return 'ID photo must be under 5MB'
+    return t('validation.idFile.size')
   }
   return null
 }
@@ -263,9 +365,9 @@ export function sanitizeText(input: string): string {
     .replace(/[<>]/g, '')
 }
 
-export type LoginFormData = z.infer<typeof loginSchema>
-export type RegisterFormData = z.infer<typeof registerSchema>
-export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
-export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
-export type LoanRequestFormData = z.infer<typeof loanRequestSchema>
-export type ContactFormData = z.infer<typeof contactSchema>
+export type LoginFormData = z.infer<ReturnType<typeof createLoginSchema>>
+export type RegisterFormData = z.infer<ReturnType<typeof createRegisterSchema>>
+export type ForgotPasswordFormData = z.infer<ReturnType<typeof createForgotPasswordSchema>>
+export type ResetPasswordFormData = z.infer<ReturnType<typeof createResetPasswordSchema>>
+export type LoanRequestFormData = z.infer<ReturnType<typeof createLoanRequestSchema>>
+export type ContactFormData = z.infer<ReturnType<typeof createContactSchema>>

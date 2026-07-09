@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -14,12 +14,13 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
 import { useConfirm } from '@/context/ConfirmContext'
+import { useLanguage } from '@/context/LanguageContext'
 import { supabase, type LoanRequest } from '@/lib/supabase'
 import { ACTIVE_LOAN_STATUSES, COMPANY, LOAN_TERMS } from '@/lib/constants'
 import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import { formatSupabaseError } from '@/lib/supabaseErrors'
 import {
-  loanRequestSchema,
+  createLoanRequestSchema,
   validateIdFile,
   sanitizeText,
   imageContentType,
@@ -37,23 +38,10 @@ import { getOutstandingBalance } from '@/lib/loans'
 
 type ApplyMode = 'website' | 'whatsapp'
 
-const employmentOptions = [
-  { value: 'employed', label: 'Employed' },
-  { value: 'self-employed', label: 'Self-Employed' },
-  { value: 'contract', label: 'Contract' },
-  { value: 'other', label: 'Other' },
-]
-
-const idTypeOptions = [
-  { value: 'national_id', label: 'Omang / National ID' },
-  { value: 'passport', label: 'Passport (non-citizens)' },
-]
-
-const termOptions = LOAN_TERMS.map((t) => ({ value: String(t.value), label: t.label }))
-
 export function ApplyPage() {
   const { user, profile } = useAuth()
   const { confirm } = useConfirm()
+  const { t, language } = useLanguage()
   const [mode, setMode] = useState<ApplyMode>('website')
   const [idFile, setIdFile] = useState<File | null>(null)
   const [idPreview, setIdPreview] = useState<string | null>(null)
@@ -63,6 +51,29 @@ export function ApplyPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [activeLoan, setActiveLoan] = useState<LoanRequest | null>(null)
   const [checkingActive, setCheckingActive] = useState(true)
+
+  const employmentOptions = useMemo(
+    () => [
+      { value: 'employed', label: t('apply.employment.employed') },
+      { value: 'self-employed', label: t('apply.employment.selfEmployed') },
+      { value: 'contract', label: t('apply.employment.contract') },
+      { value: 'other', label: t('apply.employment.other') },
+    ],
+    [t],
+  )
+
+  const idTypeOptions = useMemo(
+    () => [
+      { value: 'national_id', label: t('apply.idType.nationalId') },
+      { value: 'passport', label: t('apply.idType.passport') },
+    ],
+    [t],
+  )
+
+  const termOptions = useMemo(
+    () => LOAN_TERMS.map((term) => ({ value: String(term.value), label: term.label })),
+    [],
+  )
 
   useEffect(() => {
     if (!user) {
@@ -86,6 +97,8 @@ export function ApplyPage() {
       cancelled = true
     }
   }, [user])
+
+  const loanRequestSchema = useMemo(() => createLoanRequestSchema(t), [t])
 
   const {
     register,
@@ -129,11 +142,10 @@ export function ApplyPage() {
     if (income <= 0 || amount <= income) return true
 
     return confirm({
-      title: 'Borrowing advisory',
-      message:
-        'You are requesting more than your monthly income. Borrowing more than you can comfortably afford may lead to serious financial strain. Are you sure you want to continue?',
-      confirmLabel: 'Continue anyway',
-      cancelLabel: 'Go back',
+      title: t('apply.borrowing.title'),
+      message: t('apply.borrowing.message'),
+      confirmLabel: t('apply.borrowing.confirm'),
+      cancelLabel: t('apply.borrowing.cancel'),
       tone: 'warning',
     })
   }
@@ -146,7 +158,7 @@ export function ApplyPage() {
       setIdPreview(null)
       return
     }
-    const validationError = validateIdFile(file)
+    const validationError = validateIdFile(file, t)
     if (validationError) {
       setFileError(validationError)
       setIdFile(null)
@@ -159,7 +171,7 @@ export function ApplyPage() {
 
   const onSubmitWebsite = async (data: LoanRequestFormData) => {
     if (!idFile) {
-      setFileError('Please upload a photo of your ID document')
+      setFileError(t('apply.error.idRequired'))
       return
     }
 
@@ -177,7 +189,7 @@ export function ApplyPage() {
     setSubmitError(null)
 
     if (!user?.id) {
-      setSubmitError('You must be signed in to submit a loan application.')
+      setSubmitError(t('apply.error.signInRequired'))
       setSubmitting(false)
       return
     }
@@ -236,22 +248,23 @@ export function ApplyPage() {
   if (success) {
     return (
       <>
-        <PageHero title="Application Submitted" subtitle="Thank you for choosing us." />
+        <PageHero
+          title={t('apply.success.hero.title')}
+          subtitle={t('apply.success.hero.subtitle')}
+        />
         <div className="mx-auto max-w-lg px-4 py-16 text-center sm:px-6">
           <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
             <CheckCircle className="mx-auto h-16 w-16 text-growth-500" />
-            <h2 className="mt-6 text-2xl font-bold text-brand-900">We&apos;ve Received Your Application</h2>
-            <p className="mt-3 text-brand-600">
-              Our team will review your request and contact you shortly. You can track the status in your dashboard.
-            </p>
+            <h2 className="mt-6 text-2xl font-bold text-brand-900">{t('apply.success.title')}</h2>
+            <p className="mt-3 text-brand-600">{t('apply.success.body')}</p>
             <div className="mt-8 flex justify-center gap-4">
               {user ? (
                 <a href="#/dashboard">
-                  <Button>View Dashboard</Button>
+                  <Button>{t('apply.success.dashboard')}</Button>
                 </a>
               ) : (
                 <a href="#/register">
-                  <Button>Create Account to Track</Button>
+                  <Button>{t('apply.success.createAccount')}</Button>
                 </a>
               )}
             </div>
@@ -264,7 +277,12 @@ export function ApplyPage() {
   if (checkingActive) {
     return (
       <>
-        <PageHero title="Apply for a Loan" subtitle="Checking your account…" />
+        <PageHero
+          title={t('apply.hero.title')}
+          subtitle={t('apply.checking.subtitle')}
+          titleKey="apply.hero.title"
+          subtitleKey="apply.hero.subtitle"
+        />
         <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
           <div className="skeleton h-40 rounded-2xl" />
         </div>
@@ -278,8 +296,8 @@ export function ApplyPage() {
     return (
       <>
         <PageHero
-          title="You already have an active loan"
-          subtitle="You can apply for a new loan once your current one is fully repaid."
+          title={t('apply.active.title')}
+          subtitle={t('apply.active.subtitle')}
         />
         <div className="mx-auto max-w-lg px-4 py-16 sm:px-6">
           <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
@@ -302,7 +320,7 @@ export function ApplyPage() {
               <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
                 {activeLoan.total_repayable != null && (
                   <div className="rounded-xl bg-brand-50 p-3">
-                    <dt className="text-brand-500">Total repayable</dt>
+                    <dt className="text-brand-500">{t('apply.active.totalRepayable')}</dt>
                     <dd className="font-semibold text-brand-900">
                       {formatPula(activeLoan.total_repayable)}
                     </dd>
@@ -310,14 +328,14 @@ export function ApplyPage() {
                 )}
                 {balance != null && (
                   <div className="rounded-xl bg-brand-50 p-3">
-                    <dt className="text-brand-500">Outstanding balance</dt>
+                    <dt className="text-brand-500">{t('apply.active.outstandingBalance')}</dt>
                     <dd className="font-semibold text-brand-900">{formatPula(balance)}</dd>
                   </div>
                 )}
                 {activeLoan.due_date && (
                   <div className="rounded-xl bg-brand-50 p-3">
                     <dt className="flex items-center gap-1 text-brand-500">
-                      <Clock className="h-3.5 w-3.5" /> Due date
+                      <Clock className="h-3.5 w-3.5" /> {t('apply.active.dueDate')}
                     </dt>
                     <dd className="font-semibold text-brand-900">
                       {new Date(activeLoan.due_date).toLocaleDateString('en-GB', {
@@ -331,17 +349,15 @@ export function ApplyPage() {
               </dl>
 
               <p className="mt-5 rounded-xl bg-brand-50/70 p-3 text-sm text-brand-600">
-                Once your current loan is marked as fully paid, you&apos;ll be able to submit a new
-                application here. If you&apos;ve already settled it, please contact us so we can update
-                your record.
+                {t('apply.active.note')}
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link to="/dashboard">
-                  <Button>View my dashboard</Button>
+                  <Button>{t('apply.active.viewDashboard')}</Button>
                 </Link>
                 <Link to="/contact">
-                  <Button variant="outline">Contact us</Button>
+                  <Button variant="outline">{t('apply.active.contactUs')}</Button>
                 </Link>
               </div>
             </Card>
@@ -351,11 +367,126 @@ export function ApplyPage() {
     )
   }
 
+  const modeLabel = (key: 'apply.mode.website' | 'apply.mode.whatsapp') =>
+    language === 'tn' ? (
+      t(key)
+    ) : (
+      <EditableText as="span" contentKey={key}>
+        {t(key)}
+      </EditableText>
+    )
+
+  const sharedFormFields = (
+    <>
+      <Input
+        label={t('apply.field.fullName')}
+        required
+        hint={t('apply.field.fullNameHint')}
+        {...register('fullName')}
+        error={errors.fullName?.message}
+      />
+      <Input
+        label={t('apply.field.email')}
+        type="email"
+        required
+        hint={t('apply.field.emailHint')}
+        {...register('email')}
+        error={errors.email?.message}
+      />
+      <PhoneInput
+        label={t('apply.field.phone')}
+        required
+        hint={t('apply.field.phoneHint')}
+        {...register('phone')}
+        error={errors.phone?.message}
+      />
+      <Select
+        label={t('apply.field.documentType')}
+        options={idTypeOptions}
+        required
+        hint={t('apply.field.documentTypeHint')}
+        {...register('idType')}
+        error={errors.idType?.message}
+      />
+      <Input
+        label={isPassport ? t('apply.field.passportNumber') : t('apply.field.idNumber')}
+        required
+        inputMode={isPassport ? 'text' : 'numeric'}
+        hint={isPassport ? t('apply.field.passportHint') : t('apply.field.idNumberHint')}
+        {...register('idNumber')}
+        error={errors.idNumber?.message}
+      />
+      <Textarea
+        label={t('apply.field.physicalAddress')}
+        rows={3}
+        required
+        hint={t('apply.field.physicalAddressHint')}
+        {...register('physicalAddress')}
+        error={errors.physicalAddress?.message}
+      />
+      <Input
+        label={t('apply.field.loanAmount')}
+        type="number"
+        required
+        min={COMPANY.loanAmountMin}
+        max={COMPANY.loanAmountMax}
+        inputMode="numeric"
+        hint={t('apply.field.loanAmountHint')}
+        {...register('loanAmount', { valueAsNumber: true })}
+        error={errors.loanAmount?.message}
+      />
+      <Select
+        label={t('apply.field.repaymentPeriod')}
+        options={termOptions}
+        required
+        hint={t('apply.field.repaymentPeriodHint')}
+        {...register('termMonths', { valueAsNumber: true })}
+        error={errors.termMonths?.message}
+      />
+      <Textarea
+        label={t('apply.field.loanPurpose')}
+        rows={3}
+        required
+        hint={t('apply.field.loanPurposeHint')}
+        {...register('loanPurpose')}
+        error={errors.loanPurpose?.message}
+      />
+      <Select
+        label={t('apply.field.employmentStatus')}
+        options={employmentOptions}
+        required
+        hint={t('apply.field.employmentStatusHint')}
+        {...register('employmentStatus')}
+        error={errors.employmentStatus?.message}
+      />
+      {isOtherEmployment && (
+        <Input
+          label={t('apply.field.employmentOther')}
+          required
+          hint={t('apply.field.employmentOtherHint')}
+          {...register('employmentOther')}
+          error={errors.employmentOther?.message}
+        />
+      )}
+      <Input
+        label={t('apply.field.monthlyIncome')}
+        type="number"
+        min={0}
+        inputMode="numeric"
+        hint={t('apply.field.monthlyIncomeHint')}
+        {...register('monthlyIncome', {
+          setValueAs: (v) => (v === '' || v == null ? null : Number(v)),
+        })}
+        error={errors.monthlyIncome?.message}
+      />
+    </>
+  )
+
   return (
     <>
       <PageHero
-        title="Apply for a Loan"
-        subtitle="Choose to apply through our secure website form or via WhatsApp — both options are available."
+        title={t('apply.hero.title')}
+        subtitle={t('apply.hero.subtitle')}
         titleKey="apply.hero.title"
         subtitleKey="apply.hero.subtitle"
       />
@@ -369,10 +500,7 @@ export function ApplyPage() {
               mode === 'website' ? 'bg-white text-brand-800 shadow-sm' : 'text-brand-600'
             }`}
           >
-            <Globe className="h-4 w-4" />{' '}
-            <EditableText as="span" contentKey="apply.mode.website">
-              Apply via Website
-            </EditableText>
+            <Globe className="h-4 w-4" /> {modeLabel('apply.mode.website')}
           </button>
           <button
             type="button"
@@ -381,128 +509,19 @@ export function ApplyPage() {
               mode === 'whatsapp' ? 'bg-white text-brand-800 shadow-sm' : 'text-brand-600'
             }`}
           >
-            <WhatsAppIcon className="h-4 w-4" />{' '}
-            <EditableText as="span" contentKey="apply.mode.whatsapp">
-              Apply via WhatsApp
-            </EditableText>
+            <WhatsAppIcon className="h-4 w-4" /> {modeLabel('apply.mode.whatsapp')}
           </button>
         </div>
 
         {mode === 'whatsapp' ? (
           <Card>
-            <h2 className="text-xl font-semibold text-brand-900">Apply Through WhatsApp</h2>
-            <p className="mt-2 text-brand-600">
-              Fill in your details below, then continue on WhatsApp to send your application and attach your ID photo.
-            </p>
+            <h2 className="text-xl font-semibold text-brand-900">{t('apply.whatsapp.title')}</h2>
+            <p className="mt-2 text-brand-600">{t('apply.whatsapp.intro')}</p>
             <div className="mt-3 rounded-xl border border-brand-100 bg-brand-50/70 p-3 text-sm text-brand-700">
-              We include your <strong>repayment period</strong>, <strong>employment details</strong>,
-              <strong> loan disbursement details</strong>, and optional <strong>monthly income</strong> in the
-              WhatsApp application summary.
+              {t('apply.whatsapp.note')}
             </div>
             <form className="mt-6 space-y-4" onSubmit={(e) => e.preventDefault()} noValidate>
-              <Input
-                label="Full Name"
-                required
-                hint="Letters only — as on your ID (no numbers)."
-                {...register('fullName')}
-                error={errors.fullName?.message}
-              />
-              <Input
-                label="Email"
-                type="email"
-                required
-                hint="A valid email address."
-                {...register('email')}
-                error={errors.email?.message}
-              />
-              <PhoneInput
-                label="Phone"
-                required
-                hint="Enter your 8-digit mobile number after +267."
-                {...register('phone')}
-                error={errors.phone?.message}
-              />
-              <Select
-                label="Document Type"
-                options={idTypeOptions}
-                required
-                hint="Choose Omang for citizens, or Passport for non-citizens."
-                {...register('idType')}
-                error={errors.idType?.message}
-              />
-              <Input
-                label={isPassport ? 'Passport Number' : 'Omang / National ID Number'}
-                required
-                inputMode={isPassport ? 'text' : 'numeric'}
-                hint={
-                  isPassport
-                    ? 'Letters and numbers (6–15 characters).'
-                    : 'Digits only (9–12 numbers).'
-                }
-                {...register('idNumber')}
-                error={errors.idNumber?.message}
-              />
-              <Textarea
-                label="Physical Address"
-                rows={3}
-                required
-                hint="Include plot number, street, and city/town."
-                {...register('physicalAddress')}
-                error={errors.physicalAddress?.message}
-              />
-              <Input
-                label="Loan Amount (Pula)"
-                type="number"
-                required
-                inputMode="numeric"
-                hint={`Numbers only, between P${COMPANY.loanAmountMin.toLocaleString()} and P${COMPANY.loanAmountMax.toLocaleString()}.`}
-                {...register('loanAmount', { valueAsNumber: true })}
-                error={errors.loanAmount?.message}
-              />
-              <Select
-                label="Repayment Period"
-                options={termOptions}
-                required
-                hint="How long you'd like to repay the loan (1–12 months)."
-                {...register('termMonths', { valueAsNumber: true })}
-                error={errors.termMonths?.message}
-              />
-              <Textarea
-                label="Purpose of Loan"
-                rows={3}
-                required
-                hint="Briefly describe what the loan is for."
-                {...register('loanPurpose')}
-                error={errors.loanPurpose?.message}
-              />
-              <Select
-                label="Employment Status"
-                options={employmentOptions}
-                required
-                hint="Select the option that best describes you."
-                {...register('employmentStatus')}
-                error={errors.employmentStatus?.message}
-              />
-              {isOtherEmployment && (
-                <Input
-                  label="Please specify"
-                  required
-                  hint="Tell us what you do (e.g. student, pensioner, business owner)."
-                  {...register('employmentOther')}
-                  error={errors.employmentOther?.message}
-                />
-              )}
-              <Input
-                label="Monthly Income (Pula, optional)"
-                type="number"
-                min={0}
-                inputMode="numeric"
-                hint="Optional — numbers only."
-                {...register('monthlyIncome', {
-                  setValueAs: (v) => (v === '' || v == null ? null : Number(v)),
-                })}
-                error={errors.monthlyIncome?.message}
-              />
+              {sharedFormFields}
               <DisbursementFields register={register} control={control} errors={errors} />
               <Button
                 variant="whatsapp"
@@ -514,16 +533,14 @@ export function ApplyPage() {
                 })}
               >
                 <WhatsAppIcon className="h-5 w-5" />
-                Continue on WhatsApp
+                {t('apply.submit.whatsapp')}
               </Button>
             </form>
           </Card>
         ) : (
           <Card>
-            <h2 className="text-xl font-semibold text-brand-900">Secure Loan Application</h2>
-            <p className="mt-2 text-brand-600">
-              All information is encrypted and securely stored. Please upload a clear photo of your ID document.
-            </p>
+            <h2 className="text-xl font-semibold text-brand-900">{t('apply.website.title')}</h2>
+            <p className="mt-2 text-brand-600">{t('apply.website.intro')}</p>
 
             {submitError && (
               <div className="mt-4 flex items-center gap-2 rounded-xl bg-red-50 p-4 text-red-700">
@@ -533,52 +550,11 @@ export function ApplyPage() {
             )}
 
             <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmitWebsite)} noValidate>
-              <Input
-                label="Full Name"
-                required
-                hint="Letters only — as on your ID (no numbers)."
-                {...register('fullName')}
-                error={errors.fullName?.message}
-              />
-              <Input
-                label="Email"
-                type="email"
-                required
-                hint="A valid email address."
-                {...register('email')}
-                error={errors.email?.message}
-              />
-              <PhoneInput
-                label="Phone"
-                required
-                hint="Enter your 8-digit mobile number after +267."
-                {...register('phone')}
-                error={errors.phone?.message}
-              />
-              <Select
-                label="Document Type"
-                options={idTypeOptions}
-                required
-                hint="Choose Omang for citizens, or Passport for non-citizens."
-                {...register('idType')}
-                error={errors.idType?.message}
-              />
-              <Input
-                label={isPassport ? 'Passport Number' : 'Omang / National ID Number'}
-                required
-                inputMode={isPassport ? 'text' : 'numeric'}
-                hint={
-                  isPassport
-                    ? 'Letters and numbers (6–15 characters).'
-                    : 'Digits only (9–12 numbers).'
-                }
-                {...register('idNumber')}
-                error={errors.idNumber?.message}
-              />
+              {sharedFormFields}
 
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-brand-800">
-                  {isPassport ? 'Passport Photo' : 'ID Document Photo'}{' '}
+                  {isPassport ? t('apply.field.passportPhoto') : t('apply.field.idPhoto')}{' '}
                   <span className="text-red-500">*</span>
                 </label>
                 <div
@@ -594,7 +570,7 @@ export function ApplyPage() {
                   ) : (
                     <div className="space-y-2">
                       <Upload className="mx-auto h-10 w-10 text-brand-400" />
-                      <p className="text-sm text-brand-600">JPEG, PNG or WebP — max 5MB</p>
+                      <p className="text-sm text-brand-600">{t('apply.field.idUploadHint')}</p>
                     </div>
                   )}
                   <input
@@ -607,70 +583,6 @@ export function ApplyPage() {
                 {fileError && <p className="text-sm text-red-600">{fileError}</p>}
               </div>
 
-              <Textarea
-                label="Physical Address"
-                rows={3}
-                required
-                hint="Include plot number, street, and city/town."
-                {...register('physicalAddress')}
-                error={errors.physicalAddress?.message}
-              />
-              <Input
-                label="Loan Amount (Pula)"
-                type="number"
-                required
-                min={500}
-                max={COMPANY.loanAmountMax}
-                inputMode="numeric"
-                hint={`Numbers only, between P${COMPANY.loanAmountMin.toLocaleString()} and P${COMPANY.loanAmountMax.toLocaleString()}.`}
-                {...register('loanAmount', { valueAsNumber: true })}
-                error={errors.loanAmount?.message}
-              />
-              <Select
-                label="Repayment Period"
-                options={termOptions}
-                required
-                hint="How long you'd like to repay the loan (1–12 months)."
-                {...register('termMonths', { valueAsNumber: true })}
-                error={errors.termMonths?.message}
-              />
-              <Textarea
-                label="Purpose of Loan"
-                rows={3}
-                required
-                hint="Briefly describe what the loan is for."
-                {...register('loanPurpose')}
-                error={errors.loanPurpose?.message}
-              />
-              <Select
-                label="Employment Status"
-                options={employmentOptions}
-                required
-                hint="Select the option that best describes you."
-                {...register('employmentStatus')}
-                error={errors.employmentStatus?.message}
-              />
-              {isOtherEmployment && (
-                <Input
-                  label="Please specify"
-                  required
-                  hint="Tell us what you do (e.g. student, pensioner, business owner)."
-                  {...register('employmentOther')}
-                  error={errors.employmentOther?.message}
-                />
-              )}
-              <Input
-                label="Monthly Income (Pula, optional)"
-                type="number"
-                min={0}
-                inputMode="numeric"
-                hint="Optional — numbers only."
-                {...register('monthlyIncome', {
-                  setValueAs: (v) => (v === '' || v == null ? null : Number(v)),
-                })}
-                error={errors.monthlyIncome?.message}
-              />
-
               <DisbursementFields register={register} control={control} errors={errors} />
 
               <PrivacyConsentField
@@ -680,7 +592,7 @@ export function ApplyPage() {
               />
 
               <Button type="submit" className="w-full" loading={submitting}>
-                Submit Application
+                {t('apply.submit.website')}
               </Button>
             </form>
           </Card>

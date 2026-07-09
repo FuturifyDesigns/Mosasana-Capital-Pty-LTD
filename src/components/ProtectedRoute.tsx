@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+import { useLanguage } from '@/context/LanguageContext'
 import { Button } from '@/components/ui/Button'
 import type { ReactNode } from 'react'
 
@@ -11,6 +12,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, adminOnly = false, blockAdmin = false }: ProtectedRouteProps) {
   const { user, isAdmin, isBanned, loading, signOut } = useAuth()
+  const { t } = useLanguage()
   const location = useLocation()
 
   if (loading) {
@@ -28,13 +30,10 @@ export function ProtectedRoute({ children, adminOnly = false, blockAdmin = false
   if (isBanned) {
     return (
       <div className="mx-auto flex min-h-[50vh] max-w-md flex-col items-center justify-center px-4 text-center">
-        <h2 className="text-xl font-bold text-brand-900">Account suspended</h2>
-        <p className="mt-3 text-brand-600">
-          Your account has been suspended. Please contact Mosasana Capital support if you believe
-          this is a mistake.
-        </p>
+        <h2 className="text-xl font-bold text-brand-900">{t('protectedRoute.suspended.title')}</h2>
+        <p className="mt-3 text-brand-600">{t('protectedRoute.suspended.body')}</p>
         <Button className="mt-6" variant="outline" onClick={() => signOut()}>
-          Sign out
+          {t('common.signOut')}
         </Button>
       </div>
     )

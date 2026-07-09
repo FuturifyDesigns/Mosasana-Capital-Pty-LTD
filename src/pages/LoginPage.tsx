@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -6,27 +6,31 @@ import { AlertCircle } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
-import { loginSchema, type LoginFormData } from '@/lib/validation'
+import { createLoginSchema, type LoginFormData } from '@/lib/validation'
 import { formatSupabaseError } from '@/lib/supabaseErrors'
 import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { AuthDivider, GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
+import { useLanguage } from '@/context/LanguageContext'
 
 const BASE = import.meta.env.BASE_URL
 
 export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useLanguage()
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard'
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+
+  const schema = useMemo(() => createLoginSchema(t), [t])
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(schema),
   })
 
   const onSubmit = async (data: LoginFormData) => {
@@ -47,9 +51,7 @@ export function LoginPage() {
     if (authError) {
       const msg = formatSupabaseError(authError)
       setError(
-        /invalid login credentials/i.test(msg)
-          ? 'Incorrect email or password. If you just registered, confirm your email first.'
-          : msg,
+        /invalid login credentials/i.test(msg) ? t('auth.login.invalidCredentials') : msg,
       )
       setLoading(false)
       return
@@ -64,7 +66,7 @@ export function LoginPage() {
         .single()
       if (profile?.banned) {
         await supabase.auth.signOut()
-        setError('Your account has been suspended. Please contact support.')
+        setError(t('auth.login.suspended'))
         setLoading(false)
         return
       }
@@ -75,17 +77,17 @@ export function LoginPage() {
 
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to submit loan requests and track your applications."
+      title={t('auth.login.title')}
+      subtitle={t('auth.login.subtitle')}
       image={`${BASE}auth-signin.png`}
-      panelHeading="Good to see you again"
-      panelText="Pick up right where you left off and manage all your loan applications in one secure place."
-      points={['Track application status', 'View your loan history', 'Apply again in a few clicks']}
+      panelHeading={t('auth.login.panelHeading')}
+      panelText={t('auth.login.panelText')}
+      points={[t('auth.login.point1'), t('auth.login.point2'), t('auth.login.point3')]}
       footer={
         <>
-          Don&apos;t have an account?{' '}
+          {t('auth.login.footer')}{' '}
           <Link to="/register" className="font-semibold text-brand-700 hover:text-brand-900">
-            Register here
+            {t('auth.login.footerLink')}
           </Link>
         </>
       }
@@ -99,16 +101,16 @@ export function LoginPage() {
 
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
         <Input
-          label="Email"
+          label={t('auth.login.email')}
           type="email"
           required
           autoComplete="email"
-          hint="The email address you registered with."
+          hint={t('auth.login.emailHint')}
           {...register('email')}
           error={errors.email?.message}
         />
         <Input
-          label="Password"
+          label={t('auth.login.password')}
           type="password"
           required
           autoComplete="current-password"
@@ -120,11 +122,11 @@ export function LoginPage() {
             to="/forgot-password"
             className="text-sm font-medium text-brand-600 transition hover:text-brand-900"
           >
-            Forgot password?
+            {t('auth.login.forgotPassword')}
           </Link>
         </div>
         <Button type="submit" className="w-full" loading={loading}>
-          Sign In
+          {t('auth.login.submit')}
         </Button>
       </form>
 

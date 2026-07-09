@@ -1,3 +1,4 @@
+import type { TranslationKey } from '@/lib/i18n'
 import type { LoanRequest } from './supabase'
 import { LOAN_STATUSES } from './constants'
 import { getOutstandingBalance } from './loans'
@@ -115,6 +116,16 @@ export const ADMIN_WORKFLOW_STEPS: readonly AdminWorkflowStep[] = [
   { id: 'repay', label: 'Collect', description: 'Record repayments until fully paid' },
 ] as const
 
+export const ADMIN_WORKFLOW_STEP_KEYS: Record<
+  AdminWorkflowStepId,
+  { labelKey: TranslationKey; descKey: TranslationKey }
+> = {
+  decision: { labelKey: 'admin.workflow.decide', descKey: 'admin.workflow.decide.desc' },
+  terms: { labelKey: 'admin.workflow.setTerms', descKey: 'admin.workflow.setTerms.desc' },
+  disburse: { labelKey: 'admin.workflow.disburse', descKey: 'admin.workflow.disburse.desc' },
+  repay: { labelKey: 'admin.workflow.collect', descKey: 'admin.workflow.collect.desc' },
+}
+
 export function getActiveWorkflowStepId(loan: LoanRequest): AdminWorkflowStepId | 'closed' {
   if (isClosedLoanStatus(loan.status)) return 'closed'
   if (isInReviewLoanStatus(loan.status)) return 'decision'
@@ -154,76 +165,68 @@ export function formatLoanStatusLabel(status: string): string {
   return meta?.label ?? status.charAt(0).toUpperCase() + status.slice(1)
 }
 
-export function getAdminStatusPanelTitle(loan: LoanRequest): string {
-  if (loan.status === 'disbursed') return 'Loan active'
-  if (isLoanLocked(loan)) return 'Closed'
-  return 'Update status'
+export function getLoanStatusLabelKey(status: string): TranslationKey {
+  if (isInReviewLoanStatus(status)) return 'status.reviewing'
+  return `status.${status}` as TranslationKey
 }
 
-export function getAdminNextStepHint(loan: LoanRequest): string {
+export function getAdminStatusPanelTitleKey(loan: LoanRequest): TranslationKey {
+  if (loan.status === 'disbursed') return 'admin.statusPanel.loanActive'
+  if (isLoanLocked(loan)) return 'admin.statusPanel.closed'
+  return 'admin.statusPanel.updateStatus'
+}
+
+export function getAdminNextStepHintKey(loan: LoanRequest): TranslationKey {
   const status = loan.status as LoanStatus
 
-  if (isInReviewLoanStatus(status)) {
-    return 'Review the application and payout details. Then choose Approved to accept this loan, or Rejected to decline it.'
-  }
+  if (isInReviewLoanStatus(status)) return 'admin.nextStep.review'
 
   if (status === 'approved') {
-    if (!hasSavedRepaymentTerms(loan)) {
-      return 'Required: set repayment terms below and click Save terms. Disburse is locked until terms are saved.'
-    }
-    return 'Required: transfer funds to the client’s payout details, then change status to Disbursed.'
+    if (!hasSavedRepaymentTerms(loan)) return 'admin.nextStep.termsRequired'
+    return 'admin.nextStep.disburse'
   }
 
-  if (status === 'disbursed') {
-    return 'Record each repayment below as payments are received. Status becomes Paid automatically when the full balance is cleared.'
-  }
+  if (status === 'disbursed') return 'admin.nextStep.repay'
+  if (status === 'paid') return 'admin.nextStep.paid'
+  if (status === 'rejected') return 'admin.nextStep.rejected'
+  if (status === 'discontinued') return 'admin.nextStep.discontinued'
 
-  if (status === 'paid') {
-    return 'This loan is fully repaid. No further action is needed — the record is locked.'
-  }
-
-  if (status === 'rejected') {
-    return 'This application was declined. No further action is needed — the record is locked.'
-  }
-
-  if (status === 'discontinued') {
-    return 'This request was discontinued and the client was notified. No further action is needed.'
-  }
-
-  return LOAN_STATUS_META[status]?.adminHint ?? ''
+  return `admin.statusHint.${status}` as TranslationKey
 }
 
-export function getAdminStatusOptions(loan: LoanRequest): { value: string; label: string }[] {
+export function getAdminStatusOptions(
+  loan: LoanRequest,
+): { value: string; labelKey: TranslationKey }[] {
   const current = loan.status as LoanStatus
   if (!LOAN_STATUSES.includes(current)) {
-    return LOAN_STATUSES.map((s) => ({ value: s, label: formatLoanStatusLabel(s) }))
+    return LOAN_STATUSES.map((s) => ({ value: s, labelKey: getLoanStatusLabelKey(s) }))
   }
 
   if (isLoanLocked(loan)) {
-    return [{ value: current, label: formatLoanStatusLabel(current) }]
+    return [{ value: current, labelKey: getLoanStatusLabelKey(current) }]
   }
 
   if (isInReviewLoanStatus(current)) {
     return [
-      { value: current, label: LOAN_STATUS_META.reviewing.label },
-      { value: 'approved', label: 'Approved — accept loan' },
-      { value: 'rejected', label: 'Rejected — decline application' },
+      { value: current, labelKey: 'status.reviewing' },
+      { value: 'approved', labelKey: 'admin.statusOption.approvedAccept' },
+      { value: 'rejected', labelKey: 'admin.statusOption.rejectedDecline' },
     ]
   }
 
   if (current === 'approved') {
-    const options = [
-      { value: 'approved', label: LOAN_STATUS_META.approved.label },
-      { value: 'rejected', label: 'Rejected — cancel before payout' },
+    const options: { value: string; labelKey: TranslationKey }[] = [
+      { value: 'approved', labelKey: 'status.approved' },
+      { value: 'rejected', labelKey: 'admin.statusOption.rejectedCancel' },
     ]
     if (canMarkDisbursed(loan)) {
-      options.splice(1, 0, { value: 'disbursed', label: 'Disbursed — funds sent' })
+      options.splice(1, 0, { value: 'disbursed', labelKey: 'admin.statusOption.disbursedSent' })
     }
     return options
   }
 
   const allowed = TRANSITIONS[current]
-  return allowed.map((s) => ({ value: s, label: LOAN_STATUS_META[s].label }))
+  return allowed.map((s) => ({ value: s, labelKey: getLoanStatusLabelKey(s) }))
 }
 
 export function canAdminChangeStatus(loan: LoanRequest): boolean {

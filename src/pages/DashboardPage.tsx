@@ -21,7 +21,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useLanguage } from '@/context/LanguageContext'
 import { supabase, type LoanRequest, type LoanPayment } from '@/lib/supabase'
 import { ACTIVE_LOAN_STATUSES } from '@/lib/constants'
-import type { DashboardTranslationKey } from '@/lib/i18n/dashboard'
+import type { TranslationKey } from '@/lib/i18n'
 import {
   formatDueDate,
   getEstimatedTotalRepayable,
@@ -380,7 +380,7 @@ function LoanFileCard({
   const { t } = useLanguage()
   const [expanded, setExpanded] = useState(defaultExpanded)
   const statusKey = normalizeStatus(loan.status)
-  const statusTitle = t(`statusMessage.${statusKey}.title` as DashboardTranslationKey)
+  const statusTitle = t(`statusMessage.${statusKey}.title` as TranslationKey)
 
   const appliedDate = new Date(loan.created_at).toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -471,7 +471,7 @@ function StatusBadge({ status }: { status: string }) {
     <span
       className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(status)}`}
     >
-      {t(`status.${key}` as DashboardTranslationKey)}
+      {t(`status.${key}` as TranslationKey)}
     </span>
   )
 }
@@ -499,10 +499,10 @@ function LoanStatusBanner({ status }: { status: ClientStatusKey }) {
       <Icon className="mt-0.5 h-5 w-5 shrink-0" />
       <div>
         <p className="font-semibold">
-          {t(`statusMessage.${metaKey}.title` as DashboardTranslationKey)}
+          {t(`statusMessage.${metaKey}.title` as TranslationKey)}
         </p>
         <p className="mt-0.5 leading-relaxed opacity-90">
-          {t(`statusMessage.${metaKey}.body` as DashboardTranslationKey)}
+          {t(`statusMessage.${metaKey}.body` as TranslationKey)}
         </p>
       </div>
     </div>

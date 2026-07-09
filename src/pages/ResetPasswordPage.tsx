@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,17 +8,20 @@ import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/Logo'
 import { supabase } from '@/lib/supabase'
-import { resetPasswordSchema, type ResetPasswordFormData } from '@/lib/validation'
+import { createResetPasswordSchema, type ResetPasswordFormData } from '@/lib/validation'
+import { useLanguage } from '@/context/LanguageContext'
+import type { TranslationKey } from '@/lib/i18n'
 
-const checks = [
-  { label: 'At least 8 characters', test: (v: string) => v.length >= 8 },
-  { label: 'One uppercase letter', test: (v: string) => /[A-Z]/.test(v) },
-  { label: 'One lowercase letter', test: (v: string) => /[a-z]/.test(v) },
-  { label: 'One number', test: (v: string) => /[0-9]/.test(v) },
+const checks: { key: TranslationKey; test: (v: string) => boolean }[] = [
+  { key: 'auth.reset.check.length', test: (v) => v.length >= 8 },
+  { key: 'auth.reset.check.upper', test: (v) => /[A-Z]/.test(v) },
+  { key: 'auth.reset.check.lower', test: (v) => /[a-z]/.test(v) },
+  { key: 'auth.reset.check.number', test: (v) => /[0-9]/.test(v) },
 ]
 
 export function ResetPasswordPage() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
@@ -28,13 +31,15 @@ export function ResetPasswordPage() {
     supabase.auth.getSession().then(({ data }) => setReady(!!data.session))
   }, [])
 
+  const schema = useMemo(() => createResetPasswordSchema(t), [t])
+
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
   } = useForm<ResetPasswordFormData>({
-    resolver: zodResolver(resetPasswordSchema),
+    resolver: zodResolver(schema),
   })
 
   const passwordValue = watch('password') || ''
@@ -90,10 +95,10 @@ export function ResetPasswordPage() {
                 <CheckCircle2 className="h-9 w-9 text-white" />
               </span>
             </div>
-            <h1 className="mt-6 font-display text-2xl font-bold text-brand-900">Password updated</h1>
-            <p className="mt-3 text-brand-600">
-              Your password has been changed. Taking you to your dashboard…
-            </p>
+            <h1 className="mt-6 font-display text-2xl font-bold text-brand-900">
+              {t('auth.reset.done.title')}
+            </h1>
+            <p className="mt-3 text-brand-600">{t('auth.reset.done.body')}</p>
           </div>
         ) : (
           <>
@@ -108,16 +113,14 @@ export function ResetPasswordPage() {
               </motion.span>
             </div>
             <h1 className="mt-5 text-center font-display text-2xl font-bold text-brand-900">
-              Set a new password
+              {t('auth.reset.title')}
             </h1>
-            <p className="mt-2 text-center text-sm text-brand-600">
-              Choose a strong password to secure your account.
-            </p>
+            <p className="mt-2 text-center text-sm text-brand-600">{t('auth.reset.subtitle')}</p>
 
             {!ready && (
               <div className="mt-6 flex items-start gap-2 rounded-xl bg-brand-50 p-4 text-sm text-brand-600">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
-                <span>Open this page from the password-reset link in your email to continue.</span>
+                <span>{t('auth.reset.linkRequired')}</span>
               </div>
             )}
 
@@ -130,7 +133,7 @@ export function ResetPasswordPage() {
 
             <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
               <Input
-                label="New Password"
+                label={t('auth.reset.newPassword')}
                 type="password"
                 required
                 autoComplete="new-password"
@@ -144,7 +147,7 @@ export function ResetPasswordPage() {
                     const ok = c.test(passwordValue)
                     return (
                       <li
-                        key={c.label}
+                        key={c.key}
                         className={`flex items-center gap-1.5 text-xs transition ${
                           ok ? 'text-growth-600' : 'text-brand-400'
                         }`}
@@ -156,7 +159,7 @@ export function ResetPasswordPage() {
                         >
                           <Lock className="h-2.5 w-2.5" />
                         </span>
-                        {c.label}
+                        {t(c.key)}
                       </li>
                     )
                   })}
@@ -164,16 +167,16 @@ export function ResetPasswordPage() {
               )}
 
               <Input
-                label="Confirm New Password"
+                label={t('auth.reset.confirmPassword')}
                 type="password"
                 required
                 autoComplete="new-password"
-                hint="Re-enter your new password to confirm."
+                hint={t('auth.reset.confirmPasswordHint')}
                 {...register('confirmPassword')}
                 error={errors.confirmPassword?.message}
               />
               <Button type="submit" className="w-full" loading={loading} disabled={!ready}>
-                Update password
+                {t('auth.reset.submit')}
               </Button>
             </form>
           </>

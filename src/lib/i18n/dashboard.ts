@@ -1,6 +1,4 @@
-import type { Language } from './types'
-
-const en = {
+export const en = {
   'dashboard.title': 'My Dashboard',
   'dashboard.welcome': 'Welcome back, {name}',
   'dashboard.activeLoan': 'Active loan',
@@ -75,7 +73,7 @@ const en = {
     'This loan request was discontinued. You may submit a new application when you are ready, or contact us if you have questions.',
 } as const
 
-const tn: Record<keyof typeof en, string> = {
+export const tn: Record<keyof typeof en, string> = {
   'dashboard.title': 'Boto jwa Me',
   'dashboard.welcome': 'O amogetšwe gape, {name}',
   'dashboard.activeLoan': 'Koloto e e dirang',
@@ -150,22 +148,4 @@ const tn: Record<keyof typeof en, string> = {
   'statusMessage.discontinued.title': 'Kopo e khutlisiweng',
   'statusMessage.discontinued.body':
     'Kopo ya koloto ena e khutlisiweng. O ka romela kopo e ntšha fa o iketleetse, kgotsa o ikopanye le rona fa o na le dipotso.',
-}
-
-export type DashboardTranslationKey = keyof typeof en
-
-export const dashboardTranslations: Record<Language, Record<DashboardTranslationKey, string>> = {
-  en,
-  tn,
-}
-
-export function formatTranslation(
-  template: string,
-  vars?: Record<string, string | number>,
-): string {
-  if (!vars) return template
-  return Object.entries(vars).reduce(
-    (text, [key, value]) => text.replaceAll(`{${key}}`, String(value)),
-    template,
-  )
 }

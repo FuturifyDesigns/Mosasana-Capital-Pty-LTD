@@ -117,8 +117,6 @@ export function WebsiteFormAnimation() {
 
   return (
     <div className="relative w-full max-w-md">
-      <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
-
       <div className="relative overflow-hidden rounded-2xl border border-brand-200 bg-white shadow-2xl">
         <div className="border-b border-brand-100 bg-brand-50 px-3 py-2.5">
           <div className="flex items-center gap-2.5">

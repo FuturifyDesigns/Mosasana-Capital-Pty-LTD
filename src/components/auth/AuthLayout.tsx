@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Check } from 'lucide-react'
 import { Logo } from '@/components/Logo'
+import { useLanguage } from '@/context/LanguageContext'
 
 interface AuthLayoutProps {
   title: string
@@ -27,6 +28,8 @@ export function AuthLayout({
   footer,
   className = '',
 }: AuthLayoutProps) {
+  const { t } = useLanguage()
+
   return (
     <section className={`mx-auto max-w-5xl px-4 py-6 pb-[calc(var(--footer-bottom-pad)+1rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-12 lg:py-16 ${className}`}>
       <Link
@@ -34,7 +37,7 @@ export function AuthLayout({
         className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-brand-600 transition hover:text-brand-900"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to options
+        {t('common.backToOptions')}
       </Link>
 
       <motion.div

@@ -2,25 +2,29 @@ import { Link } from 'react-router-dom'
 import { ArrowUpRight } from 'lucide-react'
 import { BotswanaFlag } from './icons/BotswanaFlag'
 import { RegulatoryNotice } from '@/components/RegulatoryNotice'
+import { TranslatedText } from '@/components/TranslatedText'
 import { EditableText } from '@/components/editable/EditableText'
 import { EditableOfficerCard } from '@/components/editable/EditableOfficerCard'
+import { useLanguage } from '@/context/LanguageContext'
 import { COMPANY } from '@/lib/constants'
+import type { TranslationKey } from '@/lib/i18n'
 
 export function Footer() {
+  const { t } = useLanguage()
   const year = new Date().getFullYear()
 
   const officers = [
-    { role: 'Principal Officer', prefix: 'site.principal', defaults: COMPANY.principalOfficer },
-    { role: 'Compliance Officer', prefix: 'site.compliance', defaults: COMPANY.complianceOfficer },
+    { roleKey: 'common.principalOfficer' as const, prefix: 'site.principal', defaults: COMPANY.principalOfficer },
+    { roleKey: 'common.complianceOfficer' as const, prefix: 'site.compliance', defaults: COMPANY.complianceOfficer },
   ]
 
-  const exploreLinks = [
-    { to: '/about', label: 'About Us' },
-    { to: '/contact', label: 'Contact Us' },
-    { to: '/login', label: 'Client Login' },
-    { to: '/register', label: 'Create Account' },
-    { to: '/terms', label: 'Terms' },
-    { to: '/privacy', label: 'Privacy' },
+  const exploreLinks: { to: string; labelKey: TranslationKey }[] = [
+    { to: '/about', labelKey: 'nav.aboutUs' },
+    { to: '/contact', labelKey: 'nav.contactUs' },
+    { to: '/login', labelKey: 'nav.clientLogin' },
+    { to: '/register', labelKey: 'nav.createAccount' },
+    { to: '/terms', labelKey: 'nav.terms' },
+    { to: '/privacy', labelKey: 'nav.privacy' },
   ]
 
   const licenseLine = COMPANY.nbfiraLicense
@@ -53,16 +57,16 @@ export function Footer() {
 
           <div className="inline-flex items-center gap-2 rounded-full border border-brand-700/60 bg-brand-800/50 px-3 py-1 text-[11px] font-semibold text-brand-100">
             <BotswanaFlag className="h-3 w-4 rounded-sm ring-1 ring-black/10" />
-            <EditableText as="span" contentKey="site.footer.proudly">
+            <TranslatedText tnKey="common.proudlyBotswana" contentKey="site.footer.proudly" as="span">
               Proudly Botswana
-            </EditableText>
+            </TranslatedText>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             {officers.map((officer) => (
               <EditableOfficerCard
                 key={officer.prefix}
-                role={officer.role}
+                role={t(officer.roleKey)}
                 prefix={officer.prefix}
                 defaults={officer.defaults}
                 variant="footer"
@@ -77,7 +81,7 @@ export function Footer() {
                 to={link.to}
                 className="rounded-lg bg-brand-800/30 px-3 py-2 text-center text-xs font-medium text-brand-200 transition hover:bg-brand-700/40 hover:text-white"
               >
-                {link.label}
+                {t(link.labelKey)}
               </Link>
             ))}
           </nav>
@@ -101,16 +105,16 @@ export function Footer() {
             </EditableText>
             <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-brand-700/60 bg-brand-800/50 px-3 py-1.5 text-xs font-semibold text-brand-100">
               <BotswanaFlag className="h-3.5 w-5 rounded-sm ring-1 ring-black/10" />
-              <EditableText as="span" contentKey="site.footer.proudly">
+              <TranslatedText tnKey="common.proudlyBotswana" contentKey="site.footer.proudly" as="span">
                 Proudly Botswana
-              </EditableText>
+              </TranslatedText>
             </div>
           </div>
 
           {officers.map((officer) => (
             <EditableOfficerCard
               key={officer.prefix}
-              role={officer.role}
+              role={t(officer.roleKey)}
               prefix={officer.prefix}
               defaults={officer.defaults}
               variant="footer"
@@ -118,11 +122,13 @@ export function Footer() {
           ))}
 
           <div>
-            <h3 className="text-[11px] font-semibold uppercase tracking-widest text-gold-400">Explore</h3>
+            <h3 className="text-[11px] font-semibold uppercase tracking-widest text-gold-400">
+              {t('common.explore')}
+            </h3>
             <nav className="mt-1.5 flex flex-col gap-2 text-sm">
               {exploreLinks.map((link) => (
                 <Link key={link.to} to={link.to} className="text-brand-300 transition hover:text-white">
-                  {link.label}
+                  {t(link.labelKey)}
                 </Link>
               ))}
             </nav>
@@ -154,7 +160,7 @@ export function Footer() {
             rel="noopener noreferrer"
             className="group inline-flex items-center gap-1 text-brand-200 transition hover:text-white"
           >
-            Built by {COMPANY.builtBy.name}
+            {t('common.builtBy', { name: COMPANY.builtBy.name })}
             <ArrowUpRight className="h-3 w-3 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 sm:h-3.5 sm:w-3.5" />
           </a>
         </div>

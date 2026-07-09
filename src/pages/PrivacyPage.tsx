@@ -1,25 +1,26 @@
 import { LegalPageLayout, LegalSection } from '@/components/LegalPageLayout'
-import { COMPANY } from '@/lib/constants'
-import { PRIVACY_SECTIONS } from '@/lib/privacySections'
-
-const { dataProtection: DPA } = COMPANY
+import { useLanguage } from '@/context/LanguageContext'
+import { useLocalizedPrivacySections } from '@/lib/i18n/useLegalSections'
 
 export function PrivacyPage() {
-  const sections = PRIVACY_SECTIONS.map((section) => ({
+  const { t, language } = useLanguage()
+  const privacySections = useLocalizedPrivacySections()
+
+  const sections = privacySections.map((section) => ({
     id: section.key,
     title: section.title,
   }))
 
   return (
     <LegalPageLayout
-      title="Privacy Policy"
-      subtitle={`${COMPANY.legalName} · Effective ${COMPANY.privacyEffectiveDate} (aligned with ${DPA.actReference})`}
-      titleKey="privacy.hero.title"
-      subtitleKey="privacy.hero.subtitle"
+      title={t('privacy.hero.title')}
+      subtitle={t('privacy.hero.subtitle')}
+      titleKey={language === 'en' ? 'privacy.hero.title' : undefined}
+      subtitleKey={language === 'en' ? 'privacy.hero.subtitle' : undefined}
       variant="privacy"
       sections={sections}
     >
-      {PRIVACY_SECTIONS.map((section, index) => (
+      {privacySections.map((section, index) => (
         <LegalSection
           key={section.key}
           sectionKey={section.key}

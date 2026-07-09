@@ -19,16 +19,18 @@ import {
   type ClientRecordsFilter,
   type ClientRecord,
 } from '@/lib/clientRecords'
-import { formatLoanStatusLabel, statusBadgeClass } from '@/lib/loanStatus'
+import { getLoanStatusLabelKey, statusBadgeClass } from '@/lib/loanStatus'
 import { DisbursementDetails } from '@/components/admin/DisbursementDetails'
+import { useLanguage } from '@/context/LanguageContext'
+import type { TranslationKey } from '@/lib/i18n'
 import type { AdminUser, LoanRequest } from '@/lib/supabase'
 
-const FILTER_OPTIONS: { value: ClientRecordsFilter; label: string }[] = [
-  { value: 'all', label: 'All clients' },
-  { value: 'funded', label: 'Funded clients' },
-  { value: 'active', label: 'Active borrowers' },
-  { value: 'settled', label: 'Fully settled' },
-  { value: 'rejected', label: 'Never funded' },
+const FILTER_OPTION_KEYS: { value: ClientRecordsFilter; labelKey: TranslationKey }[] = [
+  { value: 'all', labelKey: 'admin.records.filter.all' },
+  { value: 'funded', labelKey: 'admin.records.filter.funded' },
+  { value: 'active', labelKey: 'admin.records.filter.active' },
+  { value: 'settled', labelKey: 'admin.records.filter.settled' },
+  { value: 'rejected', labelKey: 'admin.records.filter.rejected' },
 ]
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
@@ -48,6 +50,7 @@ export function ClientRecordsPanel({
   idDocUrls,
   onPreviewDoc,
 }: ClientRecordsPanelProps) {
+  const { t } = useLanguage()
   const [recordsFilter, setRecordsFilter] = useState<ClientRecordsFilter>('funded')
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
   const [expandedLoanId, setExpandedLoanId] = useState<string | null>(null)
@@ -80,7 +83,7 @@ export function ClientRecordsPanel({
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-brand-200 bg-white/60 py-16 text-center">
         <Archive className="h-10 w-10 text-brand-300" />
-        <p className="mt-3 text-brand-600">No client records match your filters.</p>
+        <p className="mt-3 text-brand-600">{t('admin.empty.noClientRecords')}</p>
       </div>
     )
   }
@@ -88,19 +91,20 @@ export function ClientRecordsPanel({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <SummaryTile label="Clients" value={String(summary.clients)} />
-        <SummaryTile label="Total loans" value={String(summary.totalLoans)} />
-        <SummaryTile label="Total repaid" value={formatPula(summary.totalRepaid)} />
-        <SummaryTile label="Outstanding" value={formatPula(summary.outstanding)} accent />
+        <SummaryTile label={t('admin.records.clients')} value={String(summary.clients)} />
+        <SummaryTile label={t('admin.records.totalLoans')} value={String(summary.totalLoans)} />
+        <SummaryTile label={t('admin.records.totalRepaid')} value={formatPula(summary.totalRepaid)} />
+        <SummaryTile label={t('admin.records.outstanding')} value={formatPula(summary.outstanding)} accent />
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-brand-600">
-          Client file history — expand a client, then each loan for full details and ID documents.
-        </p>
+        <p className="text-sm text-brand-600">{t('admin.records.hint')}</p>
         <div className="w-full sm:w-72">
           <Select
-            options={FILTER_OPTIONS}
+            options={FILTER_OPTION_KEYS.map((option) => ({
+              value: option.value,
+              label: t(option.labelKey),
+            }))}
             value={recordsFilter}
             onChange={(e) => setRecordsFilter(e.target.value as ClientRecordsFilter)}
             hidePlaceholder
@@ -179,6 +183,7 @@ function ClientRecordCard({
   onToggle: () => void
   onToggleLoan: (loanId: string) => void
 }) {
+  const { t } = useLanguage()
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -217,7 +222,7 @@ function ClientRecordCard({
               )}
               {record.loanCount > 1 && record.paidCount > 0 && (
                 <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                  Returning borrower
+                  {t('admin.returningBorrower')}
                 </span>
               )}
             </div>
@@ -324,6 +329,7 @@ function LoanFileGroup({
   idDocUrls: Record<string, string>
   onPreviewDoc: (name: string, url: string) => void
 }) {
+  const { t } = useLanguage()
   if (loans.length === 0) return null
   return (
     <div className="space-y-2">
@@ -364,7 +370,7 @@ function LoanFileGroup({
                               <span
                                 className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${statusBadgeClass(loan.status)}`}
                               >
-                                {formatLoanStatusLabel(loan.status)}
+                                {t(getLoanStatusLabelKey(loan.status))}
                               </span>
                             </div>
                             <p className="mt-0.5 text-xs text-brand-500">

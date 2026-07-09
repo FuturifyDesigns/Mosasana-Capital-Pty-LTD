@@ -4,13 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, HandHeart } from 'lucide-react'
 import { Button } from './ui/Button'
 import { WhatsAppIcon } from './icons/WhatsAppIcon'
-import { EditableText } from '@/components/editable/EditableText'
+import { TranslatedText } from '@/components/TranslatedText'
+import { useLanguage } from '@/context/LanguageContext'
 import { buildWhatsAppContactUrl } from '@/lib/whatsapp'
 import { COMPANY } from '@/lib/constants'
 
 const SESSION_KEY = 'mosasana_exit_shown'
 
 export function ExitIntentPopup() {
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export function ExitIntentPopup() {
               type="button"
               onClick={() => setOpen(false)}
               className="absolute right-4 top-4 text-brand-300 transition hover:text-brand-600"
-              aria-label="Close"
+              aria-label={t('common.close')}
             >
               <X className="h-5 w-5" />
             </button>
@@ -71,18 +73,18 @@ export function ExitIntentPopup() {
               <HandHeart className="h-8 w-8" />
             </div>
             <h2 className="mt-5 font-display text-2xl font-bold text-brand-900">
-              <EditableText as="span" contentKey="popup.exit.title">
+              <TranslatedText tnKey="popup.exit.title" contentKey="popup.exit.title" as="span">
                 Leaving so soon?
-              </EditableText>
+              </TranslatedText>
             </h2>
             <p className="mt-3 leading-relaxed text-brand-600">
-              <EditableText as="span" multiline contentKey="popup.exit.body">
+              <TranslatedText tnKey="popup.exit.body" contentKey="popup.exit.body" as="span" multiline>
                 {`Need short-term relief for a financial shortfall? ${COMPANY.shortName} makes it quick and easy — apply online or chat with us on WhatsApp before you go.`}
-              </EditableText>
+              </TranslatedText>
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Link to="/account" className="flex-1" onClick={() => setOpen(false)}>
-                <Button className="w-full">Get Started</Button>
+                <Button className="w-full">{t('common.getStarted')}</Button>
               </Link>
               <a
                 href={buildWhatsAppContactUrl('Client', 'I would like to enquire about a loan.')}
@@ -101,7 +103,7 @@ export function ExitIntentPopup() {
               onClick={() => setOpen(false)}
               className="mt-4 text-sm font-medium text-brand-400 transition hover:text-brand-700"
             >
-              No thanks, continue browsing
+              {t('common.noThanks')}
             </button>
           </motion.div>
         </motion.div>

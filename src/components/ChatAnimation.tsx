@@ -145,8 +145,6 @@ export function ChatAnimation() {
 
   return (
     <div className="relative mx-auto w-full max-w-[min(320px,100%)] overflow-hidden">
-      <div className="absolute -inset-4 rounded-[3rem] bg-gradient-to-br from-brand-300/30 to-gold-400/20 blur-2xl" />
-
       <div className="relative overflow-hidden rounded-[2.5rem] border-[6px] border-[#0b141a] bg-[#0b141a] shadow-2xl">
         <div className="absolute left-1/2 top-0 z-20 h-6 w-32 -translate-x-1/2 rounded-b-2xl bg-[#0b141a]" />
 

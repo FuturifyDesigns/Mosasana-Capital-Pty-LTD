@@ -16,6 +16,7 @@ import {
 import type { LoanPayment, LoanRequest } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/context/ToastContext'
+import { useLanguage } from '@/context/LanguageContext'
 import { sanitizeText } from '@/lib/validation'
 
 interface RepaymentEditorProps {
@@ -53,6 +54,7 @@ export function RepaymentEditor({
   onPaymentRecorded,
 }: RepaymentEditorProps) {
   const { showToast } = useToast()
+  const { t } = useLanguage()
   const principal = toNumber(loan.loan_amount)
   const term = loan.term_months ?? 1
   const suggestedRate = resolveInterestRate(loan.interest_rate)
@@ -124,17 +126,17 @@ export function RepaymentEditor({
   }
 
   const validateTerms = (candidateTotal: number | null, parsedRate: number | null): string | null => {
-    if (parsedRate === null) return 'Enter a valid interest rate between 0 and 100.'
+    if (parsedRate === null) return t('admin.repayment.invalidInterestRate')
     if (candidateTotal == null || candidateTotal <= 0) {
-      return 'Total repayable must be greater than zero.'
+      return t('admin.repayment.totalMustBePositive')
     }
     if (candidateTotal < minTotal) {
-      return `Total cannot be less than ${formatPula(minTotal)} (principal or amount already paid).`
+      return t('admin.repayment.totalTooLow', { min: formatPula(minTotal) })
     }
     if (parsedRate === 0 && !hasPayments && candidateTotal !== principal) {
-      return `With 0% interest and no payments yet, total must equal the principal (${formatPula(principal)}).`
+      return t('admin.repayment.zeroInterestTotalMismatch', { principal: formatPula(principal) })
     }
-    if (due === '') return 'Set a due date before saving repayment terms.'
+    if (due === '') return t('admin.repayment.dueDateRequired')
     return null
   }
 
@@ -165,30 +167,30 @@ export function RepaymentEditor({
     })
     setSavingTerms(false)
     setTotalEdited(false)
-    showToast('Repayment terms saved.', 'success')
+    showToast(t('admin.repayment.termsSaved'), 'success')
   }
 
   const handleRecordPayment = async () => {
     if (!canRecordPayments(loan)) {
-      showToast('Payments can only be recorded on approved or disbursed loans.', 'error')
+      showToast(t('admin.repayment.paymentsOnlyApproved'), 'error')
       return
     }
     if (loan.total_repayable == null || toNumber(loan.total_repayable) <= 0) {
-      showToast('Save repayment terms (total repayable) before recording payments.', 'error')
+      showToast(t('admin.repayment.saveTermsBeforePayment'), 'error')
       return
     }
     if (loan.status === 'paid' || (balance != null && balance <= 0)) {
-      showToast('This loan is already fully repaid.', 'error')
+      showToast(t('admin.repayment.alreadyFullyRepaid'), 'error')
       return
     }
 
     const amount = Number(paymentAmount)
     if (!amount || amount <= 0 || !Number.isFinite(amount)) {
-      showToast('Enter a valid payment amount.', 'error')
+      showToast(t('admin.repayment.invalidPaymentAmount'), 'error')
       return
     }
     if (balance != null && amount > balance + 0.01) {
-      showToast(`Payment cannot exceed outstanding balance of ${formatPula(balance)}.`, 'error')
+      showToast(t('admin.repayment.paymentExceedsBalance', { balance: formatPula(balance) }), 'error')
       return
     }
 
@@ -200,12 +202,12 @@ export function RepaymentEditor({
     })
     setRecording(false)
     if (error) {
-      showToast(error.message || 'Could not record payment. Run fix-live-db.sql in Supabase.', 'error')
+      showToast(error.message || t('admin.repayment.paymentRecordFailed'), 'error')
       return
     }
     setPaymentAmount('')
     setPaymentNotes('')
-    showToast(`Payment of ${formatPula(amount)} recorded.`, 'success')
+    showToast(t('admin.repayment.paymentRecorded', { amount: formatPula(amount) }), 'success')
     onPaymentRecorded()
   }
 
@@ -216,46 +218,42 @@ export function RepaymentEditor({
     <div className="rounded-2xl bg-gradient-to-br from-brand-50 to-white p-4 ring-1 ring-brand-100">
       <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand-800">
         <Percent className="h-4 w-4 text-brand-500" />
-        Loan terms & interest
+        {t('admin.repayment.termsTitle')}
       </p>
       {loan.status === 'approved' && loan.total_repayable == null && (
         <div className="mb-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950">
-          <strong>Required:</strong> set repayment terms and click <strong>Save terms</strong>. Disburse is
-          blocked until this step is complete.
+          {t('admin.repayment.termsRequired')}
         </div>
       )}
       {hasPayments && (
         <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>
-            {formatPula(paidNum)} already recorded. You can add <strong>late fees or additional interest</strong>{' '}
-            for delayed payments — increase the total below, then save. The customer will be notified automatically.
-          </p>
+          <p>{t('admin.repayment.paymentsRecorded', { amount: formatPula(paidNum) })}</p>
         </div>
       )}
       <div className="mb-3 grid grid-cols-3 gap-2 text-center text-xs">
         <div className="rounded-xl bg-white p-2.5 ring-1 ring-brand-100">
-          <p className="text-brand-500">Principal</p>
+          <p className="text-brand-500">{t('admin.repayment.principal')}</p>
           <p className="mt-1 font-bold text-brand-900">{formatPula(principal)}</p>
         </div>
         <div className="rounded-xl bg-white p-2.5 ring-1 ring-brand-100">
-          <p className="text-brand-500">Interest / fees</p>
+          <p className="text-brand-500">{t('admin.repayment.interestFees')}</p>
           <p className="mt-1 font-bold text-amber-700">
             {totalNum != null && totalNum > principal
               ? formatPula(totalNum - principal)
               : rateNum === 0
-                ? 'None'
+                ? t('admin.repayment.none')
                 : formatPula(previewInterest)}
           </p>
         </div>
         <div className="rounded-xl bg-white p-2.5 ring-1 ring-brand-100">
-          <p className="text-brand-500">Total due</p>
+          <p className="text-brand-500">{t('admin.repayment.totalDue')}</p>
           <p className="mt-1 font-bold text-brand-900">{formatPula(totalNum ?? previewTotal)}</p>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <label className="text-xs font-medium text-brand-600">
-          Monthly interest (%)
+          {t('admin.repayment.monthlyInterest')}
           <input
             type="number"
             min="0"
@@ -264,12 +262,12 @@ export function RepaymentEditor({
             value={rate}
             onChange={(e) => setRate(e.target.value)}
             onWheel={(e) => e.currentTarget.blur()}
-            placeholder="0 for no interest"
+            placeholder={t('admin.repayment.interestPlaceholder')}
             className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
           />
         </label>
         <label className="text-xs font-medium text-brand-600">
-          Total repayable
+          {t('admin.repayment.totalRepayable')}
           <input
             type="number"
             min={minTotal}
@@ -283,7 +281,7 @@ export function RepaymentEditor({
           />
         </label>
         <label className="text-xs font-medium text-brand-600">
-          Due date
+          {t('admin.repayment.dueDate')}
           <input
             type="date"
             value={due}
@@ -294,7 +292,7 @@ export function RepaymentEditor({
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button type="button" size="sm" onClick={handleSaveTerms} disabled={!termsDirty || savingTerms}>
-          {savingTerms ? 'Saving…' : 'Save terms'}
+          {savingTerms ? t('admin.repayment.saving') : t('admin.repayment.saveTerms')}
         </Button>
       </div>
     </div>
@@ -304,10 +302,10 @@ export function RepaymentEditor({
     return (
       <div className="mt-4 rounded-xl border border-dashed border-brand-200 bg-brand-50/40 p-4 text-sm text-brand-600">
         {loan.status === 'discontinued'
-          ? 'This request was discontinued. No further repayment actions apply.'
+          ? t('admin.repayment.discontinued')
           : loan.status === 'rejected'
-            ? 'This application was rejected. No repayment terms apply.'
-            : 'Approve this application first. Repayment terms are unlocked after approval.'}
+            ? t('admin.repayment.rejected')
+            : t('admin.repayment.approveFirst')}
       </div>
     )
   }
@@ -317,8 +315,7 @@ export function RepaymentEditor({
       <div className="mt-5 space-y-4 border-t border-brand-100 pt-5">
         {renderTermsBlock()}
         <div className="rounded-xl border border-dashed border-brand-200 bg-brand-50/50 p-4 text-sm text-brand-600">
-          Payment recording is locked until you mark this loan as <strong>Disbursed</strong> after sending
-          funds.
+          {t('admin.repayment.lockedUntilDisbursed')}
         </div>
       </div>
     )
@@ -328,10 +325,12 @@ export function RepaymentEditor({
     return (
       <div className="mt-5 space-y-4 border-t border-brand-100 pt-5">
         <div className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-800 ring-1 ring-emerald-100">
-          <p className="font-semibold">Loan fully repaid — record locked</p>
+          <p className="font-semibold">{t('admin.repayment.fullyRepaidTitle')}</p>
           <p className="mt-1">
-            Total received: {formatPula(paidNum)} of {formatPula(loan.total_repayable ?? principal)}.
-            This loan cannot be edited further.
+            {t('admin.repayment.fullyRepaidBody', {
+              paid: formatPula(paidNum),
+              total: formatPula(loan.total_repayable ?? principal),
+            })}
           </p>
         </div>
         {loanPayments.length > 0 && <PaymentHistoryList payments={loanPayments} />}
@@ -343,8 +342,7 @@ export function RepaymentEditor({
     <div className="mt-5 space-y-4 border-t border-brand-100 pt-5">
       {loan.status === 'disbursed' && (
         <div className="rounded-xl border border-brand-200 bg-brand-50 p-3 text-xs text-brand-800">
-          Record each payment below as it is received. Status becomes <strong>Paid</strong> automatically when the
-          full balance is cleared.
+          {t('admin.repayment.recordHint')}
         </div>
       )}
       {renderTermsBlock()}
@@ -353,16 +351,25 @@ export function RepaymentEditor({
         <div className="rounded-2xl bg-emerald-50/60 p-4 ring-1 ring-emerald-100">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">Outstanding</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                {t('dashboard.outstanding')}
+              </p>
               <p className="text-2xl font-bold text-emerald-900">{formatPula(balance ?? 0)}</p>
             </div>
             <div className="text-right text-sm text-emerald-800">
               <p>
-                Paid: <strong>{formatPula(paidNum)}</strong> of {formatPula(totalNum)}
+                {t('admin.repayment.paidOf', {
+                  paid: formatPula(paidNum),
+                  total: formatPula(totalNum),
+                })}
               </p>
-              {due && <p className="mt-0.5 text-xs text-emerald-600">Due {formatDueDate(due)}</p>}
+              {due && (
+                <p className="mt-0.5 text-xs text-emerald-600">
+                  {t('admin.repayment.dueOn', { date: formatDueDate(due) })}
+                </p>
+              )}
               {loan.interest_rate === 0 && (
-                <p className="mt-0.5 text-xs text-emerald-600">0% interest applied</p>
+                <p className="mt-0.5 text-xs text-emerald-600">{t('admin.repayment.zeroInterestApplied')}</p>
               )}
             </div>
           </div>
@@ -379,10 +386,10 @@ export function RepaymentEditor({
         <div className="rounded-2xl border border-brand-100 bg-white p-4">
           <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-brand-800">
             <Wallet className="h-4 w-4 text-brand-500" />
-            Record payment received
+            {t('admin.repayment.recordPayment')}
           </p>
           {loan.total_repayable == null ? (
-            <p className="text-sm text-amber-700">Save repayment terms before recording payments.</p>
+            <p className="text-sm text-amber-700">{t('admin.repayment.saveTermsFirst')}</p>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto]">
               <input
@@ -390,7 +397,7 @@ export function RepaymentEditor({
                 min="0"
                 max={balance ?? undefined}
                 step="0.01"
-                placeholder="Amount (P)"
+                placeholder={t('admin.repayment.amountPlaceholder')}
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
                 onWheel={(e) => e.currentTarget.blur()}
@@ -399,7 +406,7 @@ export function RepaymentEditor({
               <input
                 type="text"
                 maxLength={500}
-                placeholder="Notes (optional, e.g. WhatsApp ref)"
+                placeholder={t('admin.repayment.notesPlaceholder')}
                 value={paymentNotes}
                 onChange={(e) => setPaymentNotes(e.target.value)}
                 className="rounded-lg border border-brand-200 px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
@@ -411,7 +418,7 @@ export function RepaymentEditor({
                 disabled={recording || balance === 0}
               >
                 <Plus className="h-4 w-4" />
-                {recording ? 'Recording…' : 'Record'}
+                {recording ? t('admin.repayment.recording') : t('admin.repayment.record')}
               </Button>
             </div>
           )}
@@ -424,11 +431,12 @@ export function RepaymentEditor({
 }
 
 function PaymentHistoryList({ payments }: { payments: LoanPayment[] }) {
+  const { t } = useLanguage()
   return (
     <div className="rounded-2xl border border-brand-100 bg-white p-4">
       <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-brand-800">
         <History className="h-4 w-4 text-brand-500" />
-        Payment history
+        {t('dashboard.paymentHistory')}
       </p>
       <ul className="max-h-40 space-y-2 overflow-y-auto">
         {payments.map((p) => (
@@ -441,10 +449,12 @@ function PaymentHistoryList({ payments }: { payments: LoanPayment[] }) {
               {p.notes && <span className="ml-2 text-brand-500">— {p.notes}</span>}
               {(p.interest_rate_snapshot != null || p.total_repayable_snapshot != null) && (
                 <p className="text-[11px] text-brand-500">
-                  Terms at payment:
-                  {p.interest_rate_snapshot != null ? ` ${p.interest_rate_snapshot}% interest` : ' interest N/A'}
+                  {t('dashboard.termsAtPayment')}{' '}
+                  {p.interest_rate_snapshot != null
+                    ? t('dashboard.interest', { rate: p.interest_rate_snapshot })
+                    : t('dashboard.interestNa')}
                   {p.total_repayable_snapshot != null
-                    ? ` · total ${formatPula(p.total_repayable_snapshot)}`
+                    ? ` · ${t('dashboard.total', { amount: formatPula(p.total_repayable_snapshot) })}`
                     : ''}
                 </p>
               )}

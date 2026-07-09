@@ -24,12 +24,13 @@ import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { supabase, type LoanRequest, type ContactEnquiry, type AdminUser, type LoanPayment } from '@/lib/supabase'
 import { ENQUIRY_STATUSES, IN_REVIEW_LOAN_STATUSES, OPEN_LOAN_PIPELINE_STATUSES, CLOSED_LOAN_STATUSES } from '@/lib/constants'
-import { formatLoanStatusLabel, isLoanLocked, validateStatusChange } from '@/lib/loanStatus'
+import { getLoanStatusLabelKey, isLoanLocked, validateStatusChange } from '@/lib/loanStatus'
 import { LoanRequestCard } from '@/components/admin/LoanRequestCard'
 import { ClientRecordsPanel } from '@/components/admin/ClientRecordsPanel'
 import { buildClientRecords, filterClientRecords } from '@/lib/clientRecords'
 import { useToast } from '@/context/ToastContext'
 import { useConfirm } from '@/context/ConfirmContext'
+import { useLanguage } from '@/context/LanguageContext'
 
 type Tab = 'loans' | 'records' | 'enquiries' | 'users'
 
@@ -37,14 +38,6 @@ interface ReminderLogRow {
   loan_id: string
   kind: string
   created_at: string
-}
-
-const reminderKindLabel: Record<string, string> = {
-  'd-7': '7 days before',
-  'd-3': '3 days before',
-  'd-1': '1 day before',
-  'd-0': 'due date',
-  overdue: 'overdue',
 }
 
 const enquiryBadge: Record<string, string> = {
@@ -59,6 +52,7 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 export function AdminPage() {
   const { showToast } = useToast()
   const { confirm } = useConfirm()
+  const { t } = useLanguage()
   const [tab, setTab] = useState<Tab>('loans')
   const [loans, setLoans] = useState<LoanRequest[]>([])
   const [enquiries, setEnquiries] = useState<ContactEnquiry[]>([])
@@ -124,14 +118,14 @@ export function AdminPage() {
         })),
       )
       if (usersRes.error.code === 'PGRST202') {
-        showToast('Run supabase/fix-live-db.sql in Supabase to enable full user management.', 'info')
+        showToast(t('admin.toast.rpcHint'), 'info')
       }
     } else {
       setUsers((usersRes.data as AdminUser[]) || [])
     }
 
     if (!options?.silent) setLoading(false)
-  }, [showToast])
+  }, [showToast, t])
 
   useEffect(() => {
     fetchData()
@@ -157,12 +151,13 @@ export function AdminPage() {
 
   const banUser = async (u: AdminUser) => {
     const next = !u.banned
+    const displayName = u.full_name || u.email
     if (next) {
       const ok = await confirm({
-        title: 'Ban user?',
-        message: `Ban ${u.full_name || u.email}? They won't be able to sign in until you unban them.`,
-        confirmLabel: 'Ban user',
-        cancelLabel: 'Cancel',
+        title: t('admin.confirm.ban.title'),
+        message: t('admin.confirm.ban.message', { name: displayName }),
+        confirmLabel: t('admin.confirm.ban.confirm'),
+        cancelLabel: t('common.cancel'),
         tone: 'danger',
         icon: Ban,
       })
@@ -174,16 +169,17 @@ export function AdminPage() {
       setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, banned: !next } : x)))
       showToast(error.message || 'Could not update user.', 'error')
     } else {
-      showToast(next ? 'User banned.' : 'User unbanned.', 'success')
+      showToast(next ? t('admin.toast.userBanned') : t('admin.toast.userUnbanned'), 'success')
     }
   }
 
   const deleteUser = async (u: AdminUser) => {
+    const displayName = u.full_name || u.email
     const ok = await confirm({
-      title: 'Delete user permanently?',
-      message: `Permanently delete ${u.full_name || u.email}? This removes their account and cannot be undone.`,
-      confirmLabel: 'Delete',
-      cancelLabel: 'Cancel',
+      title: t('admin.confirm.deleteUser.title'),
+      message: t('admin.confirm.deleteUser.message', { name: displayName }),
+      confirmLabel: t('common.delete'),
+      cancelLabel: t('common.cancel'),
       tone: 'danger',
     })
     if (!ok) return
@@ -192,7 +188,7 @@ export function AdminPage() {
       showToast(error.message || 'Could not delete user.', 'error')
     } else {
       setUsers((prev) => prev.filter((x) => x.id !== u.id))
-      showToast('User deleted.', 'success')
+      showToast(t('admin.toast.userDeleted'), 'success')
     }
   }
 
@@ -224,15 +220,15 @@ export function AdminPage() {
     }
 
     if (data) setLoans((prev) => prev.map((l) => (l.id === id ? (data as LoanRequest) : l)))
-    showToast(`Loan status updated to ${formatLoanStatusLabel(status)}.`, 'success')
+    showToast(t('admin.toast.statusUpdated', { status: t(getLoanStatusLabelKey(status)) }), 'success')
   }
 
   const discontinueLoan = async (loan: LoanRequest) => {
     const ok = await confirm({
-      title: 'Discontinue this request?',
-      message: `${loan.full_name}'s loan request will be marked discontinued and the client will be notified. The record stays in client history.`,
-      confirmLabel: 'Discontinue',
-      cancelLabel: 'Cancel',
+      title: t('admin.confirm.discontinue.title'),
+      message: t('admin.confirm.discontinue.message', { name: loan.full_name }),
+      confirmLabel: t('admin.loan.discontinue'),
+      cancelLabel: t('common.cancel'),
       tone: 'danger',
     })
     if (!ok) return
@@ -244,15 +240,15 @@ export function AdminPage() {
     }
     setExpandedLoanId((id) => (id === loan.id ? null : id))
     await fetchData({ silent: true })
-    showToast('Loan request discontinued. Client notified.', 'success')
+    showToast(t('admin.toast.loanDiscontinued'), 'success')
   }
 
   const deleteLoanRequest = async (loan: LoanRequest) => {
     const ok = await confirm({
-      title: 'Delete this request permanently?',
-      message: `${loan.full_name}'s application will be removed. The client will be notified. This cannot be undone.`,
-      confirmLabel: 'Delete',
-      cancelLabel: 'Cancel',
+      title: t('admin.confirm.deleteLoan.title'),
+      message: t('admin.confirm.deleteLoan.message', { name: loan.full_name }),
+      confirmLabel: t('common.delete'),
+      cancelLabel: t('common.cancel'),
       tone: 'danger',
     })
     if (!ok) return
@@ -264,7 +260,7 @@ export function AdminPage() {
     }
     setLoans((prev) => prev.filter((l) => l.id !== loan.id))
     setExpandedLoanId((id) => (id === loan.id ? null : id))
-    showToast('Loan request deleted. Client notified.', 'success')
+    showToast(t('admin.toast.loanDeleted'), 'success')
   }
 
   const saveRepaymentTerms = async (
@@ -277,7 +273,7 @@ export function AdminPage() {
   ) => {
     const loan = loans.find((l) => l.id === id)
     if (loan && isLoanLocked(loan)) {
-      showToast('Paid and rejected loans are locked.', 'error')
+      showToast(t('admin.toast.paidRejectedLocked'), 'error')
       return
     }
 
@@ -410,14 +406,17 @@ export function AdminPage() {
       loanPipeline === 'active'
         ? [...OPEN_LOAN_PIPELINE_STATUSES]
         : [...CLOSED_LOAN_STATUSES]
-    return [{ value: 'all', label: 'All statuses' }, ...statuses.map((s) => ({ value: s, label: formatLoanStatusLabel(s) }))]
-  }, [loanPipeline])
+    return [
+      { value: 'all', label: t('admin.filter.allStatuses') },
+      ...statuses.map((s) => ({ value: s, label: t(getLoanStatusLabelKey(s)) })),
+    ]
+  }, [loanPipeline, t])
 
   const statusOptions =
     tab === 'loans'
       ? loanStatusOptions
       : tab === 'enquiries'
-        ? [{ value: 'all', label: 'All statuses' }, ...ENQUIRY_STATUSES.map((s) => ({ value: s, label: cap(s) }))]
+        ? [{ value: 'all', label: t('admin.filter.allStatuses') }, ...ENQUIRY_STATUSES.map((s) => ({ value: s, label: cap(s) }))]
         : []
 
   const switchTab = (t: Tab) => {
@@ -430,18 +429,18 @@ export function AdminPage() {
 
   return (
     <>
-      <PageHero title="Admin Portal" subtitle="Manage loans, client records, repayments, enquiries, and users." />
+      <PageHero title={t('admin.hero.title')} subtitle={t('admin.hero.subtitle')} />
 
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
-          <StatCard icon={FileText} label="Total loans" value={stats.totalLoans} tone="brand" />
-          <StatCard icon={Clock} label="In review" value={stats.inReview} tone="blue" highlight={stats.inReview > 0} />
-          <StatCard icon={CheckCircle2} label="Approved" value={stats.approved} tone="green" />
-          <StatCard icon={Wallet} label="Settled" value={stats.archived} tone="emerald" />
-          <StatCard icon={Archive} label="Funded clients" value={stats.fundedClients} tone="green" />
-          <StatCard icon={Inbox} label="New enquiries" value={stats.newEnquiries} tone="blue" highlight={stats.newEnquiries > 0} />
-          <StatCard icon={Users} label="Users" value={stats.totalUsers} tone="brand" />
+          <StatCard icon={FileText} label={t('admin.stat.totalLoans')} value={stats.totalLoans} tone="brand" />
+          <StatCard icon={Clock} label={t('admin.stat.inReview')} value={stats.inReview} tone="blue" highlight={stats.inReview > 0} />
+          <StatCard icon={CheckCircle2} label={t('admin.stat.approved')} value={stats.approved} tone="green" />
+          <StatCard icon={Wallet} label={t('admin.stat.settled')} value={stats.archived} tone="emerald" />
+          <StatCard icon={Archive} label={t('admin.stat.fundedClients')} value={stats.fundedClients} tone="green" />
+          <StatCard icon={Inbox} label={t('admin.stat.newEnquiries')} value={stats.newEnquiries} tone="blue" highlight={stats.newEnquiries > 0} />
+          <StatCard icon={Users} label={t('admin.stat.users')} value={stats.totalUsers} tone="brand" />
         </div>
 
         {/* Controls */}
@@ -454,7 +453,7 @@ export function AdminPage() {
               }`}
             >
               <FileText className="h-4 w-4" />
-              Loan Requests
+              {t('admin.tab.loans')}
               {stats.inReview > 0 && (
                 <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">{stats.inReview}</span>
               )}
@@ -466,7 +465,7 @@ export function AdminPage() {
               }`}
             >
               <Archive className="h-4 w-4" />
-              Client Records
+              {t('admin.tab.records')}
             </button>
             <button
               onClick={() => switchTab('enquiries')}
@@ -475,7 +474,7 @@ export function AdminPage() {
               }`}
             >
               <MessageSquare className="h-4 w-4" />
-              Enquiries
+              {t('admin.tab.enquiries')}
               {stats.newEnquiries > 0 && (
                 <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">{stats.newEnquiries}</span>
               )}
@@ -487,7 +486,7 @@ export function AdminPage() {
               }`}
             >
               <Users className="h-4 w-4" />
-              Users
+              {t('admin.tab.users')}
             </button>
           </div>
 
@@ -499,12 +498,12 @@ export function AdminPage() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={
                   tab === 'loans'
-                    ? 'Search name, email, ID…'
+                    ? t('admin.search.loans')
                     : tab === 'records'
-                      ? 'Search client name, email, ID…'
+                      ? t('admin.search.records')
                       : tab === 'users'
-                        ? 'Search name, email, phone…'
-                        : 'Search name, email, subject…'
+                        ? t('admin.search.users')
+                        : t('admin.search.enquiries')
                 }
                 className="w-full rounded-xl border border-brand-200 bg-white py-2.5 pl-9 pr-3 text-sm text-brand-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
               />
@@ -516,12 +515,12 @@ export function AdminPage() {
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   hidePlaceholder
-                  aria-label="Filter by status"
+                  aria-label={t('admin.filterByStatus')}
                 />
               </div>
             ) : null}
             <Button variant="outline" size="sm" onClick={() => fetchData()} className="shrink-0">
-              <RefreshCw className="h-4 w-4" /> Refresh
+              <RefreshCw className="h-4 w-4" /> {t('common.refresh')}
             </Button>
           </div>
         </div>
@@ -550,7 +549,7 @@ export function AdminPage() {
                       : 'bg-white text-brand-700 ring-1 ring-brand-100 hover:bg-brand-50'
                   }`}
                 >
-                  Active pipeline ({stats.openPipeline})
+                  {t('admin.pipeline.active', { count: stats.openPipeline })}
                 </button>
                 <button
                   type="button"
@@ -565,21 +564,21 @@ export function AdminPage() {
                       : 'bg-white text-brand-700 ring-1 ring-brand-100 hover:bg-brand-50'
                   }`}
                 >
-                  Archive — paid & closed ({stats.archived})
+                  {t('admin.pipeline.archive', { count: stats.archived })}
                 </button>
               </div>
               <p className="text-sm text-brand-600">
                 {loanPipeline === 'active'
-                  ? 'Open requests only — paid and closed loans are in Archive or Client Records.'
-                  : 'Settled, rejected, and discontinued loans. Full history is also in Client Records.'}
+                  ? t('admin.pipeline.activeHint')
+                  : t('admin.pipeline.archiveHint')}
               </p>
 
               {filteredLoans.length === 0 ? (
                 <EmptyState
                   label={
                     loanPipeline === 'active'
-                      ? 'No active loan requests.'
-                      : 'No archived loans match your filters.'
+                      ? t('admin.empty.noActiveLoans')
+                      : t('admin.empty.noArchivedLoans')
                   }
                 />
               ) : (
@@ -606,7 +605,6 @@ export function AdminPage() {
                       }
                       payments={payments}
                       remindersByLoan={remindersByLoan}
-                      reminderKindLabel={reminderKindLabel}
                       idDocUrl={loan.id_photo_path ? idDocUrls[loan.id_photo_path] : undefined}
                       expanded={expandedLoanId === loan.id}
                       onToggle={() =>
@@ -634,7 +632,7 @@ export function AdminPage() {
           ) : tab === 'enquiries' ? (
             <div className="space-y-4">
               {filteredEnquiries.length === 0 ? (
-                <EmptyState label="No enquiries match your filters." />
+                <EmptyState label={t('admin.empty.noEnquiries')} />
               ) : (
                 filteredEnquiries.map((enquiry, i) => (
                   <motion.div
@@ -666,14 +664,14 @@ export function AdminPage() {
                           <div className="mt-3 flex flex-wrap gap-2">
                             <a href={`mailto:${enquiry.email}?subject=RE: ${encodeURIComponent(enquiry.subject)}`}>
                               <Button variant="outline" size="sm">
-                                <Mail className="h-4 w-4" /> Reply by email
+                                <Mail className="h-4 w-4" /> {t('admin.enquiry.replyByEmail')}
                               </Button>
                             </a>
                           </div>
                         </div>
                         <div className="w-44 shrink-0">
                           <Select
-                            label="Update status"
+                            label={t('admin.enquiry.updateStatus')}
                             hidePlaceholder
                             options={ENQUIRY_STATUSES.map((s) => ({ value: s, label: cap(s) }))}
                             value={enquiry.status}
@@ -689,7 +687,7 @@ export function AdminPage() {
           ) : (
             <div className="space-y-3">
               {filteredUsers.length === 0 ? (
-                <EmptyState label="No users found." />
+                <EmptyState label={t('admin.empty.noUsers')} />
               ) : (
                 filteredUsers.map((u, i) => (
                   <motion.div
@@ -703,16 +701,16 @@ export function AdminPage() {
                         <div className="min-w-0 space-y-1.5">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-lg font-semibold text-brand-900">
-                              {u.full_name || '(no name)'}
+                              {u.full_name || t('admin.user.noName')}
                             </p>
                             {u.role === 'admin' && (
                               <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-semibold text-brand-700">
-                                <ShieldCheck className="h-3.5 w-3.5" /> Admin
+                                <ShieldCheck className="h-3.5 w-3.5" /> {t('admin.user.admin')}
                               </span>
                             )}
                             {u.banned && (
                               <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">
-                                Banned
+                                {t('admin.user.banned')}
                               </span>
                             )}
                           </div>
@@ -723,10 +721,16 @@ export function AdminPage() {
                             )}
                           </div>
                           <p className="text-xs text-brand-500">
-                            {u.loan_count} loan{u.loan_count === 1 ? '' : 's'}
-                            {u.active_loan_count > 0 ? ` · ${u.active_loan_count} active` : ''}
-                            {' · Joined '}
-                            {new Date(u.created_at).toLocaleDateString()}
+                            {u.loan_count === 1
+                              ? t('admin.user.loans', { count: u.loan_count })
+                              : t('admin.user.loansPlural', { count: u.loan_count })}
+                            {u.active_loan_count > 0
+                              ? ` · ${t('admin.user.active', { count: u.active_loan_count })}`
+                              : ''}
+                            {' · '}
+                            {t('admin.user.joined', {
+                              date: new Date(u.created_at).toLocaleDateString(),
+                            })}
                           </p>
                         </div>
                         {u.role !== 'admin' && (
@@ -736,7 +740,7 @@ export function AdminPage() {
                               size="sm"
                               onClick={() => banUser(u)}
                             >
-                              <Ban className="h-4 w-4" /> {u.banned ? 'Unban' : 'Ban'}
+                              <Ban className="h-4 w-4" /> {u.banned ? t('admin.user.unban') : t('admin.user.ban')}
                             </Button>
                             <Button
                               variant="outline"
@@ -744,7 +748,7 @@ export function AdminPage() {
                               onClick={() => deleteUser(u)}
                               className="border-red-200 text-red-600 hover:bg-red-50"
                             >
-                              <Trash2 className="h-4 w-4" /> Delete
+                              <Trash2 className="h-4 w-4" /> {t('common.delete')}
                             </Button>
                           </div>
                         )}
@@ -772,7 +776,7 @@ export function AdminPage() {
                 type="button"
                 onClick={() => setPreviewDoc(null)}
                 className="rounded-lg p-1.5 text-brand-600 transition hover:bg-brand-50"
-                aria-label="Close document preview"
+                aria-label={t('admin.preview.close')}
               >
                 <X className="h-5 w-5" />
               </button>

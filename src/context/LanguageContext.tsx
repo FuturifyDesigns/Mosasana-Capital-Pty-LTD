@@ -7,11 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import {
-  dashboardTranslations,
-  formatTranslation,
-  type DashboardTranslationKey,
-} from '@/lib/i18n/dashboard'
+import { translate, type TranslationKey } from '@/lib/i18n'
 import type { Language } from '@/lib/i18n/types'
 
 const STORAGE_KEY = 'mosasana_language'
@@ -20,7 +16,7 @@ interface LanguageContextValue {
   language: Language
   setLanguage: (language: Language) => void
   toggleLanguage: () => void
-  t: (key: DashboardTranslationKey, vars?: Record<string, string | number>) => string
+  t: (key: TranslationKey, vars?: Record<string, string | number>) => string
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null)
@@ -56,10 +52,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const t = useCallback(
-    (key: DashboardTranslationKey, vars?: Record<string, string | number>) => {
-      const template = dashboardTranslations[language][key] ?? dashboardTranslations.en[key] ?? key
-      return formatTranslation(template, vars)
-    },
+    (key: TranslationKey, vars?: Record<string, string | number>) =>
+      translate(language, key, vars),
     [language],
   )
 

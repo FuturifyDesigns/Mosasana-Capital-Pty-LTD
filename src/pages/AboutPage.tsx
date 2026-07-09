@@ -2,9 +2,11 @@ import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
 import { Reveal, RevealGroup, RevealItem } from '@/components/Reveal'
 import { BotswanaFlag } from '@/components/icons/BotswanaFlag'
+import { TranslatedText } from '@/components/TranslatedText'
 import { EditableText } from '@/components/editable/EditableText'
 import { EditableImage } from '@/components/editable/EditableImage'
 import { EditableOfficerCard } from '@/components/editable/EditableOfficerCard'
+import { useLanguage } from '@/context/LanguageContext'
 import { COMPANY } from '@/lib/constants'
 import {
   User,
@@ -87,13 +89,15 @@ const values = [
 ]
 
 export function AboutPage() {
+  const { t, language } = useLanguage()
+
   return (
     <>
       <PageHero
-        title="About Us"
-        subtitle={`${COMPANY.nbfiraLicense} · Short-term relief for daily financial shortfalls across Botswana.`}
-        titleKey="about.hero.title"
-        subtitleKey="about.hero.subtitle"
+        title={t('about.hero.title')}
+        subtitle={t('about.hero.subtitle')}
+        titleKey={language === 'en' ? 'about.hero.title' : undefined}
+        subtitleKey={language === 'en' ? 'about.hero.subtitle' : undefined}
       />
 
       {/* Who we are */}
@@ -102,15 +106,18 @@ export function AboutPage() {
           <Reveal direction="right">
             <span className="inline-flex items-center gap-2 rounded-full bg-brand-100 px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-brand-700">
               <BotswanaFlag className="h-3.5 w-5 rounded-sm ring-1 ring-black/5" />
-              Proudly Botswana
+              <TranslatedText tnKey="about.proudlyBotswana" as="span">
+                Proudly Botswana
+              </TranslatedText>
             </span>
-            <EditableText
-              as="h2"
+            <TranslatedText
+              tnKey="about.who.title"
               contentKey="about.who.title"
+              as="h2"
               className="mt-5 font-display text-3xl font-bold text-brand-900 sm:text-4xl"
             >
               {COMPANY.name}
-            </EditableText>
+            </TranslatedText>
             <EditableText
               as="p"
               multiline
@@ -148,29 +155,32 @@ export function AboutPage() {
       <section className="border-y border-brand-100/60 bg-gradient-to-b from-brand-50/60 via-white to-white">
         <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16 lg:py-24">
           <Reveal className="text-center">
-            <EditableText
-              as="span"
+            <TranslatedText
+              tnKey="about.tree.eyebrow"
               contentKey="about.tree.eyebrow"
+              as="span"
               className="text-sm font-semibold uppercase tracking-widest text-growth-600"
             >
               What&apos;s in a name
-            </EditableText>
-            <EditableText
-              as="h2"
+            </TranslatedText>
+            <TranslatedText
+              tnKey="about.tree.title"
               contentKey="about.tree.title"
+              as="h2"
               className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl"
             >
               Rooted in meaning
-            </EditableText>
-            <EditableText
+            </TranslatedText>
+            <TranslatedText
+              tnKey="about.tree.text"
+              contentKey="about.tree.text"
               as="p"
               multiline
-              contentKey="about.tree.text"
               className="mx-auto mt-4 max-w-2xl leading-relaxed text-brand-600"
             >
               Our story grows from a single Setswana word — follow it from its roots to what we
               offer today.
-            </EditableText>
+            </TranslatedText>
           </Reveal>
 
           {/* Canopy */}
@@ -251,20 +261,22 @@ export function AboutPage() {
       <section className="border-y border-brand-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
           <Reveal className="mb-12 text-center">
-            <EditableText
-              as="span"
+            <TranslatedText
+              tnKey="about.values.eyebrow"
               contentKey="about.values.eyebrow"
+              as="span"
               className="text-sm font-semibold uppercase tracking-widest text-brand-500"
             >
               What we stand for
-            </EditableText>
-            <EditableText
-              as="h2"
+            </TranslatedText>
+            <TranslatedText
+              tnKey="about.values.title"
               contentKey="about.values.title"
+              as="h2"
               className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl"
             >
               Our core values
-            </EditableText>
+            </TranslatedText>
           </Reveal>
           <RevealGroup className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {values.map((value, i) => (
@@ -303,13 +315,14 @@ export function AboutPage() {
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-100 text-brand-600 transition-transform duration-500 group-hover:scale-110">
                 <Target className="h-6 w-6" />
               </div>
-              <EditableText
-                as="h3"
+              <TranslatedText
+                tnKey="about.vision.title"
                 contentKey="about.vision.title"
+                as="h3"
                 className="font-display text-xl font-bold text-brand-900"
               >
                 Our Vision
-              </EditableText>
+              </TranslatedText>
               <EditableText
                 as="p"
                 multiline
@@ -325,13 +338,14 @@ export function AboutPage() {
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gold-500/15 text-gold-600 transition-transform duration-500 group-hover:scale-110">
                 <Compass className="h-6 w-6" />
               </div>
-              <EditableText
-                as="h3"
+              <TranslatedText
+                tnKey="about.mission.title"
                 contentKey="about.mission.title"
+                as="h3"
                 className="font-display text-xl font-bold text-brand-900"
               >
                 Our Mission
-              </EditableText>
+              </TranslatedText>
               <EditableText
                 as="p"
                 multiline
@@ -349,25 +363,27 @@ export function AboutPage() {
       <section className="border-t border-brand-100/60 bg-white/70 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
           <Reveal className="mb-10 text-center">
-            <EditableText
-              as="span"
+            <TranslatedText
+              tnKey="about.team.eyebrow"
               contentKey="about.team.eyebrow"
+              as="span"
               className="text-sm font-semibold uppercase tracking-widest text-brand-500"
             >
               The people behind Mosasana
-            </EditableText>
-            <EditableText
-              as="h2"
+            </TranslatedText>
+            <TranslatedText
+              tnKey="about.team.title"
               contentKey="about.team.title"
+              as="h2"
               className="mt-3 font-display text-3xl font-bold text-brand-900 sm:text-4xl"
             >
               Leadership Team
-            </EditableText>
+            </TranslatedText>
           </Reveal>
           <RevealGroup className="grid gap-6 md:grid-cols-2">
             {[
-              { role: 'Principal Officer', prefix: 'site.principal', defaults: COMPANY.principalOfficer },
-              { role: 'Compliance Officer', prefix: 'site.compliance', defaults: COMPANY.complianceOfficer },
+              { roleKey: 'about.leadership.principalOfficer' as const, prefix: 'site.principal', defaults: COMPANY.principalOfficer },
+              { roleKey: 'about.leadership.complianceOfficer' as const, prefix: 'site.compliance', defaults: COMPANY.complianceOfficer },
             ].map((officer) => (
               <RevealItem key={officer.prefix}>
                 <Card hover className="group h-full">
@@ -376,7 +392,7 @@ export function AboutPage() {
                       <User className="h-7 w-7" />
                     </div>
                     <EditableOfficerCard
-                      role={officer.role}
+                      role={t(officer.roleKey)}
                       prefix={officer.prefix}
                       defaults={officer.defaults}
                     />
@@ -394,21 +410,23 @@ export function AboutPage() {
         <div className="absolute -bottom-12 left-1/4 h-56 w-56 rounded-full bg-gold-400/15 blur-3xl" />
         <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-5 px-4 text-center sm:px-6">
           <BotswanaFlag className="h-14 w-20 rounded-lg shadow-xl ring-2 ring-white/40 transition-transform duration-500 hover:scale-105" />
-          <EditableText
-            as="h2"
+          <TranslatedText
+            tnKey="about.banner.title"
             contentKey="about.banner.title"
+            as="h2"
             className="font-display text-2xl font-bold sm:text-3xl"
           >
             Proudly Botswana
-          </EditableText>
-          <EditableText
+          </TranslatedText>
+          <TranslatedText
+            tnKey="about.banner.text"
+            contentKey="about.banner.text"
             as="p"
             multiline
-            contentKey="about.banner.text"
             className="max-w-2xl leading-relaxed text-brand-100"
           >
             {`${COMPANY.shortName} is a Botswana business built to serve Batswana — providing accessible, responsible financial support to the communities we call home.`}
-          </EditableText>
+          </TranslatedText>
         </div>
       </section>
     </>

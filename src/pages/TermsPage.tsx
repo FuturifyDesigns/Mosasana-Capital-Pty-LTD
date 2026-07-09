@@ -1,23 +1,26 @@
 import { LegalPageLayout, LegalSection } from '@/components/LegalPageLayout'
-import { COMPANY } from '@/lib/constants'
-import { TERMS_SECTIONS } from '@/lib/termsSections'
+import { useLanguage } from '@/context/LanguageContext'
+import { useLocalizedTermsSections } from '@/lib/i18n/useLegalSections'
 
 export function TermsPage() {
-  const sections = TERMS_SECTIONS.map((section) => ({
+  const { t, language } = useLanguage()
+  const termsSections = useLocalizedTermsSections()
+
+  const sections = termsSections.map((section) => ({
     id: section.key,
     title: section.title,
   }))
 
   return (
     <LegalPageLayout
-      title="Terms and Conditions"
-      subtitle={`Effective ${COMPANY.termsEffectiveDate} · ${COMPANY.legalName}`}
-      titleKey="terms.hero.title"
-      subtitleKey="terms.hero.subtitle"
+      title={t('terms.hero.title')}
+      subtitle={t('terms.hero.subtitle')}
+      titleKey={language === 'en' ? 'terms.hero.title' : undefined}
+      subtitleKey={language === 'en' ? 'terms.hero.subtitle' : undefined}
       variant="terms"
       sections={sections}
     >
-      {TERMS_SECTIONS.map((section, index) => (
+      {termsSections.map((section, index) => (
         <LegalSection
           key={section.key}
           sectionKey={section.key}

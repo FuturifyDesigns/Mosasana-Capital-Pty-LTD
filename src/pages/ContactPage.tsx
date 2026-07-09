@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { motion } from 'framer-motion'
@@ -11,20 +11,24 @@ import { PhoneInput } from '@/components/ui/PhoneInput'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
-import { contactSchema, sanitizeText, type ContactFormData } from '@/lib/validation'
+import { createContactSchema, sanitizeText, type ContactFormData } from '@/lib/validation'
 import { checkRateLimit, rateLimitMessage } from '@/lib/rateLimit'
 import { COMPANY } from '@/lib/constants'
 import { buildWhatsAppContactUrl } from '@/lib/whatsapp'
 import { PrivacyConsentField } from '@/components/PrivacyConsentField'
 import { EditableOfficerCard } from '@/components/editable/EditableOfficerCard'
 import { EditableText } from '@/components/editable/EditableText'
+import { useLanguage } from '@/context/LanguageContext'
 import { isHoneypotTriggered } from '@/lib/security'
 import { normalizeBotswanaPhone } from '@/lib/phone'
 
 export function ContactPage() {
+  const { t, language } = useLanguage()
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const schema = useMemo(() => createContactSchema(t), [t])
 
   const {
     register,
@@ -33,7 +37,7 @@ export function ContactPage() {
     reset,
     formState: { errors },
   } = useForm<ContactFormData>({
-    resolver: zodResolver(contactSchema),
+    resolver: zodResolver(schema),
     defaultValues: { acceptPrivacy: false, companyWebsite: '' },
   })
 
@@ -68,7 +72,7 @@ export function ContactPage() {
       setSuccess(true)
       reset()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send enquiry. Please try again.')
+      setError(err instanceof Error ? err.message : t('contact.form.error'))
     } finally {
       setSubmitting(false)
     }
@@ -77,10 +81,10 @@ export function ContactPage() {
   return (
     <>
       <PageHero
-        title="Contact Us"
-        subtitle="Have a question? Reach out to our team — we're here to help."
-        titleKey="contact.hero.title"
-        subtitleKey="contact.hero.subtitle"
+        title={t('contact.hero.title')}
+        subtitle={t('contact.hero.subtitle')}
+        titleKey={language === 'en' ? 'contact.hero.title' : undefined}
+        subtitleKey={language === 'en' ? 'contact.hero.subtitle' : undefined}
       />
 
       <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
@@ -88,7 +92,7 @@ export function ContactPage() {
           <div className="space-y-6 lg:col-span-2">
             <Card>
               <EditableOfficerCard
-                role="Principal Officer"
+                role={t('common.principalOfficer')}
                 prefix="site.principal"
                 defaults={COMPANY.principalOfficer}
               />
@@ -96,7 +100,7 @@ export function ContactPage() {
 
             <Card>
               <EditableOfficerCard
-                role="Compliance Officer"
+                role={t('common.complianceOfficer')}
                 prefix="site.compliance"
                 defaults={COMPANY.complianceOfficer}
               />
@@ -106,10 +110,10 @@ export function ContactPage() {
               <div className="flex items-start gap-3">
                 <MapPin className="mt-0.5 h-5 w-5 text-brand-500" />
                 <div>
-                  <h3 className="font-semibold text-brand-900">Where we are</h3>
+                  <h3 className="font-semibold text-brand-900">{t('contact.location.title')}</h3>
                   <p className="mt-1 text-sm text-brand-600">
                     <EditableText as="span" multiline contentKey="contact.location.text">
-                      {`Based in ${COMPANY.location}, serving clients across ${COMPANY.serviceArea}.`}
+                      {t('contact.location.text')}
                     </EditableText>
                   </p>
                 </div>
@@ -120,10 +124,8 @@ export function ContactPage() {
               <div className="flex items-start gap-3">
                 <MapPin className="mt-0.5 h-5 w-5 text-brand-500" />
                 <div>
-                  <h3 className="font-semibold text-brand-900">Prefer WhatsApp?</h3>
-                  <p className="mt-1 text-sm text-brand-600">
-                    Message us directly for faster responses.
-                  </p>
+                  <h3 className="font-semibold text-brand-900">{t('contact.whatsapp.title')}</h3>
+                  <p className="mt-1 text-sm text-brand-600">{t('contact.whatsapp.body')}</p>
                   <a
                     href={buildWhatsAppContactUrl(
                       formValues.fullName || 'Client',
@@ -134,7 +136,7 @@ export function ContactPage() {
                     className="mt-3 inline-block"
                   >
                     <Button variant="whatsapp" size="sm">
-                      <WhatsAppIcon className="h-4 w-4" /> Chat on WhatsApp
+                      <WhatsAppIcon className="h-4 w-4" /> {t('common.whatsappChat')}
                     </Button>
                   </a>
                 </div>
@@ -144,7 +146,7 @@ export function ContactPage() {
 
           <div className="lg:col-span-3">
             <Card>
-              <h2 className="text-xl font-semibold text-brand-900">Send an Enquiry</h2>
+              <h2 className="text-xl font-semibold text-brand-900">{t('contact.form.title')}</h2>
 
               {success && (
                 <motion.div
@@ -153,7 +155,7 @@ export function ContactPage() {
                   className="mt-4 flex items-center gap-2 rounded-xl bg-green-50 p-4 text-green-700"
                 >
                   <CheckCircle className="h-5 w-5" />
-                  <p className="text-sm">Your enquiry has been sent. We&apos;ll get back to you soon.</p>
+                  <p className="text-sm">{t('contact.form.success')}</p>
                 </motion.div>
               )}
 
@@ -174,38 +176,38 @@ export function ContactPage() {
                   {...register('companyWebsite')}
                 />
                 <Input
-                  label="Full Name"
+                  label={t('contact.field.fullName')}
                   required
-                  hint="Letters only — no numbers."
+                  hint={t('contact.field.fullNameHint')}
                   {...register('fullName')}
                   error={errors.fullName?.message}
                 />
                 <Input
-                  label="Email"
+                  label={t('contact.field.email')}
                   type="email"
                   required
-                  hint="We'll reply to this address."
+                  hint={t('contact.field.emailHint')}
                   {...register('email')}
                   error={errors.email?.message}
                 />
                 <PhoneInput
-                  label="Phone (optional)"
-                  hint="Enter your 8-digit mobile number after +267."
+                  label={t('contact.field.phone')}
+                  hint={t('contact.field.phoneHint')}
                   {...register('phone')}
                   error={errors.phone?.message}
                 />
                 <Input
-                  label="Subject"
+                  label={t('contact.field.subject')}
                   required
-                  hint="A short summary of your enquiry."
+                  hint={t('contact.field.subjectHint')}
                   {...register('subject')}
                   error={errors.subject?.message}
                 />
                 <Textarea
-                  label="Message"
+                  label={t('contact.field.message')}
                   rows={5}
                   required
-                  hint="Tell us how we can help — at least 10 characters."
+                  hint={t('contact.field.messageHint')}
                   {...register('message')}
                   error={errors.message?.message}
                 />
@@ -215,7 +217,7 @@ export function ContactPage() {
                   variant="contact"
                 />
                 <Button type="submit" className="w-full" loading={submitting}>
-                  Send Enquiry
+                  {t('contact.form.submit')}
                 </Button>
               </form>
             </Card>

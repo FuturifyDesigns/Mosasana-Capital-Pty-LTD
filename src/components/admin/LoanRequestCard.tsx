@@ -17,13 +17,15 @@ import { AdminWorkflowStepper } from '@/components/admin/AdminWorkflowStepper'
 import { DisbursementDetails } from '@/components/admin/DisbursementDetails'
 import { formatPula } from '@/lib/format'
 import { getRepaymentReminder } from '@/lib/loans'
+import { useLanguage } from '@/context/LanguageContext'
+import type { TranslationKey } from '@/lib/i18n'
 import {
   canAdminChangeStatus,
   canMarkDisbursed,
-  formatLoanStatusLabel,
-  getAdminNextStepHint,
+  getAdminNextStepHintKey,
   getAdminStatusOptions,
-  getAdminStatusPanelTitle,
+  getAdminStatusPanelTitleKey,
+  getLoanStatusLabelKey,
   isClosedLoanStatus,
 } from '@/lib/loanStatus'
 import type { LoanPayment, LoanRequest } from '@/lib/supabase'
@@ -41,7 +43,6 @@ interface LoanRequestCardProps {
   isReturningBorrower?: boolean
   payments: LoanPayment[]
   remindersByLoan: Map<string, ReminderLogRow[]>
-  reminderKindLabel: Record<string, string>
   idDocUrl?: string
   expanded: boolean
   onToggle: () => void
@@ -65,7 +66,6 @@ export function LoanRequestCard({
   isReturningBorrower = false,
   payments,
   remindersByLoan,
-  reminderKindLabel,
   idDocUrl,
   expanded,
   onToggle,
@@ -76,11 +76,24 @@ export function LoanRequestCard({
   onDiscontinue,
   onDelete,
 }: LoanRequestCardProps) {
+  const { t } = useLanguage()
   const canDiscontinue = !isClosedLoanStatus(loan.status)
   const canDelete = ['pending', 'reviewing'].includes(loan.status)
 
   const reminder = getRepaymentReminder(loan)
   const sent = remindersByLoan.get(loan.id) ?? []
+
+  const reminderKindKeys: Record<string, TranslationKey> = {
+    'd-7': 'admin.reminder.d7',
+    'd-3': 'admin.reminder.d3',
+    'd-1': 'admin.reminder.d1',
+    'd-0': 'admin.reminder.d0',
+    overdue: 'admin.reminder.overdue',
+  }
+  const reminderKindLabel = (kind: string) => {
+    const key = reminderKindKeys[kind]
+    return key ? t(key) : kind
+  }
 
   return (
     <Card className="overflow-hidden !p-0">
@@ -95,11 +108,11 @@ export function LoanRequestCard({
             <p className="text-lg font-semibold">{loan.full_name}</p>
             {isReturningBorrower && (
               <span className="rounded-full bg-emerald-200/90 px-2.5 py-0.5 text-xs font-semibold text-emerald-900">
-                Returning borrower
+                {t('admin.returningBorrower')}
               </span>
             )}
             <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
-              {formatLoanStatusLabel(loan.status)}
+              {t(getLoanStatusLabelKey(loan.status))}
             </span>
             <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium capitalize">
               {loan.source}
@@ -111,8 +124,8 @@ export function LoanRequestCard({
           <p className="mt-0.5 text-sm text-brand-100">{loan.loan_purpose}</p>
           {!expanded && (
             <p className="mt-2 text-xs text-brand-100/90">
-              {loan.email} · {new Date(loan.created_at).toLocaleString()} · Tap to{' '}
-              {expanded ? 'collapse' : 'open'}
+              {loan.email} · {new Date(loan.created_at).toLocaleString()} ·{' '}
+              {t(expanded ? 'admin.loan.tapToCollapse' : 'admin.loan.tapToOpen')}
             </p>
           )}
         </div>
@@ -176,10 +189,12 @@ export function LoanRequestCard({
                   {sent.length > 0 && (
                     <span
                       className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-600"
-                      title={`Reminder emails sent: ${sent.map((r) => reminderKindLabel[r.kind] ?? r.kind).join(', ')}`}
+                      title={sent.map((r) => reminderKindLabel(r.kind)).join(', ')}
                     >
                       <Mail className="h-3.5 w-3.5 text-brand-400" />
-                      {sent.length} reminder{sent.length === 1 ? '' : 's'} sent
+                      {sent.length === 1
+                        ? t('admin.loan.remindersSent', { count: sent.length })
+                        : t('admin.loan.remindersSentPlural', { count: sent.length })}
                     </span>
                   )}
                   {idDocUrl && (
@@ -192,7 +207,7 @@ export function LoanRequestCard({
                         )
                       }
                       className="mt-2 overflow-hidden rounded-xl border border-brand-200 bg-white text-left transition hover:border-brand-400"
-                      title="Click to open larger preview"
+                      title={t('admin.loan.enlargeId')}
                     >
                       <img
                         src={idDocUrl}
@@ -202,7 +217,7 @@ export function LoanRequestCard({
                       />
                       <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-brand-700">
                         <IdCard className="h-3.5 w-3.5" />
-                        Click to enlarge ID document
+                        {t('admin.loan.enlargeId')}
                       </div>
                     </button>
                   )}
@@ -220,40 +235,43 @@ export function LoanRequestCard({
                   {canAdminChangeStatus(loan) ? (
                     <>
                       <Select
-                        label={getAdminStatusPanelTitle(loan)}
+                        label={t(getAdminStatusPanelTitleKey(loan))}
                         hidePlaceholder
-                        options={getAdminStatusOptions(loan)}
+                        options={getAdminStatusOptions(loan).map((option) => ({
+                          value: option.value,
+                          label: t(option.labelKey),
+                        }))}
                         value={loan.status}
                         onChange={(e) => onStatusChange(loan.id, e.target.value)}
                         hint={
                           loan.status === 'approved' && !canMarkDisbursed(loan)
-                            ? 'Disburse is locked until repayment terms are saved below.'
+                            ? t('admin.statusHint.disburseLocked')
                             : undefined
                         }
                       />
                       <div className="rounded-xl border border-brand-100 bg-brand-50/80 p-3">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-500">
-                          Next step
+                          {t('admin.nextStep')}
                         </p>
                         <p className="mt-1 text-[11px] leading-relaxed text-brand-700">
-                          {getAdminNextStepHint(loan)}
+                          {t(getAdminNextStepHintKey(loan))}
                         </p>
                       </div>
                     </>
                   ) : (
                     <div className="rounded-xl border border-brand-100 bg-brand-50/80 p-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-brand-500">
-                        {getAdminStatusPanelTitle(loan)}
+                        {t(getAdminStatusPanelTitleKey(loan))}
                       </p>
                       <p className="mt-1 text-sm font-semibold text-brand-900">
-                        {formatLoanStatusLabel(loan.status)}
+                        {t(getLoanStatusLabelKey(loan.status))}
                       </p>
                       <div className="mt-3 rounded-lg border border-brand-100 bg-white/80 p-2.5">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-500">
-                          Next step
+                          {t('admin.nextStep')}
                         </p>
                         <p className="mt-1 text-[11px] leading-relaxed text-brand-700">
-                          {getAdminNextStepHint(loan)}
+                          {t(getAdminNextStepHintKey(loan))}
                         </p>
                       </div>
                     </div>
@@ -269,7 +287,7 @@ export function LoanRequestCard({
                           onClick={() => onDiscontinue(loan)}
                         >
                           <Ban className="h-4 w-4" />
-                          Discontinue
+                          {t('admin.loan.discontinue')}
                         </Button>
                       )}
                       {canDelete && !['paid', 'disbursed'].includes(loan.status) && (
@@ -280,7 +298,7 @@ export function LoanRequestCard({
                           onClick={() => onDelete(loan)}
                         >
                           <Trash2 className="h-4 w-4" />
-                          Delete
+                          {t('admin.loan.delete')}
                         </Button>
                       )}
                     </div>

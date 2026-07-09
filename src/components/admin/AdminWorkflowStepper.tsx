@@ -1,6 +1,8 @@
 import { Check, Lock } from 'lucide-react'
+import { useLanguage } from '@/context/LanguageContext'
 import {
   ADMIN_WORKFLOW_STEPS,
+  ADMIN_WORKFLOW_STEP_KEYS,
   getActiveWorkflowStepId,
   getWorkflowStepState,
 } from '@/lib/loanStatus'
@@ -11,6 +13,7 @@ interface AdminWorkflowStepperProps {
 }
 
 export function AdminWorkflowStepper({ loan }: AdminWorkflowStepperProps) {
+  const { t } = useLanguage()
   const active = getActiveWorkflowStepId(loan)
   if (active === 'closed') return null
 
@@ -21,6 +24,7 @@ export function AdminWorkflowStepper({ loan }: AdminWorkflowStepperProps) {
         const isCurrent = state === 'current'
         const isComplete = state === 'complete'
         const isLocked = state === 'locked'
+        const keys = ADMIN_WORKFLOW_STEP_KEYS[step.id]
 
         return (
           <li
@@ -46,11 +50,15 @@ export function AdminWorkflowStepper({ loan }: AdminWorkflowStepperProps) {
                 {isComplete ? <Check className="h-3.5 w-3.5" /> : isLocked ? <Lock className="h-3 w-3" /> : index + 1}
               </span>
               <p className={`text-xs font-semibold ${isCurrent ? 'text-brand-900' : 'text-brand-700'}`}>
-                {step.label}
-                {isCurrent && <span className="ml-1 text-[10px] font-bold uppercase text-brand-500">Now</span>}
+                {t(keys.labelKey)}
+                {isCurrent && (
+                  <span className="ml-1 text-[10px] font-bold uppercase text-brand-500">
+                    {t('admin.workflow.now')}
+                  </span>
+                )}
               </p>
             </div>
-            <p className="mt-1.5 pl-8 text-[10px] leading-snug text-brand-600">{step.description}</p>
+            <p className="mt-1.5 pl-8 text-[10px] leading-snug text-brand-600">{t(keys.descKey)}</p>
           </li>
         )
       })}

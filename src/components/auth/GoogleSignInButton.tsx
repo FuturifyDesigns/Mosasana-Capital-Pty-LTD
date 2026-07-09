@@ -4,6 +4,7 @@ import { SITE_URL } from '@/lib/constants'
 import { setOAuthReturnPath } from '@/lib/oauthReturn'
 import { Button } from '@/components/ui/Button'
 import { formatSupabaseError } from '@/lib/supabaseErrors'
+import { useLanguage } from '@/context/LanguageContext'
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -36,12 +37,14 @@ interface GoogleSignInButtonProps {
 }
 
 export function GoogleSignInButton({
-  label = 'Continue with Google',
+  label,
   className = '',
   returnTo = '/login',
 }: GoogleSignInButtonProps) {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const buttonLabel = label ?? t('common.continueWithGoogle')
 
   const handleGoogleSignIn = async () => {
     setLoading(true)
@@ -76,20 +79,22 @@ export function GoogleSignInButton({
         onClick={handleGoogleSignIn}
       >
         {!loading && <GoogleIcon className="h-5 w-5" />}
-        {label}
+        {buttonLabel}
       </Button>
     </div>
   )
 }
 
 export function AuthDivider() {
+  const { t } = useLanguage()
+
   return (
     <div className="relative my-5">
       <div className="absolute inset-0 flex items-center">
         <div className="w-full border-t border-brand-100" />
       </div>
       <div className="relative flex justify-center text-xs uppercase tracking-wide">
-        <span className="bg-white px-3 text-brand-400">or</span>
+        <span className="bg-white px-3 text-brand-400">{t('common.or')}</span>
       </div>
     </div>
   )

@@ -4,7 +4,9 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Check, LogIn, UserPlus } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/Button'
+import { useLanguage } from '@/context/LanguageContext'
 import { COMPANY } from '@/lib/constants'
+import type { TranslationKey } from '@/lib/i18n'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -12,29 +14,26 @@ type Side = 'in' | 'up'
 
 const panels = {
   in: {
-    title: 'Sign in',
-    tagline: 'Welcome back',
+    prefix: 'auth.panel.signIn',
     to: '/login',
     image: `${BASE}auth-signin-thumb.png`,
-    description: 'Track applications and submit new loan requests.',
-    points: ['Track application status', 'View your loan history', 'Pick up where you left off'],
-    cta: 'Sign in',
     icon: LogIn,
   },
   up: {
-    title: 'Sign up',
-    tagline: 'New to Mosasana?',
+    prefix: 'auth.panel.signUp',
     to: '/register',
     image: `${BASE}auth-signup-thumb.png`,
-    description: 'Register in minutes to apply for short-term cash loans.',
-    points: ['Quick, secure sign-up', 'Apply on web or WhatsApp', 'Verified by email'],
-    cta: 'Create account',
     icon: UserPlus,
   },
 } as const
 
+function panelKey(prefix: string, suffix: string): TranslationKey {
+  return `${prefix}.${suffix}` as TranslationKey
+}
+
 export function AuthPage() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [hovered, setHovered] = useState<Side | null>(null)
 
   const flexGrow = (side: Side) => {
@@ -44,6 +43,24 @@ export function AuthPage() {
 
   const handleSelect = (side: Side) => {
     navigate(panels[side].to)
+  }
+
+  const getPanel = (side: Side) => {
+    const { prefix, to, image, icon } = panels[side]
+    return {
+      to,
+      image,
+      icon,
+      title: t(panelKey(prefix, 'title')),
+      tagline: t(panelKey(prefix, 'tagline')),
+      description: t(panelKey(prefix, 'description')),
+      points: [
+        t(panelKey(prefix, 'point1')),
+        t(panelKey(prefix, 'point2')),
+        t(panelKey(prefix, 'point3')),
+      ],
+      cta: t(panelKey(prefix, 'cta')),
+    }
   }
 
   return (
@@ -66,20 +83,18 @@ export function AuthPage() {
             </span>
           </div>
           <h1 className="mt-3 font-display text-xl font-bold text-brand-900 sm:mt-6 sm:text-4xl">
-            Welcome to {COMPANY.shortName}
+            {t('auth.welcome.title', { company: COMPANY.shortName })}
           </h1>
           <p className="mx-auto mt-2 max-w-md text-sm text-brand-600 sm:mt-3 sm:text-base">
-            <span className="md:hidden">Sign in or create an account to continue.</span>
-            <span className="hidden md:inline">
-              Choose how you&apos;d like to continue. Hover to explore, click to get started.
-            </span>
+            <span className="md:hidden">{t('auth.welcome.subtitleMobile')}</span>
+            <span className="hidden md:inline">{t('auth.welcome.subtitleDesktop')}</span>
           </p>
         </motion.div>
 
         {/* Mobile — compact cards */}
         <div className="grid gap-3 md:hidden">
           {(Object.keys(panels) as Side[]).map((side, index) => {
-            const p = panels[side]
+            const p = getPanel(side)
             const Icon = p.icon
             return (
               <motion.div
@@ -126,7 +141,7 @@ export function AuthPage() {
         {/* Desktop — interactive split panels */}
         <div className="hidden gap-4 md:flex md:h-[28rem] md:flex-row">
           {(Object.keys(panels) as Side[]).map((side, index) => {
-            const p = panels[side]
+            const p = getPanel(side)
             const active = hovered === side
             return (
               <motion.button

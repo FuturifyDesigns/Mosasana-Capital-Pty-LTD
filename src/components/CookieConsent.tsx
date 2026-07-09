@@ -3,13 +3,15 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Cookie } from 'lucide-react'
 import { Button } from './ui/Button'
-import { EditableText } from '@/components/editable/EditableText'
+import { TranslatedText } from '@/components/TranslatedText'
 import { useToast } from '@/context/ToastContext'
+import { useLanguage } from '@/context/LanguageContext'
 import { getCookie, setCookie, COOKIE_CONSENT_KEY } from '@/lib/cookies'
 import { COMPANY } from '@/lib/constants'
 
 export function CookieConsent() {
   const { showToast } = useToast()
+  const { t } = useLanguage()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -35,9 +37,7 @@ export function CookieConsent() {
     setCookie(COOKIE_CONSENT_KEY, choice)
     setVisible(false)
     showToast(
-      choice === 'accepted'
-        ? 'Cookie preferences saved.'
-        : 'Only essential cookies will be used.',
+      choice === 'accepted' ? t('cookie.acceptedToast') : t('cookie.declinedToast'),
       choice === 'accepted' ? 'success' : 'info',
     )
   }
@@ -60,16 +60,16 @@ export function CookieConsent() {
                 <Cookie className="h-4 w-4 sm:h-5 sm:w-5" />
               </span>
               <p className="min-w-0 break-words text-sm leading-relaxed text-brand-700">
-                <EditableText as="span" contentKey="cookie.banner.prefix">
+                <TranslatedText tnKey="cookie.banner.prefix" contentKey="cookie.banner.prefix" as="span">
                   We use essential cookies to keep you signed in and secure our site. Optional cookies are
                   only used if you accept. See our
-                </EditableText>{' '}
+                </TranslatedText>{' '}
                 <Link to="/privacy" className="font-semibold text-brand-800 underline-offset-2 hover:underline">
-                  Privacy Policy
+                  {t('common.privacyPolicy')}
                 </Link>{' '}
-                <EditableText as="span" contentKey="cookie.banner.suffix">
+                <TranslatedText tnKey="cookie.banner.suffix" contentKey="cookie.banner.suffix" as="span">
                   {`for how we process personal data under Botswana's ${COMPANY.dataProtection.actReference}.`}
-                </EditableText>
+                </TranslatedText>
               </p>
             </div>
             <div className="flex w-full min-w-0 shrink-0 gap-2 sm:w-auto">
@@ -79,14 +79,14 @@ export function CookieConsent() {
                 className="min-w-0 flex-1 sm:flex-none"
                 onClick={() => handleChoice('declined')}
               >
-                Essential only
+                {t('cookie.essentialOnly')}
               </Button>
               <Button
                 size="sm"
                 className="min-w-0 flex-1 sm:flex-none"
                 onClick={() => handleChoice('accepted')}
               >
-                Accept all
+                {t('cookie.acceptAll')}
               </Button>
             </div>
           </div>
