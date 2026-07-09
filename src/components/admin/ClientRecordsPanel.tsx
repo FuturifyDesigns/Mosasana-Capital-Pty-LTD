@@ -360,6 +360,14 @@ function ClientRecordCard({
                                       ? ` · Income ${formatPula(loan.monthly_income)}`
                                       : ''}
                                   </p>
+                                  <DisbursementDetails
+                                    disbursementType={loan.disbursement_type}
+                                    bankName={loan.bank_name}
+                                    bankAccountName={loan.bank_account_name}
+                                    bankAccountNumber={loan.bank_account_number}
+                                    bankBranchCode={loan.bank_branch_code}
+                                    bankBranchName={loan.bank_branch_name}
+                                  />
                                   <p>
                                     <strong>Total due:</strong>{' '}
                                     {total != null ? formatPula(total) : '—'} ·{' '}

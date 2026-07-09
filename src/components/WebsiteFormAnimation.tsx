@@ -25,6 +25,9 @@ const FIELDS: Field[] = [
   { label: 'Purpose of Loan', value: 'Rent for this month', type: 'text', required: true },
   { label: 'Employment Status', value: 'Employed', type: 'select', required: true },
   { label: 'Monthly Income (Pula, optional)', value: '12000', type: 'text' },
+  { label: 'Bank / Wallet', value: 'Orange Money', type: 'select', required: true },
+  { label: 'Name on Account', value: 'Thabo Nkile', type: 'text', required: true },
+  { label: 'Orange Money Number', value: '71234567', type: 'text', required: true },
 ]
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))

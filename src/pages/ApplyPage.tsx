@@ -23,11 +23,13 @@ import {
   validateIdFile,
   sanitizeText,
   imageContentType,
+  toDisbursementDbFields,
   type LoanRequestFormData,
 } from '@/lib/validation'
 import { buildWhatsAppLoanUrl } from '@/lib/whatsapp'
 import { RegulatoryNotice } from '@/components/RegulatoryNotice'
 import { PrivacyConsentField } from '@/components/PrivacyConsentField'
+import { DisbursementFields } from '@/components/DisbursementFields'
 import { EditableText } from '@/components/editable/EditableText'
 import { formatPula } from '@/lib/format'
 import { normalizeBotswanaPhone } from '@/lib/phone'
@@ -89,6 +91,7 @@ export function ApplyPage() {
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors },
   } = useForm<LoanRequestFormData>({
     resolver: zodResolver(loanRequestSchema),
@@ -97,6 +100,9 @@ export function ApplyPage() {
       email: user?.email || '',
       phone: normalizeBotswanaPhone(profile?.phone || ''),
       physicalAddress: profile?.physical_address || '',
+      bankAccountHolderName: profile?.full_name || '',
+      bankBranchCode: '',
+      bankBranchName: '',
       idType: 'national_id',
       termMonths: 3,
       acceptPrivacy: false,
@@ -191,6 +197,8 @@ export function ApplyPage() {
 
       if (uploadError) throw uploadError
 
+      const payout = toDisbursementDbFields(data)
+
       const { error: insertError } = await supabase.from('loan_requests').insert({
         user_id: user.id,
         full_name: sanitizeText(data.fullName),
@@ -208,6 +216,7 @@ export function ApplyPage() {
             ? sanitizeText(data.employmentOther)
             : data.employmentStatus,
         monthly_income: data.monthlyIncome ?? null,
+        ...payout,
         status: 'pending',
         source: 'website',
       })
@@ -386,8 +395,9 @@ export function ApplyPage() {
               Fill in your details below, then continue on WhatsApp to send your application and attach your ID photo.
             </p>
             <div className="mt-3 rounded-xl border border-brand-100 bg-brand-50/70 p-3 text-sm text-brand-700">
-              We now include your selected <strong>repayment period</strong>, <strong>employment details</strong>,
-              and optional <strong>monthly income</strong> in the WhatsApp application summary.
+              We include your <strong>repayment period</strong>, <strong>employment details</strong>,
+              <strong> loan disbursement details</strong>, and optional <strong>monthly income</strong> in the
+              WhatsApp application summary.
             </div>
             <form className="mt-6 space-y-4" onSubmit={(e) => e.preventDefault()} noValidate>
               <Input
@@ -482,15 +492,26 @@ export function ApplyPage() {
                   error={errors.employmentOther?.message}
                 />
               )}
+              <Input
+                label="Monthly Income (Pula, optional)"
+                type="number"
+                min={0}
+                inputMode="numeric"
+                hint="Optional — numbers only."
+                {...register('monthlyIncome', {
+                  setValueAs: (v) => (v === '' || v == null ? null : Number(v)),
+                })}
+                error={errors.monthlyIncome?.message}
+              />
+              <DisbursementFields register={register} control={control} errors={errors} />
               <Button
                 variant="whatsapp"
                 className="w-full"
                 type="button"
-                onClick={async () => {
-                  const ok = await confirmHighBorrowingRisk(formValues)
-                  if (!ok) return
-                  window.open(buildWhatsAppLoanUrl(formValues), '_blank', 'noopener,noreferrer')
-                }}
+                onClick={handleSubmit(async (data) => {
+                  if (!(await confirmHighBorrowingRisk(data))) return
+                  window.open(buildWhatsAppLoanUrl(data), '_blank', 'noopener,noreferrer')
+                })}
               >
                 <WhatsAppIcon className="h-5 w-5" />
                 Continue on WhatsApp
@@ -649,6 +670,8 @@ export function ApplyPage() {
                 })}
                 error={errors.monthlyIncome?.message}
               />
+
+              <DisbursementFields register={register} control={control} errors={errors} />
 
               <PrivacyConsentField
                 register={register}

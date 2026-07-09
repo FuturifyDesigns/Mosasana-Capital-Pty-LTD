@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { RepaymentEditor } from '@/components/admin/RepaymentEditor'
+import { DisbursementDetails } from '@/components/admin/DisbursementDetails'
 import { formatPula } from '@/lib/format'
 import { getRepaymentReminder } from '@/lib/loans'
 import {
@@ -193,6 +194,14 @@ export function LoanRequestCard({
                       </div>
                     </button>
                   )}
+                  <DisbursementDetails
+                    disbursementType={loan.disbursement_type}
+                    bankName={loan.bank_name}
+                    bankAccountName={loan.bank_account_name}
+                    bankAccountNumber={loan.bank_account_number}
+                    bankBranchCode={loan.bank_branch_code}
+                    bankBranchName={loan.bank_branch_name}
+                  />
                 </div>
 
                 <div className="w-full shrink-0 space-y-3 sm:w-48">

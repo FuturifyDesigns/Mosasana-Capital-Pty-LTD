@@ -1,4 +1,4 @@
-import { COMPANY, WHATSAPP_NUMBER } from './constants'
+import { COMPANY, WHATSAPP_NUMBER, getDisbursementProviderLabel } from './constants'
 import type { LoanRequestFormData } from './validation'
 
 export function buildWhatsAppLoanUrl(data: Partial<LoanRequestFormData>): string {
@@ -7,6 +7,9 @@ export function buildWhatsAppLoanUrl(data: Partial<LoanRequestFormData>): string
     data.employmentStatus === 'other' && data.employmentOther
       ? data.employmentOther
       : data.employmentStatus || ''
+  const payoutProvider = data.disbursementProvider
+    ? getDisbursementProviderLabel(data.disbursementProvider)
+    : ''
   const message = [
     `*Loan Application - ${COMPANY.shortName}*`,
     '',
@@ -21,6 +24,13 @@ export function buildWhatsAppLoanUrl(data: Partial<LoanRequestFormData>): string
     `Purpose: ${data.loanPurpose || ''}`,
     `Employment: ${employment}`,
     data.monthlyIncome ? `Monthly Income: P${data.monthlyIncome}` : '',
+    '',
+    '*Loan disbursement*',
+    payoutProvider ? `Bank / Wallet: ${payoutProvider}` : '',
+    data.bankAccountHolderName ? `Name on account: ${data.bankAccountHolderName}` : '',
+    data.bankAccountNumber ? `Account / wallet number: ${data.bankAccountNumber}` : '',
+    data.bankBranchCode ? `Branch code: ${data.bankBranchCode}` : '',
+    data.bankBranchName ? `Branch name: ${data.bankBranchName}` : '',
     '',
     'Please attach a photo of your ID / passport document.',
   ]

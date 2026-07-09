@@ -27,7 +27,6 @@ import { ENQUIRY_STATUSES, OPEN_LOAN_PIPELINE_STATUSES, CLOSED_LOAN_STATUSES } f
 import { isLoanLocked, validateStatusChange } from '@/lib/loanStatus'
 import { LoanRequestCard } from '@/components/admin/LoanRequestCard'
 import { ClientRecordsPanel } from '@/components/admin/ClientRecordsPanel'
-import { DisbursementDetails } from '@/components/admin/DisbursementDetails'
 import { buildClientRecords, filterClientRecords } from '@/lib/clientRecords'
 import { useToast } from '@/context/ToastContext'
 import { useConfirm } from '@/context/ConfirmContext'
@@ -685,15 +684,6 @@ export function AdminPage() {
                               <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5 text-brand-400" />{u.phone}</span>
                             )}
                           </div>
-                          <DisbursementDetails
-                            compact
-                            disbursementType={u.disbursement_type}
-                            bankName={u.bank_name}
-                            bankAccountName={u.bank_account_name}
-                            bankAccountNumber={u.bank_account_number}
-                            bankBranchCode={u.bank_branch_code}
-                            bankBranchName={u.bank_branch_name}
-                          />
                           <p className="text-xs text-brand-500">
                             {u.loan_count} loan{u.loan_count === 1 ? '' : 's'}
                             {u.active_loan_count > 0 ? ` · ${u.active_loan_count} active` : ''}

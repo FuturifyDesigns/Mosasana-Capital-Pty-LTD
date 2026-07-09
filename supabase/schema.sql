@@ -35,6 +35,12 @@ CREATE TABLE IF NOT EXISTS public.loan_requests (
   term_months INTEGER CHECK (term_months BETWEEN 1 AND 12),
   employment_status TEXT NOT NULL,
   monthly_income NUMERIC(12,2),
+  disbursement_type TEXT CHECK (disbursement_type IS NULL OR disbursement_type IN ('bank', 'mobile')),
+  bank_name TEXT,
+  bank_account_name TEXT,
+  bank_account_number TEXT,
+  bank_branch_code TEXT,
+  bank_branch_name TEXT,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'reviewing', 'approved', 'rejected', 'disbursed', 'paid')),
   total_repayable NUMERIC(12,2),
   amount_paid NUMERIC(12,2) NOT NULL DEFAULT 0,
@@ -87,12 +93,6 @@ BEGIN
     id,
     full_name,
     phone,
-    disbursement_type,
-    bank_name,
-    bank_account_name,
-    bank_account_number,
-    bank_branch_code,
-    bank_branch_name,
     role
   )
   VALUES (
@@ -103,12 +103,6 @@ BEGIN
       split_part(COALESCE(NEW.email, ''), '@', 1)
     ),
     COALESCE(NEW.raw_user_meta_data->>'phone', ''),
-    NULLIF(NEW.raw_user_meta_data->>'disbursement_type', ''),
-    NULLIF(NEW.raw_user_meta_data->>'bank_name', ''),
-    NULLIF(NEW.raw_user_meta_data->>'bank_account_name', ''),
-    NULLIF(NEW.raw_user_meta_data->>'bank_account_number', ''),
-    NULLIF(NEW.raw_user_meta_data->>'bank_branch_code', ''),
-    NULLIF(NEW.raw_user_meta_data->>'bank_branch_name', ''),
     'user'
   );
   RETURN NEW;

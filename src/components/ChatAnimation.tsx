@@ -16,12 +16,12 @@ const CONVERSATION: Message[] = [
   { from: 'customer', text: "Hi Mosasana 👋 I'd like to apply for a loan of P3,000.", time: '19:38' },
   {
     from: 'mosasana',
-    text: 'Hello Thabo! 😊 Please share your full name, email, phone, ID type and number, address, repayment period, loan purpose, employment status, and monthly income — then attach a photo of your ID.',
+    text: 'Hello Thabo! 😊 Please share your full name, email, phone, ID type and number, address, repayment period, loan purpose, employment status, monthly income, and where we should pay your loan — then attach a photo of your ID.',
     time: '19:38',
   },
   {
     from: 'customer',
-    text: `*Loan Application - ${COMPANY.shortName}*\n\nName: Thabo Nkile\nEmail: thabo@example.com\nPhone: 71234567\nID Type: Omang / National ID\nOmang / ID Number: 123456789\nAddress: Plot 456, Gaborone\nAmount: P3000\nRepayment period: 3 month(s)\nPurpose: Rent for this month\nEmployment: employed\nMonthly Income: P12000`,
+    text: `*Loan Application - ${COMPANY.shortName}*\n\nName: Thabo Nkile\nEmail: thabo@example.com\nPhone: 71234567\nID Type: Omang / National ID\nOmang / ID Number: 123456789\nAddress: Plot 456, Gaborone\nAmount: P3000\nRepayment period: 3 month(s)\nPurpose: Rent for this month\nEmployment: employed\nMonthly Income: P12000\n\n*Loan disbursement*\nBank / Wallet: Orange Money\nName on account: Thabo Nkile\nAccount / wallet number: 71234567`,
     time: '19:39',
   },
   { from: 'customer', image: true, time: '19:39' },

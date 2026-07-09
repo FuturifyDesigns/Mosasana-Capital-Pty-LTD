@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import {
   DISBURSEMENT_PROVIDER_VALUES,
+  getDisbursementKind,
   isMobileWalletProvider,
   COMPANY,
 } from './constants'
@@ -13,6 +14,61 @@ export const loginSchema = z.object({
   email: z.string().trim().email('Enter a valid email address').max(255),
   password: z.string().min(8, 'Password must be at least 8 characters').max(128),
 })
+
+const disbursementFieldsSchema = z.object({
+  disbursementProvider: z.enum(DISBURSEMENT_PROVIDER_VALUES, {
+    errorMap: () => ({ message: 'Select where we should send your loan' }),
+  }),
+  bankAccountHolderName: z
+    .string()
+    .trim()
+    .min(2, 'Name on account is required')
+    .max(120, 'Name is too long')
+    .regex(/^[a-zA-Z\s'.-]+$/, 'Name contains invalid characters'),
+  bankAccountNumber: z.string().trim().min(1, 'Account or wallet number is required'),
+  bankBranchCode: z.string().trim().optional().or(z.literal('')),
+  bankBranchName: z.string().trim().optional().or(z.literal('')),
+})
+
+function validateDisbursementFields(
+  data: z.infer<typeof disbursementFieldsSchema>,
+  ctx: z.RefinementCtx,
+) {
+  const mobile = isMobileWalletProvider(data.disbursementProvider)
+
+  if (mobile) {
+    if (!phoneRegex.test(data.bankAccountNumber)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['bankAccountNumber'],
+        message: 'Enter the 8-digit mobile number linked to this wallet',
+      })
+    }
+    return
+  }
+
+  if (!/^[0-9]{6,20}$/.test(data.bankAccountNumber)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['bankAccountNumber'],
+      message: 'Enter a valid bank account number (6–20 digits)',
+    })
+  }
+  if (!data.bankBranchCode || !/^[0-9]{3,6}$/.test(data.bankBranchCode)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['bankBranchCode'],
+      message: 'Enter a valid branch code (3–6 digits)',
+    })
+  }
+  if (!data.bankBranchName || data.bankBranchName.trim().length < 2) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['bankBranchName'],
+      message: 'Branch name is required',
+    })
+  }
+}
 
 export const registerSchema = z
   .object({
@@ -27,18 +83,6 @@ export const registerSchema = z
       .string()
       .trim()
       .regex(phoneRegex, 'Enter a valid 8-digit Botswana mobile number'),
-    disbursementProvider: z.enum(DISBURSEMENT_PROVIDER_VALUES, {
-      errorMap: () => ({ message: 'Select where we should send your loan' }),
-    }),
-    bankAccountHolderName: z
-      .string()
-      .trim()
-      .min(2, 'Name on account is required')
-      .max(120, 'Name is too long')
-      .regex(/^[a-zA-Z\s'.-]+$/, 'Name contains invalid characters'),
-    bankAccountNumber: z.string().trim().min(1, 'Account or wallet number is required'),
-    bankBranchCode: z.string().trim().optional().or(z.literal('')),
-    bankBranchName: z.string().trim().optional().or(z.literal('')),
     password: z
       .string()
       .min(8, 'Password must be at least 8 characters')
@@ -54,42 +98,6 @@ export const registerSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
-  })
-  .superRefine((data, ctx) => {
-    const mobile = isMobileWalletProvider(data.disbursementProvider)
-
-    if (mobile) {
-      if (!phoneRegex.test(data.bankAccountNumber)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['bankAccountNumber'],
-          message: 'Enter the 8-digit mobile number linked to this wallet',
-        })
-      }
-      return
-    }
-
-    if (!/^[0-9]{6,20}$/.test(data.bankAccountNumber)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['bankAccountNumber'],
-        message: 'Enter a valid bank account number (6–20 digits)',
-      })
-    }
-    if (!data.bankBranchCode || !/^[0-9]{3,6}$/.test(data.bankBranchCode)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['bankBranchCode'],
-        message: 'Enter a valid branch code (3–6 digits)',
-      })
-    }
-    if (!data.bankBranchName || data.bankBranchName.trim().length < 2) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['bankBranchName'],
-        message: 'Branch name is required',
-      })
-    }
   })
 
 export const forgotPasswordSchema = z.object({
@@ -112,8 +120,9 @@ export const resetPasswordSchema = z
     path: ['confirmPassword'],
   })
 
-export const loanRequestSchema = z
-  .object({
+export const loanRequestSchema = disbursementFieldsSchema
+  .merge(
+    z.object({
     fullName: z
       .string()
       .trim()
@@ -150,8 +159,11 @@ export const loanRequestSchema = z
     acceptPrivacy: z.boolean().refine((val) => val === true, {
       message: 'You must consent to our Privacy Policy to submit a loan application',
     }),
-  })
+  }),
+  )
   .superRefine((data, ctx) => {
+    validateDisbursementFields(data, ctx)
+
     if (data.idType === 'national_id' && !idNumberRegex.test(data.idNumber)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -224,6 +236,24 @@ export function imageContentType(file: File): string {
   if (ext === 'png') return 'image/png'
   if (ext === 'webp') return 'image/webp'
   return 'image/jpeg'
+}
+
+export function toDisbursementDbFields(data: {
+  disbursementProvider: string
+  bankAccountHolderName: string
+  bankAccountNumber: string
+  bankBranchCode?: string
+  bankBranchName?: string
+}) {
+  const mobile = isMobileWalletProvider(data.disbursementProvider)
+  return {
+    disbursement_type: getDisbursementKind(data.disbursementProvider),
+    bank_name: data.disbursementProvider,
+    bank_account_name: sanitizeText(data.bankAccountHolderName),
+    bank_account_number: sanitizeText(data.bankAccountNumber),
+    bank_branch_code: mobile ? null : sanitizeText(data.bankBranchCode || '') || null,
+    bank_branch_name: mobile ? null : sanitizeText(data.bankBranchName || '') || null,
+  }
 }
 
 export function sanitizeText(input: string): string {

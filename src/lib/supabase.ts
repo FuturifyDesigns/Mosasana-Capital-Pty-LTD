@@ -53,6 +53,12 @@ export interface LoanRequest {
   term_months: number | null
   employment_status: string
   monthly_income: number | null
+  disbursement_type: 'bank' | 'mobile' | null
+  bank_name: string | null
+  bank_account_name: string | null
+  bank_account_number: string | null
+  bank_branch_code: string | null
+  bank_branch_name: string | null
   status: string
   interest_rate: number | null
   total_repayable: number | null

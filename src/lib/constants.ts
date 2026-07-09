@@ -99,7 +99,7 @@ export const LOAN_TERMS = [
   { value: 12, label: '12 months' },
 ] as const
 
-/** Licensed commercial banks operating in Botswana (for registration / disbursement). */
+/** Licensed commercial banks operating in Botswana (for loan disbursement). */
 export const BOTSWANA_BANKS = [
   { value: 'absa', label: 'Absa Bank Botswana' },
   { value: 'access', label: 'Access Bank Botswana' },
