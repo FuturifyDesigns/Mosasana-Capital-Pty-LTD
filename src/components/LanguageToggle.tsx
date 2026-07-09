@@ -3,7 +3,7 @@ import { useLanguage } from '@/context/LanguageContext'
 import type { Language } from '@/lib/i18n/types'
 
 const LANGUAGES: { code: Language; compact: string; fullKey: 'nav.langEnglish' | 'nav.langSetswana' }[] = [
-  { code: 'en', compact: 'EN', fullKey: 'nav.langEnglish' },
+  { code: 'en', compact: 'English', fullKey: 'nav.langEnglish' },
   { code: 'tn', compact: 'Setswana', fullKey: 'nav.langSetswana' },
 ]
 
@@ -14,9 +14,7 @@ export function LanguageToggle({ compact = false }: { compact?: boolean }) {
     <div
       role="group"
       aria-label={t('nav.languageGroup')}
-      className={`relative inline-grid grid-cols-2 rounded-full bg-brand-100/90 p-0.5 ring-1 ring-brand-200/80 shadow-[inset_0_1px_2px_rgba(31,63,87,0.06)] ${
-        compact ? 'min-w-[8.75rem]' : 'min-w-[11rem]'
-      }`}
+      className="relative inline-grid min-w-[11rem] grid-cols-2 rounded-full bg-brand-100/90 p-0.5 ring-1 ring-brand-200/80 shadow-[inset_0_1px_2px_rgba(31,63,87,0.06)]"
     >
       {LANGUAGES.map((option) => {
         const active = language === option.code
