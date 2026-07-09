@@ -79,7 +79,7 @@ export function LoginPage() {
     <AuthLayout
       title={t('auth.login.title')}
       subtitle={t('auth.login.subtitle')}
-      image={`${BASE}auth-signin.png`}
+      image={`${BASE}auth-signin-thumb.png`}
       panelHeading={t('auth.login.panelHeading')}
       panelText={t('auth.login.panelText')}
       points={[t('auth.login.point1'), t('auth.login.point2'), t('auth.login.point3')]}

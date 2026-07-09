@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { EditableImage } from '@/components/editable/EditableImage'
 import { EditableText } from '@/components/editable/EditableText'
+import { preloadImages, webpSibling } from '@/lib/images'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -28,6 +29,15 @@ export function WhyChooseSlideshow() {
     const t = setInterval(() => setIndex((i) => (i + 1) % slides.length), AUTOPLAY_MS)
     return () => clearInterval(t)
   }, [paused, index])
+
+  useEffect(() => {
+    preloadImages(
+      slides.flatMap((s) => {
+        const webp = webpSibling(s.src)
+        return webp ? [webp, s.src] : [s.src]
+      }),
+    )
+  }, [])
 
   const slide = slides[index]
 

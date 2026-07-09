@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNotifications } from '@/context/NotificationContext'
 import { useAuth } from '@/context/AuthContext'
 import type { AppNotification } from '@/lib/supabase'
+import { getNotificationPath } from '@/lib/notificationLinks'
 
 const typeIcon: Record<string, typeof Bell> = {
   new_loan: FileText,
@@ -13,6 +14,7 @@ const typeIcon: Record<string, typeof Bell> = {
   payment_received: Wallet,
   interest_added: Percent,
   terms_updated: Info,
+  loan_discontinued: Info,
   new_enquiry: MessageSquare,
 }
 
@@ -81,8 +83,6 @@ export function NotificationBell() {
 
   if (!user) return null
 
-  const portalLink = isAdmin ? '/admin' : '/dashboard'
-
   return (
     <div className="relative" ref={panelRef}>
       <button
@@ -127,7 +127,7 @@ export function NotificationBell() {
                   <NotificationItem
                     key={item.id}
                     item={item}
-                    link={portalLink}
+                    link={getNotificationPath(item, isAdmin)}
                     onRead={() => {
                       if (!item.read_at) markAsRead(item.id)
                       setOpen(false)

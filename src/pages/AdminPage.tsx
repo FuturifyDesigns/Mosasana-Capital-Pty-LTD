@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   FileText,
@@ -23,7 +24,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { supabase, type LoanRequest, type ContactEnquiry, type AdminUser, type LoanPayment } from '@/lib/supabase'
-import { ENQUIRY_STATUSES, IN_REVIEW_LOAN_STATUSES, OPEN_LOAN_PIPELINE_STATUSES, CLOSED_LOAN_STATUSES } from '@/lib/constants'
+import { IN_REVIEW_LOAN_STATUSES, OPEN_LOAN_PIPELINE_STATUSES, CLOSED_LOAN_STATUSES } from '@/lib/constants'
 import { getLoanStatusLabelKey, isLoanLocked, validateStatusChange } from '@/lib/loanStatus'
 import { LoanRequestCard } from '@/components/admin/LoanRequestCard'
 import { ClientRecordsPanel } from '@/components/admin/ClientRecordsPanel'
@@ -38,6 +39,7 @@ import {
   mergePaymentFromPayload,
   subscribeAdminTables,
 } from '@/lib/realtime'
+import { useScrollToId } from '@/lib/useNotificationDeepLink'
 
 type Tab = 'loans' | 'records' | 'enquiries' | 'users'
 
@@ -50,17 +52,22 @@ interface ReminderLogRow {
 const enquiryBadge: Record<string, string> = {
   new: 'bg-blue-100 text-blue-800',
   read: 'bg-brand-100 text-brand-700',
-  responded: 'bg-green-100 text-green-800',
+  responded: 'bg-brand-100 text-brand-700',
   closed: 'bg-gray-100 text-gray-600',
 }
 
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+const isEnquiryUnread = (status: string) => status === 'new'
+
+const enquiryStatusLabel = (status: string) => (isEnquiryUnread(status) ? 'new' : 'read')
 
 export function AdminPage() {
   const { showToast } = useToast()
   const { confirm } = useConfirm()
   const { t } = useLanguage()
   const { isAdmin, loading: authLoading } = useAuth()
+  const [searchParams] = useSearchParams()
+  const deepLinkTab = searchParams.get('tab')
+  const deepLinkLoanId = searchParams.get('loan')
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [tab, setTab] = useState<Tab>('loans')
   const [loans, setLoans] = useState<LoanRequest[]>([])
@@ -99,7 +106,7 @@ export function AdminPage() {
     if (paths.length > 0) {
       const entries = await Promise.all(
         paths.map(async (p) => {
-          const { data } = await supabase.storage.from('id-documents').createSignedUrl(p, 300)
+          const { data } = await supabase.storage.from('id-documents').createSignedUrl(p, 3600)
           return [p, data?.signedUrl ?? ''] as const
         }),
       )
@@ -348,6 +355,11 @@ export function AdminPage() {
     }
   }
 
+  const markEnquiryRead = async (id: string) => {
+    await updateEnquiryStatus(id, 'read')
+    showToast(t('admin.toast.enquiryMarkedRead'), 'success')
+  }
+
   const stats = useMemo(
     () => ({
       totalLoans: loans.length,
@@ -392,10 +404,43 @@ export function AdminPage() {
     })
   }, [loans, query, statusFilter, loanPipeline])
 
+  useEffect(() => {
+    if (loading || authLoading) return
+
+    if (
+      deepLinkTab === 'loans' ||
+      deepLinkTab === 'records' ||
+      deepLinkTab === 'enquiries' ||
+      deepLinkTab === 'users'
+    ) {
+      setTab(deepLinkTab)
+    }
+
+    if (!deepLinkLoanId) return
+
+    const loan = loans.find((l) => l.id === deepLinkLoanId)
+    if (!loan) return
+
+    setTab('loans')
+    const isArchived = (CLOSED_LOAN_STATUSES as readonly string[]).includes(loan.status)
+    setLoanPipeline(isArchived ? 'archive' : 'active')
+    setStatusFilter('all')
+    setExpandedLoanId(deepLinkLoanId)
+  }, [loading, authLoading, deepLinkTab, deepLinkLoanId, loans])
+
+  useScrollToId(
+    deepLinkLoanId ? `admin-loan-${deepLinkLoanId}` : null,
+    !loading && tab === 'loans' && Boolean(deepLinkLoanId),
+    [expandedLoanId, filteredLoans.length],
+  )
+
   const filteredEnquiries = useMemo(() => {
     const q = query.trim().toLowerCase()
     return enquiries.filter((e) => {
-      const matchesStatus = statusFilter === 'all' || e.status === statusFilter
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'new' && isEnquiryUnread(e.status)) ||
+        (statusFilter === 'read' && !isEnquiryUnread(e.status))
       const matchesQuery =
         !q ||
         e.full_name.toLowerCase().includes(q) ||
@@ -462,7 +507,11 @@ export function AdminPage() {
     tab === 'loans'
       ? loanStatusOptions
       : tab === 'enquiries'
-        ? [{ value: 'all', label: t('admin.filter.allStatuses') }, ...ENQUIRY_STATUSES.map((s) => ({ value: s, label: cap(s) }))]
+        ? [
+            { value: 'all', label: t('admin.filter.allStatuses') },
+            { value: 'new', label: t('admin.enquiry.filter.unread') },
+            { value: 'read', label: t('admin.enquiry.filter.read') },
+          ]
         : []
 
   const switchTab = (t: Tab) => {
@@ -631,6 +680,7 @@ export function AdminPage() {
                 filteredLoans.map((loan, i) => (
                   <motion.div
                     key={loan.id}
+                    id={`admin-loan-${loan.id}`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: Math.min(i * 0.03, 0.3) }}
@@ -692,8 +742,10 @@ export function AdminPage() {
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-lg font-semibold text-brand-900">{enquiry.full_name}</p>
-                            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${enquiryBadge[enquiry.status] ?? 'bg-brand-100 text-brand-700'}`}>
-                              {cap(enquiry.status)}
+                            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${enquiryBadge[enquiryStatusLabel(enquiry.status)] ?? 'bg-brand-100 text-brand-700'}`}>
+                              {enquiryStatusLabel(enquiry.status) === 'new'
+                                ? t('admin.enquiry.status.new')
+                                : t('admin.enquiry.status.read')}
                             </span>
                           </div>
                           <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-brand-600">
@@ -713,16 +765,16 @@ export function AdminPage() {
                                 <Mail className="h-4 w-4" /> {t('admin.enquiry.replyByEmail')}
                               </Button>
                             </a>
+                            {isEnquiryUnread(enquiry.status) && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => void markEnquiryRead(enquiry.id)}
+                              >
+                                <CheckCircle2 className="h-4 w-4" /> {t('admin.enquiry.markRead')}
+                              </Button>
+                            )}
                           </div>
-                        </div>
-                        <div className="w-44 shrink-0">
-                          <Select
-                            label={t('admin.enquiry.updateStatus')}
-                            hidePlaceholder
-                            options={ENQUIRY_STATUSES.map((s) => ({ value: s, label: cap(s) }))}
-                            value={enquiry.status}
-                            onChange={(e) => updateEnquiryStatus(enquiry.id, e.target.value)}
-                          />
                         </div>
                       </div>
                     </Card>

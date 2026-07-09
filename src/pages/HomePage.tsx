@@ -26,6 +26,7 @@ import { COMPANY } from '@/lib/constants'
 import { useAuth } from '@/context/AuthContext'
 import { useLanguage } from '@/context/LanguageContext'
 import { useIsMobile } from '@/lib/useMediaQuery'
+import { OptimizedImage } from '@/components/ui/OptimizedImage'
 
 const BASE = import.meta.env.BASE_URL
 
@@ -329,12 +330,10 @@ export function HomePage() {
 
       {/* CTA */}
       <section className="relative overflow-hidden">
-        <img
+        <OptimizedImage
           src={`${BASE}money-band.png`}
           alt=""
           aria-hidden="true"
-          loading="lazy"
-          decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-brand-900/80" />

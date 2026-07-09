@@ -8,6 +8,7 @@ import { EditableOfficerCard } from '@/components/editable/EditableOfficerCard'
 import { useLanguage } from '@/context/LanguageContext'
 import { COMPANY } from '@/lib/constants'
 import type { TranslationKey } from '@/lib/i18n'
+import { OptimizedImage } from '@/components/ui/OptimizedImage'
 
 export function Footer() {
   const { t } = useLanguage()
@@ -36,11 +37,9 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
         <div className="space-y-5 sm:hidden">
           <div className="flex items-center gap-3">
-            <img
+            <OptimizedImage
               src={`${import.meta.env.BASE_URL}logo-transparent.png`}
               alt={COMPANY.name}
-              loading="lazy"
-              decoding="async"
               className="h-14 w-auto shrink-0"
             />
             <div className="min-w-0">
@@ -89,11 +88,9 @@ export function Footer() {
 
         <div className="hidden gap-8 sm:grid sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <img
+            <OptimizedImage
               src={`${import.meta.env.BASE_URL}logo-transparent.png`}
               alt={COMPANY.name}
-              loading="lazy"
-              decoding="async"
               className="mb-3 h-24 w-auto"
             />
             <EditableText

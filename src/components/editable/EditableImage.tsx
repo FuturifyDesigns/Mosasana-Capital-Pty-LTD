@@ -3,6 +3,7 @@ import { Pencil, Loader2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useContent } from '@/context/ContentContext'
 import { useToast } from '@/context/ToastContext'
+import { OptimizedImage } from '@/components/ui/OptimizedImage'
 
 interface EditableImageProps {
   /** Unique content key, e.g. "home.hero.image" */
@@ -34,11 +35,6 @@ export function EditableImage({
 
   const url = getImage(contentKey, src)
 
-  const imgProps = {
-    loading: eager ? ('eager' as const) : ('lazy' as const),
-    decoding: 'async' as const,
-  }
-
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -63,7 +59,12 @@ export function EditableImage({
   }
 
   const img = (
-    <img src={url} alt={alt} className={`block max-w-full ${className ?? ''}`} {...imgProps} />
+    <OptimizedImage
+      src={url}
+      alt={alt}
+      className={`block max-w-full ${className ?? ''}`}
+      eager={eager}
+    />
   )
 
   if (!isAdmin) {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus,
@@ -31,6 +31,7 @@ import {
 } from '@/lib/loans'
 import { formatPula, toNumber } from '@/lib/format'
 import { clientStatusBannerClass, statusBadgeClass } from '@/lib/loanStatus'
+import { useScrollToId } from '@/lib/useNotificationDeepLink'
 
 type ClientStatusKey =
   | 'pending'
@@ -49,6 +50,8 @@ function normalizeStatus(status: string): ClientStatusKey {
 export function DashboardPage() {
   const { user, profile, isAdmin } = useAuth()
   const { t } = useLanguage()
+  const [searchParams] = useSearchParams()
+  const focusLoanId = searchParams.get('loan')
   const [loans, setLoans] = useState<LoanRequest[]>([])
   const [payments, setPayments] = useState<LoanPayment[]>([])
   const [loading, setLoading] = useState(true)
@@ -125,6 +128,12 @@ export function DashboardPage() {
         .map((l) => ({ loan: l, reminder: getRepaymentReminder(l) }))
         .filter((r) => r.reminder && r.reminder.level !== 'ok'),
     [loans],
+  )
+
+  useScrollToId(
+    focusLoanId ? `dashboard-loan-${focusLoanId}` : null,
+    !loading && Boolean(focusLoanId),
+    [loans.length, focusLoanId],
   )
 
   if (isAdmin) {
@@ -302,6 +311,7 @@ export function DashboardPage() {
               loans={activeLoans}
               payments={payments}
               defaultExpanded
+              focusLoanId={focusLoanId}
             />
             <LoanFileSection
               title={t('dashboard.loanHistory')}
@@ -312,6 +322,7 @@ export function DashboardPage() {
               }
               loans={historyLoans}
               payments={payments}
+              focusLoanId={focusLoanId}
             />
           </div>
         )}
@@ -326,12 +337,14 @@ function LoanFileSection({
   loans,
   payments,
   defaultExpanded = false,
+  focusLoanId = null,
 }: {
   title: string
   subtitle: string
   loans: LoanRequest[]
   payments: LoanPayment[]
   defaultExpanded?: boolean
+  focusLoanId?: string | null
 }) {
   return (
     <div>
@@ -358,7 +371,8 @@ function LoanFileSection({
               <LoanFileCard
                 loan={loan}
                 payments={payments.filter((p) => p.loan_id === loan.id)}
-                defaultExpanded={defaultExpanded}
+                defaultExpanded={defaultExpanded || loan.id === focusLoanId}
+                focusLoanId={focusLoanId}
               />
             </motion.div>
           ))}
@@ -372,13 +386,19 @@ function LoanFileCard({
   loan,
   payments,
   defaultExpanded = false,
+  focusLoanId = null,
 }: {
   loan: LoanRequest
   payments: LoanPayment[]
   defaultExpanded?: boolean
+  focusLoanId?: string | null
 }) {
   const { t } = useLanguage()
-  const [expanded, setExpanded] = useState(defaultExpanded)
+  const [expanded, setExpanded] = useState(defaultExpanded || loan.id === focusLoanId)
+
+  useEffect(() => {
+    if (focusLoanId === loan.id) setExpanded(true)
+  }, [focusLoanId, loan.id])
   const statusKey = normalizeStatus(loan.status)
   const statusTitle = t(`statusMessage.${statusKey}.title` as TranslationKey)
 
@@ -389,7 +409,8 @@ function LoanFileCard({
   })
 
   return (
-    <Card className="overflow-hidden !p-0">
+    <div id={`dashboard-loan-${loan.id}`}>
+      <Card className="overflow-hidden !p-0">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -461,6 +482,7 @@ function LoanFileCard({
         )}
       </AnimatePresence>
     </Card>
+    </div>
   )
 }
 

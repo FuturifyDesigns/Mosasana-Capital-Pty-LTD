@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, Info, XCircle, X } from 'lucide-react'
 
@@ -8,10 +9,16 @@ interface Toast {
   id: number
   message: string
   type: ToastType
+  href?: string
+  onNavigate?: () => void
 }
 
 interface ToastContextValue {
-  showToast: (message: string, type?: ToastType) => void
+  showToast: (
+    message: string,
+    type?: ToastType,
+    options?: { href?: string; onNavigate?: () => void },
+  ) => void
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null)
@@ -36,10 +43,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const showToast = useCallback(
-    (message: string, type: ToastType = 'info') => {
+    (message: string, type: ToastType = 'info', options?: { href?: string; onNavigate?: () => void }) => {
       const id = Date.now() + Math.random()
-      setToasts((prev) => [...prev, { id, message, type }])
-      setTimeout(() => dismiss(id), 4000)
+      setToasts((prev) => [
+        ...prev,
+        { id, message, type, href: options?.href, onNavigate: options?.onNavigate },
+      ])
+      setTimeout(() => dismiss(id), 6000)
     },
     [dismiss],
   )
@@ -63,7 +73,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 role="status"
               >
                 <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${accents[toast.type]}`} />
-                <p className="flex-1 text-sm font-medium text-brand-800">{toast.message}</p>
+                {toast.href ? (
+                  <Link
+                    to={toast.href}
+                    onClick={() => {
+                      toast.onNavigate?.()
+                      dismiss(toast.id)
+                    }}
+                    className="flex-1 text-sm font-medium text-brand-800 hover:text-brand-950"
+                  >
+                    {toast.message}
+                  </Link>
+                ) : (
+                  <p className="flex-1 text-sm font-medium text-brand-800">{toast.message}</p>
+                )}
                 <button
                   type="button"
                   onClick={() => dismiss(toast.id)}
