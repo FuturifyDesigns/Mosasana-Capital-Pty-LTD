@@ -72,6 +72,8 @@ export const en = {
   'apply.active.contactUs': 'Contact us',
   'apply.error.idRequired': 'Please upload a photo of your ID document',
   'apply.error.signInRequired': 'You must be signed in to submit a loan application.',
+  'apply.error.activeLoan':
+    'You already have an active loan. Please finish repaying it before applying again.',
   'apply.borrowing.title': 'Borrowing advisory',
   'apply.borrowing.message':
     'You are requesting more than your monthly income. Borrowing more than you can comfortably afford may lead to serious financial strain. Are you sure you want to continue?',
@@ -167,6 +169,8 @@ export const tn: Record<keyof typeof en, string> = {
   'apply.active.contactUs': 'Ikopanye le rona',
   'apply.error.idRequired': 'Tsenya setšoantšho sa tokomane ya gago ya ID',
   'apply.error.signInRequired': 'O tshwanetše go tsena pele o romela kopo ya koloto.',
+  'apply.error.activeLoan':
+    'O se o na le koloto e e dirang. E lefeše pele o kopa e nngwe.',
   'apply.borrowing.title': 'Keletso ya go adima',
   'apply.borrowing.message':
     'O kopa palomoka e kgolo go feta madi a gago a kgwedi. Go adima go feta se o ka se lefšang go ka go tlisetsa mathata a madi a a bogologolo. A o netefatsa gore o batla go tswela pele?',

@@ -196,6 +196,25 @@ export function ApplyPage() {
       return
     }
 
+    const { data: openLoans, error: openLoanError } = await supabase
+      .from('loan_requests')
+      .select('id')
+      .eq('user_id', user.id)
+      .in('status', ACTIVE_LOAN_STATUSES as unknown as string[])
+      .limit(1)
+
+    if (openLoanError) {
+      setSubmitError(formatSupabaseError(openLoanError))
+      setSubmitting(false)
+      return
+    }
+
+    if (openLoans && openLoans.length > 0) {
+      setSubmitError(t('apply.error.activeLoan'))
+      setSubmitting(false)
+      return
+    }
+
     const identity = await checkIdentityForLoanApplication({
       email: sanitizeText(data.email).toLowerCase(),
       phone: sanitizeText(data.phone),

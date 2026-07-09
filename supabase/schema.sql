@@ -270,26 +270,32 @@ CREATE TRIGGER loan_requests_auto_paid
   FOR EACH ROW EXECUTE FUNCTION public.loan_auto_mark_paid();
 
 -- Block a new loan while the same user still has an unsettled (active) loan.
--- Active = any status that is not fully paid and not rejected.
-CREATE OR REPLACE FUNCTION public.prevent_multiple_active_loans()
-RETURNS TRIGGER AS $$
+-- Closed = paid, rejected, or discontinued.
+CREATE OR REPLACE FUNCTION public.enforce_single_active_loan()
+RETURNS TRIGGER
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
   IF NEW.user_id IS NOT NULL AND EXISTS (
-    SELECT 1 FROM public.loan_requests
+    SELECT 1
+    FROM public.loan_requests
     WHERE user_id = NEW.user_id
-      AND status NOT IN ('rejected', 'paid')
+      AND id IS DISTINCT FROM NEW.id
+      AND status NOT IN ('rejected', 'paid', 'discontinued')
   ) THEN
-    RAISE EXCEPTION 'You already have an active loan. Please finish repaying it before applying again.'
+    RAISE EXCEPTION 'You already have an active loan application or open loan.'
       USING ERRCODE = 'check_violation';
   END IF;
+
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 DROP TRIGGER IF EXISTS loan_requests_single_active ON public.loan_requests;
 CREATE TRIGGER loan_requests_single_active
   BEFORE INSERT ON public.loan_requests
-  FOR EACH ROW EXECUTE FUNCTION public.prevent_multiple_active_loans();
+  FOR EACH ROW EXECUTE FUNCTION public.enforce_single_active_loan();
+
+DROP FUNCTION IF EXISTS public.prevent_multiple_active_loans();
 
 -- ------------------------------------------------------------
 -- MIGRATION for databases created before repayment tracking.

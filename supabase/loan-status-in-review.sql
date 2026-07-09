@@ -1,5 +1,8 @@
 -- New applications start in review; legacy "pending" rows are upgraded.
--- Run in Supabase SQL Editor after deploying the app changes.
+-- Run in Supabase SQL Editor (safe to re-run).
+
+-- The protect trigger blocks UPDATE from the SQL editor — drop it for this migration.
+DROP TRIGGER IF EXISTS loan_requests_protect_fields ON public.loan_requests;
 
 UPDATE public.loan_requests
 SET status = 'reviewing'
@@ -8,7 +11,7 @@ WHERE status = 'pending';
 ALTER TABLE public.loan_requests
   ALTER COLUMN status SET DEFAULT 'reviewing';
 
--- Client inserts always land in review (matches protect_loan_request_fields).
+-- Client inserts always land in review; only admins may UPDATE via the API.
 CREATE OR REPLACE FUNCTION public.protect_loan_request_fields()
 RETURNS TRIGGER
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
@@ -26,3 +29,9 @@ BEGIN
   RAISE EXCEPTION 'Not authorized to modify loan requests';
 END;
 $$;
+
+CREATE TRIGGER loan_requests_protect_fields
+  BEFORE INSERT OR UPDATE ON public.loan_requests
+  FOR EACH ROW EXECUTE FUNCTION public.protect_loan_request_fields();
+
+NOTIFY pgrst, 'reload schema';

@@ -28,6 +28,10 @@ export function formatSupabaseError(err: unknown): string {
     return 'You already have an active loan. Please finish repaying it before applying again.'
   }
 
+  if (/active loan application or open loan/i.test(msg)) {
+    return 'You already have an active loan. Please finish repaying it before applying again.'
+  }
+
   if (/duplicate|unique/i.test(msg)) {
     return 'This record already exists. Please use different details or sign in.'
   }
