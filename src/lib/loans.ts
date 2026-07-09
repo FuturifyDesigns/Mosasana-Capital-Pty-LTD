@@ -34,7 +34,7 @@ export function parseInterestRateInput(value: string): number | null {
 }
 
 /** Statuses where repayments can be tracked and payments recorded. */
-export const REPAYABLE_LOAN_STATUSES = ['approved', 'disbursed'] as const
+export const REPAYABLE_LOAN_STATUSES = ['disbursed'] as const
 
 export function canRecordPayments(loan: LoanRequest): boolean {
   return (REPAYABLE_LOAN_STATUSES as unknown as string[]).includes(loan.status)

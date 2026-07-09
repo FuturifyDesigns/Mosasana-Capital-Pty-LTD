@@ -13,15 +13,18 @@ import { Card } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { RepaymentEditor } from '@/components/admin/RepaymentEditor'
+import { AdminWorkflowStepper } from '@/components/admin/AdminWorkflowStepper'
 import { DisbursementDetails } from '@/components/admin/DisbursementDetails'
 import { formatPula } from '@/lib/format'
 import { getRepaymentReminder } from '@/lib/loans'
 import {
   canAdminChangeStatus,
+  canMarkDisbursed,
   formatLoanStatusLabel,
+  getAdminNextStepHint,
   getAdminStatusOptions,
+  getAdminStatusPanelTitle,
   isClosedLoanStatus,
-  LOAN_STATUS_META,
 } from '@/lib/loanStatus'
 import type { LoanPayment, LoanRequest } from '@/lib/supabase'
 
@@ -128,7 +131,8 @@ export function LoanRequestCard({
             className="overflow-hidden"
           >
             <div className="border-t border-brand-100 p-4 sm:p-5">
-              <div className="flex flex-wrap items-start justify-between gap-4">
+              <AdminWorkflowStepper loan={loan} />
+              <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
                 <div className="min-w-0 space-y-2">
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-brand-600">
                     <span className="flex items-center gap-1.5">
@@ -212,31 +216,46 @@ export function LoanRequestCard({
                   />
                 </div>
 
-                <div className="w-full shrink-0 space-y-3 sm:w-48">
+                <div className="w-full shrink-0 space-y-3 sm:w-52">
                   {canAdminChangeStatus(loan) ? (
                     <>
                       <Select
-                        label="Update status"
+                        label={getAdminStatusPanelTitle(loan)}
                         hidePlaceholder
                         options={getAdminStatusOptions(loan)}
                         value={loan.status}
                         onChange={(e) => onStatusChange(loan.id, e.target.value)}
+                        hint={
+                          loan.status === 'approved' && !canMarkDisbursed(loan)
+                            ? 'Disburse is locked until repayment terms are saved below.'
+                            : undefined
+                        }
                       />
-                      <p className="text-[11px] leading-snug text-brand-500">
-                        {LOAN_STATUS_META[loan.status as keyof typeof LOAN_STATUS_META]?.adminHint}
-                      </p>
+                      <div className="rounded-xl border border-brand-100 bg-brand-50/80 p-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-500">
+                          Next step
+                        </p>
+                        <p className="mt-1 text-[11px] leading-relaxed text-brand-700">
+                          {getAdminNextStepHint(loan)}
+                        </p>
+                      </div>
                     </>
                   ) : (
                     <div className="rounded-xl border border-brand-100 bg-brand-50/80 p-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-brand-500">
-                        Status locked
+                        {getAdminStatusPanelTitle(loan)}
                       </p>
-                      <p className="mt-1 text-sm font-semibold capitalize text-brand-900">
-                        {loan.status}
+                      <p className="mt-1 text-sm font-semibold text-brand-900">
+                        {formatLoanStatusLabel(loan.status)}
                       </p>
-                      <p className="mt-1 text-[11px] leading-snug text-brand-500">
-                        {LOAN_STATUS_META[loan.status as keyof typeof LOAN_STATUS_META]?.adminHint}
-                      </p>
+                      <div className="mt-3 rounded-lg border border-brand-100 bg-white/80 p-2.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-500">
+                          Next step
+                        </p>
+                        <p className="mt-1 text-[11px] leading-relaxed text-brand-700">
+                          {getAdminNextStepHint(loan)}
+                        </p>
+                      </div>
                     </div>
                   )}
 

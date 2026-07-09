@@ -218,6 +218,12 @@ export function RepaymentEditor({
         <Percent className="h-4 w-4 text-brand-500" />
         Loan terms & interest
       </p>
+      {loan.status === 'approved' && loan.total_repayable == null && (
+        <div className="mb-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-950">
+          <strong>Required:</strong> set repayment terms and click <strong>Save terms</strong>. Disburse is
+          blocked until this step is complete.
+        </div>
+      )}
       {hasPayments && (
         <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -301,7 +307,19 @@ export function RepaymentEditor({
           ? 'This request was discontinued. No further repayment actions apply.'
           : loan.status === 'rejected'
             ? 'This application was rejected. No repayment terms apply.'
-            : 'Set repayment terms once this loan is approved or disbursed.'}
+            : 'Approve this application first. Repayment terms are unlocked after approval.'}
+      </div>
+    )
+  }
+
+  if (loan.status === 'approved') {
+    return (
+      <div className="mt-5 space-y-4 border-t border-brand-100 pt-5">
+        {renderTermsBlock()}
+        <div className="rounded-xl border border-dashed border-brand-200 bg-brand-50/50 p-4 text-sm text-brand-600">
+          Payment recording is locked until you mark this loan as <strong>Disbursed</strong> after sending
+          funds.
+        </div>
       </div>
     )
   }
@@ -323,6 +341,12 @@ export function RepaymentEditor({
 
   return (
     <div className="mt-5 space-y-4 border-t border-brand-100 pt-5">
+      {loan.status === 'disbursed' && (
+        <div className="rounded-xl border border-brand-200 bg-brand-50 p-3 text-xs text-brand-800">
+          Record each payment below as it is received. Status becomes <strong>Paid</strong> automatically when the
+          full balance is cleared.
+        </div>
+      )}
       {renderTermsBlock()}
 
       {totalNum != null && (
