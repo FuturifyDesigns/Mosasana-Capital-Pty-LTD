@@ -98,3 +98,51 @@ export async function checkIdentityAvailability(
 
   return { emailTaken, phoneTaken, idNumberTaken }
 }
+
+export interface LoanApplicationIdentityInput extends IdentityCheckInput {
+  userId: string
+  accountEmail?: string | null
+  accountPhone?: string | null
+}
+
+/** Logged-in applicants may reuse their own account email, phone, and prior ID numbers. */
+export async function checkIdentityForLoanApplication(
+  input: LoanApplicationIdentityInput,
+): Promise<IdentityCheckResult> {
+  const accountEmail = input.accountEmail?.trim().toLowerCase() ?? ''
+  const submittedEmail = input.email?.trim().toLowerCase() ?? ''
+  const accountPhone = input.accountPhone ? normalizeBotswanaPhone(input.accountPhone) : ''
+  const submittedPhone = input.phone ? normalizeBotswanaPhone(input.phone) : ''
+
+  const skipEmail = Boolean(accountEmail && submittedEmail && submittedEmail === accountEmail)
+  const skipPhone = Boolean(
+    accountPhone && submittedPhone && submittedPhone === accountPhone && submittedPhone.length === 8,
+  )
+
+  let skipId = false
+  if (input.idNumber && input.idType && input.userId) {
+    const normalized = normalizeIdNumber(input.idNumber, input.idType)
+    const { data, error } = await supabase
+      .from('loan_requests')
+      .select('id_number, id_type')
+      .eq('user_id', input.userId)
+
+    if (error) {
+      console.error('Failed to load prior loan identities:', error.message)
+    } else {
+      skipId = (data ?? []).some((row) => {
+        if (!row.id_number) return false
+        const type = (row.id_type as IdType) || 'national_id'
+        return normalizeIdNumber(row.id_number, type) === normalized
+      })
+    }
+  }
+
+  return checkIdentityAvailability({
+    email: skipEmail ? undefined : input.email,
+    phone: skipPhone ? undefined : input.phone,
+    idNumber: skipId ? undefined : input.idNumber,
+    idType: input.idType,
+    excludeUserId: input.userId,
+  })
+}

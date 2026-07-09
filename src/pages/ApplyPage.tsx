@@ -34,7 +34,7 @@ import { DisbursementFields } from '@/components/DisbursementFields'
 import { EditableText } from '@/components/editable/EditableText'
 import { formatPula } from '@/lib/format'
 import { normalizeBotswanaPhone } from '@/lib/phone'
-import { checkIdentityAvailability } from '@/lib/identityChecks'
+import { checkIdentityForLoanApplication } from '@/lib/identityChecks'
 import { getOutstandingBalance } from '@/lib/loans'
 
 type ApplyMode = 'website' | 'whatsapp'
@@ -196,12 +196,14 @@ export function ApplyPage() {
       return
     }
 
-    const identity = await checkIdentityAvailability({
+    const identity = await checkIdentityForLoanApplication({
       email: sanitizeText(data.email).toLowerCase(),
-      phone: normalizeBotswanaPhone(sanitizeText(data.phone)),
+      phone: sanitizeText(data.phone),
       idNumber: sanitizeText(data.idNumber),
       idType: data.idType,
-      excludeUserId: user.id,
+      userId: user.id,
+      accountEmail: user.email,
+      accountPhone: profile?.phone,
     })
 
     let duplicateFound = false
