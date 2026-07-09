@@ -16,17 +16,12 @@ const CONVERSATION: Message[] = [
   { from: 'customer', text: "Hi Mosasana 👋 I'd like to apply for a loan of P3,000.", time: '19:38' },
   {
     from: 'mosasana',
-    text: 'Hello Thabo! 😊 Please share: full name, email, phone, ID type/number, address, repayment period, purpose, employment, income — and where we should pay you (bank account, Orange Money, or MyZaka).',
+    text: 'Hello Thabo! 😊 Please share your full name, email, phone, ID type and number, address, repayment period, loan purpose, employment status, and monthly income — then attach a photo of your ID.',
     time: '19:38',
   },
   {
     from: 'customer',
-    text: 'Thabo Nkile • thabo@example.com • 71 234 567 • Omang 123456789 • Plot 456, Gaborone • 3 months • Rent • Employed • P12,000',
-    time: '19:39',
-  },
-  {
-    from: 'customer',
-    text: 'Payout: Orange Money • 71234567 • Thabo Nkile',
+    text: `*Loan Application - ${COMPANY.shortName}*\n\nName: Thabo Nkile\nEmail: thabo@example.com\nPhone: 71234567\nID Type: Omang / National ID\nOmang / ID Number: 123456789\nAddress: Plot 456, Gaborone\nAmount: P3000\nRepayment period: 3 month(s)\nPurpose: Rent for this month\nEmployment: employed\nMonthly Income: P12000`,
     time: '19:39',
   },
   { from: 'customer', image: true, time: '19:39' },
@@ -212,7 +207,7 @@ export function ChatAnimation() {
                       </div>
                     ) : (
                       <div className="px-1">
-                        {msg.text}
+                        <p className="whitespace-pre-line">{msg.text}</p>
                         <span
                           className={`mt-0.5 flex items-center justify-end gap-1 text-[10px] ${
                             msg.from === 'customer' ? 'text-[#8fb7ae]' : 'text-[#8696a0]'

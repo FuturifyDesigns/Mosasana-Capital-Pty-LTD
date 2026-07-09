@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Lock, CheckCircle2, ChevronLeft, ChevronRight, RotateCw } from 'lucide-react'
+import { Lock, Upload, CheckCircle2, ImageIcon, ChevronLeft, ChevronRight, RotateCw } from 'lucide-react'
 import { COMPANY } from '@/lib/constants'
 
-type FieldType = 'text' | 'select' | 'section'
+type FieldType = 'text' | 'select' | 'upload'
 
 interface Field {
   label: string
@@ -16,13 +16,15 @@ const FIELDS: Field[] = [
   { label: 'Full Name', value: 'Thabo Nkile', type: 'text', required: true },
   { label: 'Email', value: 'thabo@example.com', type: 'text', required: true },
   { label: 'Phone', value: '71 234 567', type: 'text', required: true },
-  { label: 'Loan disbursement details', value: '', type: 'section' },
-  { label: 'Bank / Wallet', value: 'First National Bank Botswana (FNB)', type: 'select', required: true },
-  { label: 'Name on Account', value: 'Thabo Nkile', type: 'text', required: true },
-  { label: 'Bank Account Number', value: '6234567890', type: 'text', required: true },
-  { label: 'Branch Code', value: '280267', type: 'text', required: true },
-  { label: 'Branch Name', value: 'Gaborone Main', type: 'text', required: true },
-  { label: 'Password', value: '••••••••', type: 'text', required: true },
+  { label: 'Document Type', value: 'Omang / National ID', type: 'select', required: true },
+  { label: 'Omang / National ID Number', value: '123456789', type: 'text', required: true },
+  { label: 'ID Document Photo', value: 'omang-id.jpg', type: 'upload', required: true },
+  { label: 'Physical Address', value: 'Plot 456, Gaborone', type: 'text', required: true },
+  { label: 'Loan Amount (Pula)', value: '3000', type: 'text', required: true },
+  { label: 'Repayment Period', value: '3 months', type: 'select', required: true },
+  { label: 'Purpose of Loan', value: 'Rent for this month', type: 'text', required: true },
+  { label: 'Employment Status', value: 'Employed', type: 'select', required: true },
+  { label: 'Monthly Income (Pula, optional)', value: '12000', type: 'text' },
 ]
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -56,13 +58,6 @@ export function WebsiteFormAnimation() {
         for (let i = 0; i < FIELDS.length; i++) {
           if (cancelled) return
           const field = FIELDS[i]
-          if (field.type === 'section') {
-            setActive(i)
-            await wait(500)
-            setFilled((prev) => ({ ...prev, [i]: field.value }))
-            continue
-          }
-
           setActive(i)
           setTyped('')
 
@@ -70,7 +65,7 @@ export function WebsiteFormAnimation() {
             for (let c = 1; c <= field.value.length; c++) {
               if (cancelled) return
               setTyped(field.value.slice(0, c))
-              await wait(field.label === 'Password' ? 28 : 45)
+              await wait(45)
             }
           } else {
             await wait(650)
@@ -131,7 +126,7 @@ export function WebsiteFormAnimation() {
             </div>
             <div className="flex flex-1 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] text-brand-600 shadow-sm ring-1 ring-brand-100">
               <Lock className="h-3 w-3 shrink-0 text-growth-500" />
-              <span className="truncate">mosasanacapital.com/register</span>
+              <span className="truncate">mosasanacapital.com/apply</span>
             </div>
           </div>
         </div>
@@ -141,43 +136,63 @@ export function WebsiteFormAnimation() {
             ref={scrollRef}
             className="h-full select-none overflow-hidden overscroll-contain px-4 py-4 sm:px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            <p className="font-display text-base font-bold text-brand-900">Create your account</p>
+            <p className="font-display text-base font-bold text-brand-900">Secure Loan Application</p>
             <p className="mt-0.5 text-[11px] text-brand-500">
-              Register with your bank, Orange Money, or MyZaka payout details.
+              All information is encrypted and securely stored.
             </p>
 
             <div className="mt-3 space-y-2.5">
               {FIELDS.map((field, i) => (
                 <div
-                  key={`${field.label}-${i}`}
+                  key={field.label}
                   ref={(el) => {
                     fieldRefs.current[i] = el
                   }}
                 >
-                  {field.type === 'section' ? (
-                    <p className="pt-1 text-[11px] font-semibold text-brand-800">{field.label}</p>
+                  <label className="block text-[11px] font-medium text-brand-800">
+                    {field.label}
+                    {field.required && <span className="ml-0.5 text-red-500">*</span>}
+                  </label>
+
+                  {field.type === 'upload' ? (
+                    <div
+                      className={`mt-1 flex items-center gap-2 rounded-lg border-2 border-dashed px-3 py-2 transition ${
+                        i === active ? 'border-brand-400 bg-brand-50' : 'border-brand-200'
+                      }`}
+                    >
+                      {valueFor(i) ? (
+                        <>
+                          <div className="flex h-7 w-7 items-center justify-center rounded bg-brand-100 text-brand-600">
+                            <ImageIcon className="h-4 w-4" />
+                          </div>
+                          <span className="text-[12px] text-brand-700">{valueFor(i)}</span>
+                          <CheckCircle2 className="ml-auto h-4 w-4 text-growth-500" />
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 text-brand-400" />
+                          <span className="text-[11px] text-brand-400">JPEG, PNG or WebP — max 5MB</span>
+                        </>
+                      )}
+                    </div>
                   ) : (
-                    <>
-                      <label className="block text-[11px] font-medium text-brand-800">
-                        {field.label}
-                        {field.required && <span className="ml-0.5 text-red-500">*</span>}
-                      </label>
-                      <div
-                        className={`mt-1 flex h-9 items-center rounded-lg border bg-white px-3 text-[13px] transition ${
-                          i === active ? 'border-brand-500 ring-2 ring-brand-200' : 'border-brand-200'
-                        }`}
-                      >
-                        <span className="truncate text-brand-900">{valueFor(i)}</span>
-                        {i === active && field.type === 'text' && field.label !== 'Password' && (
-                          <motion.span
-                            className="ml-0.5 inline-block h-4 w-px bg-brand-500"
-                            animate={{ opacity: [1, 0, 1] }}
-                            transition={{ duration: 0.8, repeat: Infinity }}
-                          />
-                        )}
-                        {field.type === 'select' && <span className="ml-auto text-brand-400">▾</span>}
-                      </div>
-                    </>
+                    <div
+                      className={`mt-1 flex h-9 items-center rounded-lg border bg-white px-3 text-[13px] transition ${
+                        i === active ? 'border-brand-500 ring-2 ring-brand-200' : 'border-brand-200'
+                      }`}
+                    >
+                      <span className="truncate text-brand-900">
+                        {field.label.includes('Amount') && valueFor(i) ? `P ${valueFor(i)}` : valueFor(i)}
+                      </span>
+                      {i === active && field.type === 'text' && (
+                        <motion.span
+                          className="ml-0.5 inline-block h-4 w-px bg-brand-500"
+                          animate={{ opacity: [1, 0, 1] }}
+                          transition={{ duration: 0.8, repeat: Infinity }}
+                        />
+                      )}
+                      {field.type === 'select' && <span className="ml-auto text-brand-400">▾</span>}
+                    </div>
                   )}
                 </div>
               ))}
@@ -195,7 +210,7 @@ export function WebsiteFormAnimation() {
                     transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
                   />
                 ) : (
-                  'Create Account'
+                  'Submit Application'
                 )}
               </button>
             </div>
@@ -216,9 +231,9 @@ export function WebsiteFormAnimation() {
                 >
                   <CheckCircle2 className="h-16 w-16 text-growth-500" />
                 </motion.div>
-                <p className="font-display text-xl font-bold text-brand-900">Check your email!</p>
+                <p className="font-display text-xl font-bold text-brand-900">Application Submitted!</p>
                 <p className="text-sm text-brand-600">
-                  Verify your account, then sign in to apply with {COMPANY.shortName}.
+                  {COMPANY.shortName} will review your request and get back to you shortly.
                 </p>
               </motion.div>
             )}
