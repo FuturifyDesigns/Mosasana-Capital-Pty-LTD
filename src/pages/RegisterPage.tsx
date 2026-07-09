@@ -121,7 +121,7 @@ export function RegisterPage() {
       className="page-zoom-out"
       title={t('auth.register.title')}
       subtitle={t('auth.register.subtitle')}
-      image={`${BASE}auth-signup-thumb.png`}
+      image={`${BASE}auth-signup.png`}
       panelHeading={t('auth.register.panelHeading')}
       panelText={t('auth.register.panelText')}
       points={[t('auth.register.point1'), t('auth.register.point2'), t('auth.register.point3')]}

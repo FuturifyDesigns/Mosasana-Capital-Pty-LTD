@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Check, LogIn, UserPlus } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/Button'
+import { OptimizedImage } from '@/components/ui/OptimizedImage'
 import { useLanguage } from '@/context/LanguageContext'
 import { COMPANY } from '@/lib/constants'
 import type { TranslationKey } from '@/lib/i18n'
@@ -16,13 +17,13 @@ const panels = {
   in: {
     prefix: 'auth.panel.signIn',
     to: '/login',
-    image: `${BASE}auth-signin-thumb.png`,
+    image: `${BASE}auth-signin.png`,
     icon: LogIn,
   },
   up: {
     prefix: 'auth.panel.signUp',
     to: '/register',
-    image: `${BASE}auth-signup-thumb.png`,
+    image: `${BASE}auth-signup.png`,
     icon: UserPlus,
   },
 } as const
@@ -106,12 +107,10 @@ export function AuthPage() {
               >
                 <div className="flex items-stretch">
                   <div className="relative w-24 shrink-0 overflow-hidden sm:w-28">
-                    <img
+                    <OptimizedImage
                       src={p.image}
                       alt=""
                       aria-hidden="true"
-                      loading="lazy"
-                      decoding="async"
                       className="h-full min-h-[5.5rem] w-full object-cover object-center"
                     />
                     <div className="absolute inset-0 bg-brand-900/25" />
@@ -158,12 +157,10 @@ export function AuthPage() {
                 transition={{ duration: 0.6, delay: 0.15 + index * 0.1 }}
                 className="group relative flex h-full flex-1 basis-0 overflow-hidden rounded-3xl text-left text-white shadow-2xl outline-none ring-1 ring-white/40 transition-[flex-grow] duration-500 ease-out focus-visible:ring-4 focus-visible:ring-white"
               >
-                <img
+                <OptimizedImage
                   src={p.image}
                   alt=""
                   aria-hidden="true"
-                  loading="lazy"
-                  decoding="async"
                   className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-900/95 via-brand-900/35 to-transparent" />
