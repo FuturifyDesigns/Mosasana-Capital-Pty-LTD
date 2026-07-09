@@ -28,7 +28,7 @@ export function NotificationPopupListener() {
       const toastType =
         n.type === 'loan_paid' || n.type === 'payment_received'
           ? 'success'
-          : n.type === 'loan_status' && n.message.toLowerCase().includes('not approved')
+          : n.type === 'loan_status' && (n.message ?? '').toLowerCase().includes('not approved')
             ? 'error'
             : 'info'
 

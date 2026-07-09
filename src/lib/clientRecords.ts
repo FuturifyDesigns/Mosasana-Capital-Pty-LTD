@@ -33,7 +33,7 @@ export interface ClientRecord {
 }
 
 function clientKey(loan: LoanRequest): string {
-  return loan.user_id ?? loan.email.trim().toLowerCase()
+  return loan.user_id ?? (loan.email ?? '').trim().toLowerCase()
 }
 
 export function buildClientRecords(loans: LoanRequest[], users: AdminUser[] = []): ClientRecord[] {

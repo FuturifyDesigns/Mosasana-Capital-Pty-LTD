@@ -28,16 +28,16 @@ import { AdminPage } from '@/pages/AdminPage'
 export default function App() {
   return (
     <AuthProvider>
-      <ToastProvider>
-        <ConfirmProvider>
-        <NotificationProvider>
-        <NotificationPopupListener />
-        <ContentProvider>
-        <LanguageProvider>
-        <HashRouter>
-        <ScrollToTop />
-        <RecoveryHandler />
-        <Routes>
+      <HashRouter>
+        <ToastProvider>
+          <ConfirmProvider>
+            <NotificationProvider>
+              <NotificationPopupListener />
+              <ContentProvider>
+                <LanguageProvider>
+                  <ScrollToTop />
+                  <RecoveryHandler />
+                  <Routes>
           <Route path="verified" element={<VerifiedPage />} />
           <Route path="reset-password" element={<ResetPasswordPage />} />
           <Route element={<Layout />}>
@@ -75,13 +75,13 @@ export default function App() {
               }
             />
           </Route>
-        </Routes>
-        </HashRouter>
-        </LanguageProvider>
-        </ContentProvider>
-        </NotificationProvider>
-        </ConfirmProvider>
-      </ToastProvider>
+                  </Routes>
+                </LanguageProvider>
+              </ContentProvider>
+            </NotificationProvider>
+          </ConfirmProvider>
+        </ToastProvider>
+      </HashRouter>
     </AuthProvider>
   )
 }

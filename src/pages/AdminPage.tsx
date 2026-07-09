@@ -167,17 +167,23 @@ export function AdminPage() {
 
     const channel = subscribeAdminTables('admin-realtime', {
       onLoanChange: (payload) => {
-        setLoans((prev) => mergeLoanFromPayload(prev, payload) as LoanRequest[])
+        if (payload.eventType !== 'INSERT') {
+          setLoans((prev) => mergeLoanFromPayload(prev, payload) as LoanRequest[])
+        }
         if (payload.eventType === 'INSERT') {
           const path = (payload.new as unknown as LoanRequest | null)?.id_photo_path
           if (path) void loadIdDocUrl(path)
         }
       },
       onEnquiryChange: (payload) => {
-        setEnquiries((prev) => mergeEnquiryFromPayload(prev, payload) as ContactEnquiry[])
+        if (payload.eventType !== 'INSERT') {
+          setEnquiries((prev) => mergeEnquiryFromPayload(prev, payload) as ContactEnquiry[])
+        }
       },
       onPaymentChange: (payload) => {
-        setPayments((prev) => mergePaymentFromPayload(prev, payload) as LoanPayment[])
+        if (payload.eventType !== 'INSERT') {
+          setPayments((prev) => mergePaymentFromPayload(prev, payload) as LoanPayment[])
+        }
       },
       onSync: scheduleSync,
     })
@@ -396,10 +402,10 @@ export function AdminPage() {
         (statusFilter === 'reviewing' && l.status === 'pending')
       const matchesQuery =
         !q ||
-        l.full_name.toLowerCase().includes(q) ||
-        l.email.toLowerCase().includes(q) ||
-        l.phone.includes(q) ||
-        l.id_number.includes(q)
+        (l.full_name ?? '').toLowerCase().includes(q) ||
+        (l.email ?? '').toLowerCase().includes(q) ||
+        (l.phone ?? '').includes(q) ||
+        (l.id_number ?? '').includes(q)
       return inPipeline && matchesStatus && matchesQuery
     })
   }, [loans, query, statusFilter, loanPipeline])
@@ -477,7 +483,8 @@ export function AdminPage() {
     const settledByUser = new Map<string, number>()
     const settledByEmail = new Map<string, number>()
     for (const loan of loans) {
-      const emailKey = loan.email.trim().toLowerCase()
+      const emailKey = (loan.email ?? '').trim().toLowerCase()
+      if (!emailKey) continue
       totalsByEmail.set(emailKey, (totalsByEmail.get(emailKey) ?? 0) + 1)
       if (loan.user_id) {
         totalsByUser.set(loan.user_id, (totalsByUser.get(loan.user_id) ?? 0) + 1)
@@ -689,7 +696,7 @@ export function AdminPage() {
                       loan={loan}
                       isReturningBorrower={
                         (() => {
-                          const emailKey = loan.email.trim().toLowerCase()
+                          const emailKey = (loan.email ?? '').trim().toLowerCase()
                           const totalCount = loan.user_id
                             ? (returningBorrowers.totalsByUser.get(loan.user_id) ?? 0)
                             : (returningBorrowers.totalsByEmail.get(emailKey) ?? 0)
