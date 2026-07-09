@@ -62,7 +62,9 @@ export function EditableImage({
     }
   }
 
-  const img = <img src={url} alt={alt} className={className} {...imgProps} />
+  const img = (
+    <img src={url} alt={alt} className={`block max-w-full ${className ?? ''}`} {...imgProps} />
+  )
 
   if (!isAdmin) {
     return img

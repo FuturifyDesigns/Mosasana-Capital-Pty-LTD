@@ -126,7 +126,7 @@ export function WebsiteFormAnimation() {
 
   return (
     <div className="relative w-full max-w-md">
-      <div className="relative overflow-hidden rounded-2xl border border-brand-200 bg-white shadow-2xl">
+      <div className="overflow-hidden rounded-2xl bg-white shadow-xl shadow-brand-900/10">
         <div className="border-b border-brand-100 bg-brand-50 px-3 py-2.5">
           <div className="flex items-center gap-2.5">
             <div className="flex items-center gap-1.5 text-brand-400">
@@ -134,7 +134,7 @@ export function WebsiteFormAnimation() {
               <ChevronRight className="h-4 w-4" />
               <RotateCw className="h-3.5 w-3.5" />
             </div>
-            <div className="flex flex-1 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] text-brand-600 shadow-sm ring-1 ring-brand-100">
+            <div className="flex flex-1 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] text-brand-600 shadow-sm">
               <Lock className="h-3 w-3 shrink-0 text-growth-500" />
               <span className="truncate">mosasanacapital.com/apply</span>
             </div>

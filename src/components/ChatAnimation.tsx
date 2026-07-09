@@ -140,8 +140,8 @@ export function ChatAnimation() {
   const visible = CONVERSATION.slice(0, visibleCount)
 
   return (
-    <div className="relative mx-auto w-full max-w-[min(320px,100%)] overflow-hidden">
-      <div className="relative overflow-hidden rounded-[2.5rem] border-[6px] border-[#0b141a] bg-[#0b141a] shadow-2xl">
+    <div className="relative mx-auto w-full max-w-[min(320px,100%)]">
+      <div className="relative overflow-hidden rounded-[2.5rem] border-[6px] border-[#0b141a] bg-[#0b141a] shadow-[0_20px_50px_-12px_rgba(15,23,42,0.35)]">
         <div className="absolute left-1/2 top-0 z-20 h-6 w-32 -translate-x-1/2 rounded-b-2xl bg-[#0b141a]" />
 
         {/* WhatsApp header */}

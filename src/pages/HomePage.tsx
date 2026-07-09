@@ -92,7 +92,7 @@ export function HomePage() {
           </Reveal>
 
           <div className="mt-6 grid items-center gap-6 sm:mt-16 lg:grid-cols-2 lg:gap-10">
-            <Reveal direction="right" className="flex flex-col items-center gap-5">
+            <Reveal direction="right" blur={false} className="flex flex-col items-center gap-5">
               <WebsiteFormAnimation />
               <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm">
                 <Globe className="h-4 w-4 text-brand-600" />
@@ -100,7 +100,7 @@ export function HomePage() {
               </div>
             </Reveal>
 
-            <Reveal direction="left" delay={0.1} className="flex flex-col items-center gap-5">
+            <Reveal direction="left" delay={0.1} blur={false} className="flex flex-col items-center gap-5">
               <ChatAnimation />
               <div className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm">
                 <WhatsAppIcon className="h-4 w-4 text-[#25D366]" />
@@ -114,13 +114,16 @@ export function HomePage() {
       {/* Tailored solutions — image left */}
       <section className="overflow-x-clip">
         <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 py-8 sm:gap-8 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
-          <Reveal direction="right" className="overflow-hidden">
-            <EditableImage
-              contentKey="home.tailored.image"
-              src={`${BASE}consultation.png`}
-              alt="Mosasana Capital loan officer assisting a client"
-              className="relative w-full rounded-3xl shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25"
-            />
+          <Reveal direction="right" blur={false}>
+            <div className="overflow-hidden rounded-3xl shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25">
+              <EditableImage
+                contentKey="home.tailored.image"
+                src={`${BASE}consultation.png`}
+                alt="Mosasana Capital loan officer assisting a client"
+                className="w-full"
+                wrapperClassName="relative block"
+              />
+            </div>
           </Reveal>
           <Reveal direction="left">
             <EditableText
@@ -209,7 +212,7 @@ export function HomePage() {
               </Link>
             </div>
           </Reveal>
-          <Reveal direction="left" className="order-2 flex justify-center">
+          <Reveal direction="left" blur={false} className="order-2 flex justify-center">
             <DashboardMock />
           </Reveal>
         </div>
@@ -218,13 +221,16 @@ export function HomePage() {
       {/* Testimonial — image left */}
       <section className="overflow-x-clip">
         <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 py-8 sm:gap-8 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12">
-          <Reveal direction="right" className="order-2 overflow-hidden lg:order-1">
-            <EditableImage
-              contentKey="home.testimonial.image"
-              src={`${BASE}testimonial-client.png`}
-              alt="Satisfied Mosasana Capital customer"
-              className="relative w-full rounded-3xl shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25"
-            />
+          <Reveal direction="right" blur={false} className="order-2 lg:order-1">
+            <div className="overflow-hidden rounded-3xl shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25">
+              <EditableImage
+                contentKey="home.testimonial.image"
+                src={`${BASE}testimonial-client.png`}
+                alt="Satisfied Mosasana Capital customer"
+                className="w-full"
+                wrapperClassName="relative block"
+              />
+            </div>
           </Reveal>
           <Reveal direction="left" className="order-1 lg:order-2">
             <Quote className="h-12 w-12 text-brand-200" />
@@ -273,7 +279,7 @@ export function HomePage() {
               Built around what matters to you
             </EditableText>
           </Reveal>
-          <Reveal>
+          <Reveal blur={false}>
             <WhyChooseSlideshow />
           </Reveal>
         </div>
@@ -464,13 +470,16 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
           className="relative overflow-visible [perspective:1000px] pb-2 sm:pb-4"
         >
           <motion.div style={mobile ? undefined : { rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}>
-            <EditableImage
-              contentKey="home.hero.image"
-              src={`${BASE}hero-money.png`}
-              alt="Happy Mosasana Capital client with cash"
-              eager
-              className="relative w-full rounded-3xl shadow-2xl"
-            />
+            <div className="overflow-hidden rounded-3xl shadow-2xl">
+              <EditableImage
+                contentKey="home.hero.image"
+                src={`${BASE}hero-money.png`}
+                alt="Happy Mosasana Capital client with cash"
+                eager
+                className="w-full"
+                wrapperClassName="relative block"
+              />
+            </div>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -522,8 +531,8 @@ function DashboardMock() {
   const pct = Math.round((paid / totalDue) * 100)
 
   return (
-    <div className="relative w-full max-w-md overflow-hidden">
-      <div className="relative overflow-hidden rounded-3xl border border-brand-100 bg-white shadow-2xl">
+    <div className="relative w-full max-w-md">
+      <div className="overflow-hidden rounded-3xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-brand-50 px-5 py-3.5">
           <div>
             <p className="text-xs text-brand-400">{t('home.mock.dashboard')}</p>
