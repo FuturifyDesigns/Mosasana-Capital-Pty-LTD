@@ -25,10 +25,10 @@ import type { AdminUser, LoanRequest } from '@/lib/supabase'
 
 const FILTER_OPTIONS: { value: ClientRecordsFilter; label: string }[] = [
   { value: 'all', label: 'All clients' },
-  { value: 'funded', label: 'Funded (disbursed/paid)' },
+  { value: 'funded', label: 'Funded clients' },
   { value: 'active', label: 'Active borrowers' },
   { value: 'settled', label: 'Fully settled' },
-  { value: 'rejected', label: 'Never funded / closed' },
+  { value: 'rejected', label: 'Never funded' },
 ]
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
@@ -98,7 +98,7 @@ export function ClientRecordsPanel({
         <p className="text-sm text-brand-600">
           Client file history — expand a client, then each loan for full details and ID documents.
         </p>
-        <div className="w-full sm:w-52">
+        <div className="w-full sm:w-72">
           <Select
             options={FILTER_OPTIONS}
             value={recordsFilter}
@@ -215,7 +215,7 @@ function ClientRecordCard({
                   {record.paidCount} settled
                 </span>
               )}
-              {record.paidCount > 0 && (
+              {record.loanCount > 1 && record.paidCount > 0 && (
                 <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
                   Returning borrower
                 </span>

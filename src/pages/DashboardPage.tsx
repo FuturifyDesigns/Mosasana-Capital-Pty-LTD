@@ -102,7 +102,7 @@ export function DashboardPage() {
     [loans],
   )
   const settledLoans = useMemo(() => loans.filter((l) => l.status === 'paid'), [loans])
-  const isReturningCustomer = settledLoans.length > 0
+  const isReturningCustomer = loans.length > 1 && settledLoans.length > 0
 
   const hasActiveLoan = !!activeLoan
 

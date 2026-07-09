@@ -380,14 +380,24 @@ export function AdminPage() {
   }, [users, query])
 
   const returningBorrowers = useMemo(() => {
-    const settledByUser = new Set<string>()
-    const settledByEmail = new Set<string>()
+    const totalsByUser = new Map<string, number>()
+    const totalsByEmail = new Map<string, number>()
+    const settledByUser = new Map<string, number>()
+    const settledByEmail = new Map<string, number>()
     for (const loan of loans) {
-      if (loan.status !== 'paid') continue
-      if (loan.user_id) settledByUser.add(loan.user_id)
-      settledByEmail.add(loan.email.trim().toLowerCase())
+      const emailKey = loan.email.trim().toLowerCase()
+      totalsByEmail.set(emailKey, (totalsByEmail.get(emailKey) ?? 0) + 1)
+      if (loan.user_id) {
+        totalsByUser.set(loan.user_id, (totalsByUser.get(loan.user_id) ?? 0) + 1)
+      }
+      if (loan.status === 'paid') {
+        settledByEmail.set(emailKey, (settledByEmail.get(emailKey) ?? 0) + 1)
+        if (loan.user_id) {
+          settledByUser.set(loan.user_id, (settledByUser.get(loan.user_id) ?? 0) + 1)
+        }
+      }
     }
-    return { settledByUser, settledByEmail }
+    return { totalsByUser, totalsByEmail, settledByUser, settledByEmail }
   }, [loans])
 
   const loanStatusOptions = useMemo(() => {
@@ -578,8 +588,16 @@ export function AdminPage() {
                     <LoanRequestCard
                       loan={loan}
                       isReturningBorrower={
-                        (loan.user_id && returningBorrowers.settledByUser.has(loan.user_id)) ||
-                        returningBorrowers.settledByEmail.has(loan.email.trim().toLowerCase())
+                        (() => {
+                          const emailKey = loan.email.trim().toLowerCase()
+                          const totalCount = loan.user_id
+                            ? (returningBorrowers.totalsByUser.get(loan.user_id) ?? 0)
+                            : (returningBorrowers.totalsByEmail.get(emailKey) ?? 0)
+                          const settledCount = loan.user_id
+                            ? (returningBorrowers.settledByUser.get(loan.user_id) ?? 0)
+                            : (returningBorrowers.settledByEmail.get(emailKey) ?? 0)
+                          return totalCount > 1 && settledCount > 0
+                        })()
                       }
                       payments={payments}
                       remindersByLoan={remindersByLoan}
