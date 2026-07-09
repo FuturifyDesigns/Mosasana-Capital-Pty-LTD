@@ -66,7 +66,14 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   )
 
   const getImage = useCallback(
-    (key: string, fallback: string) => content[key] ?? fallback,
+    (key: string, fallback: string) => {
+      const value = content[key]?.trim()
+      if (!value) return fallback
+      if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('/')) {
+        return value
+      }
+      return fallback
+    },
     [content],
   )
 

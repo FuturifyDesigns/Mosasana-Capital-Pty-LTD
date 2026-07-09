@@ -62,13 +62,23 @@ export function EditableImage({
     }
   }
 
+  const img = <img src={url} alt={alt} className={className} {...imgProps} />
+
   if (!isAdmin) {
-    return <img src={url} alt={alt} className={className} {...imgProps} />
+    return img
   }
 
+  const fillsParent =
+    className?.includes('inset-0') ||
+    className?.includes('h-full') ||
+    wrapperClassName?.includes('inset-0') ||
+    wrapperClassName?.includes('h-full')
+
   return (
-    <span className={`group/edit relative block ${wrapperClassName ?? ''}`}>
-      <img src={url} alt={alt} className={className} {...imgProps} />
+    <span
+      className={`group/edit ${fillsParent ? 'absolute inset-0' : 'relative block'} ${wrapperClassName ?? ''}`}
+    >
+      {img}
       <button
         type="button"
         onClick={() => inputRef.current?.click()}

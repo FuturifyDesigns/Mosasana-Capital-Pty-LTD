@@ -51,7 +51,8 @@ export function WhyChooseSlideshow() {
               contentKey={slide.key}
               src={slide.src}
               alt={slide.alt}
-              className="absolute inset-0 h-full w-full object-cover"
+              className="h-full w-full object-cover"
+              wrapperClassName="absolute inset-0"
               eager={index === 0}
             />
           </motion.div>
