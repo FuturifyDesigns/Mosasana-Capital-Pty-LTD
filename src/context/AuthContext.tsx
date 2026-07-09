@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, type Profile } from '@/lib/supabase'
+import { syncRealtimeAuth } from '@/lib/realtime'
 
 interface AuthContextValue {
   session: Session | null
@@ -71,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return
       setSession(data.session)
+      void syncRealtimeAuth(data.session?.access_token)
       if (data.session?.user) {
         fetchProfile(data.session.user.id).finally(() => {
           if (!cancelled) setLoading(false)
@@ -84,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession)
+      void syncRealtimeAuth(nextSession?.access_token)
       if (nextSession?.user) {
         void fetchProfile(nextSession.user.id)
       } else {

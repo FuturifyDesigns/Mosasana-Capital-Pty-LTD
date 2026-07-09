@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   FileText,
@@ -31,6 +31,13 @@ import { buildClientRecords, filterClientRecords } from '@/lib/clientRecords'
 import { useToast } from '@/context/ToastContext'
 import { useConfirm } from '@/context/ConfirmContext'
 import { useLanguage } from '@/context/LanguageContext'
+import { useAuth } from '@/context/AuthContext'
+import {
+  mergeEnquiryFromPayload,
+  mergeLoanFromPayload,
+  mergePaymentFromPayload,
+  subscribeAdminTables,
+} from '@/lib/realtime'
 
 type Tab = 'loans' | 'records' | 'enquiries' | 'users'
 
@@ -53,6 +60,8 @@ export function AdminPage() {
   const { showToast } = useToast()
   const { confirm } = useConfirm()
   const { t } = useLanguage()
+  const { isAdmin, loading: authLoading } = useAuth()
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [tab, setTab] = useState<Tab>('loans')
   const [loans, setLoans] = useState<LoanRequest[]>([])
   const [enquiries, setEnquiries] = useState<ContactEnquiry[]>([])
@@ -127,27 +136,64 @@ export function AdminPage() {
     if (!options?.silent) setLoading(false)
   }, [showToast, t])
 
-  useEffect(() => {
-    fetchData()
+  const loadIdDocUrl = useCallback(async (path: string) => {
+    const { data } = await supabase.storage.from('id-documents').createSignedUrl(path, 300)
+    if (!data?.signedUrl) return
+    setIdDocUrls((prev) => ({ ...prev, [path]: data.signedUrl }))
+  }, [])
+
+  const scheduleSync = useCallback(() => {
+    if (syncTimerRef.current) clearTimeout(syncTimerRef.current)
+    syncTimerRef.current = setTimeout(() => {
+      void fetchData({ silent: true })
+    }, 300)
   }, [fetchData])
 
-  // Live updates without full-page loading flicker
   useEffect(() => {
-    const refresh = () => fetchData({ silent: true })
-    const channel = supabase
-      .channel('admin-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_requests' }, refresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'contact_enquiries' }, refresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, refresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_reminder_log' }, refresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'loan_payments' }, refresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, refresh)
-      .subscribe()
+    if (authLoading || !isAdmin) return
+    void fetchData()
+  }, [authLoading, isAdmin, fetchData])
+
+  // Live updates: merge row changes instantly, then sync users/stats in the background.
+  useEffect(() => {
+    if (authLoading || !isAdmin) return
+
+    const channel = subscribeAdminTables('admin-realtime', {
+      onLoanChange: (payload) => {
+        setLoans((prev) => mergeLoanFromPayload(prev, payload) as LoanRequest[])
+        if (payload.eventType === 'INSERT') {
+          const path = (payload.new as unknown as LoanRequest | null)?.id_photo_path
+          if (path) void loadIdDocUrl(path)
+        }
+      },
+      onEnquiryChange: (payload) => {
+        setEnquiries((prev) => mergeEnquiryFromPayload(prev, payload) as ContactEnquiry[])
+      },
+      onPaymentChange: (payload) => {
+        setPayments((prev) => mergePaymentFromPayload(prev, payload) as LoanPayment[])
+      },
+      onSync: scheduleSync,
+    })
 
     return () => {
-      supabase.removeChannel(channel)
+      if (syncTimerRef.current) clearTimeout(syncTimerRef.current)
+      void supabase.removeChannel(channel)
     }
-  }, [fetchData])
+  }, [authLoading, isAdmin, loadIdDocUrl, scheduleSync])
+
+  // Refetch when the admin tab becomes visible again (e.g. after switching browser tabs).
+  useEffect(() => {
+    if (authLoading || !isAdmin) return
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void fetchData({ silent: true })
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [authLoading, isAdmin, fetchData])
 
   const banUser = async (u: AdminUser) => {
     const next = !u.banned
