@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Logo } from './Logo'
 import { Button } from './ui/Button'
 import { NotificationBell } from './NotificationBell'
+import { LanguageToggle } from './LanguageToggle'
 import { useAuth } from '@/context/AuthContext'
 
 const navLinks = [
@@ -45,6 +46,7 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
+          <LanguageToggle compact />
           {user ? (
             <>
               {!isAdmin && (
@@ -88,6 +90,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
+          <LanguageToggle compact />
           {!user && (
             <Link to="/account">
               <Button size="sm" className="px-3">

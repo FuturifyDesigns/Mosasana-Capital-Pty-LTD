@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus,
   FileText,
@@ -12,13 +12,16 @@ import {
   History,
   TrendingDown,
   PartyPopper,
+  ChevronDown,
 } from 'lucide-react'
 import { PageHero } from '@/components/ui/PageHero'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useAuth } from '@/context/AuthContext'
+import { useLanguage } from '@/context/LanguageContext'
 import { supabase, type LoanRequest, type LoanPayment } from '@/lib/supabase'
 import { ACTIVE_LOAN_STATUSES } from '@/lib/constants'
+import type { DashboardTranslationKey } from '@/lib/i18n/dashboard'
 import {
   formatDueDate,
   getEstimatedTotalRepayable,
@@ -27,15 +30,25 @@ import {
   getRepaymentReminder,
 } from '@/lib/loans'
 import { formatPula, toNumber } from '@/lib/format'
-import {
-  clientStatusBannerClass,
-  LOAN_STATUS_META,
-  statusBadgeClass,
-  type LoanStatus,
-} from '@/lib/loanStatus'
+import { clientStatusBannerClass, statusBadgeClass } from '@/lib/loanStatus'
+
+type ClientStatusKey =
+  | 'pending'
+  | 'reviewing'
+  | 'approved'
+  | 'disbursed'
+  | 'paid'
+  | 'rejected'
+  | 'discontinued'
+
+function normalizeStatus(status: string): ClientStatusKey {
+  if (status === 'pending') return 'reviewing'
+  return status as ClientStatusKey
+}
 
 export function DashboardPage() {
   const { user, profile, isAdmin } = useAuth()
+  const { t } = useLanguage()
   const [loans, setLoans] = useState<LoanRequest[]>([])
   const [payments, setPayments] = useState<LoanPayment[]>([])
   const [loading, setLoading] = useState(true)
@@ -121,22 +134,21 @@ export function DashboardPage() {
   const outstanding = activeLoan ? getOutstandingBalance(activeLoan) : null
   const estimatedTotal = activeLoan ? getEstimatedTotalRepayable(activeLoan) : null
   const displayTotal =
-    activeLoan?.total_repayable != null
-      ? toNumber(activeLoan.total_repayable)
-      : estimatedTotal
+    activeLoan?.total_repayable != null ? toNumber(activeLoan.total_repayable) : estimatedTotal
   const paid = activeLoan ? toNumber(activeLoan.amount_paid) : 0
   const pct =
     displayTotal && displayTotal > 0 ? Math.min(Math.round((paid / displayTotal) * 100), 100) : 0
 
+  const displayName = profile?.full_name || user?.email || 'Client'
+
   return (
     <>
       <PageHero
-        title="My Dashboard"
-        subtitle={`Welcome back, ${profile?.full_name || user?.email || 'Client'}`}
+        title={t('dashboard.title')}
+        subtitle={t('dashboard.welcome', { name: displayName })}
       />
 
       <section className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-        {/* Active loan summary */}
         {activeLoan && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -145,31 +157,32 @@ export function DashboardPage() {
           >
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-brand-100">Active loan</p>
+                <p className="text-sm font-medium text-brand-100">{t('dashboard.activeLoan')}</p>
                 <p className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
                   {outstanding != null ? formatPula(outstanding) : formatPula(activeLoan.loan_amount)}
                 </p>
                 <p className="mt-1 text-sm text-brand-100">
-                  {outstanding != null ? 'Outstanding balance' : 'Principal amount'}
+                  {outstanding != null
+                    ? t('dashboard.outstandingBalance')
+                    : t('dashboard.principalAmount')}
                   {' · '}
                   {activeLoan.loan_purpose}
-                  {activeLoan.term_months ? ` · ${activeLoan.term_months} months` : ''}
+                  {activeLoan.term_months
+                    ? ` · ${t('dashboard.months', { count: activeLoan.term_months })}`
+                    : ''}
                 </p>
               </div>
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                  statusBadgeClass(activeLoan.status)
-                }`}
-              >
-                {activeLoan.status}
-              </span>
+              <StatusBadge status={activeLoan.status} />
             </div>
 
             {displayTotal != null && (
               <div className="mt-5">
                 <div className="flex justify-between text-xs text-brand-100">
                   <span>
-                    Paid {formatPula(paid)} of {formatPula(displayTotal)}
+                    {t('dashboard.paidOf', {
+                      paid: formatPula(paid),
+                      total: formatPula(displayTotal),
+                    })}
                   </span>
                   <span>{pct}%</span>
                 </div>
@@ -186,23 +199,21 @@ export function DashboardPage() {
               {activeLoan.due_date && (
                 <span className="flex items-center gap-1.5">
                   <CalendarClock className="h-4 w-4" />
-                  Due {formatDueDate(activeLoan.due_date)}
+                  {t('dashboard.due', { date: formatDueDate(activeLoan.due_date) })}
                 </span>
               )}
               <span className="flex items-center gap-1.5">
                 <Wallet className="h-4 w-4" />
-                Applied {formatPula(activeLoan.loan_amount)}
+                {t('dashboard.appliedAmount', { amount: formatPula(activeLoan.loan_amount) })}
               </span>
             </div>
 
             <p className="mt-4 rounded-xl bg-white/10 px-3 py-2 text-xs text-brand-50">
-              Payments are recorded by our team when received (e.g. via WhatsApp or bank transfer).
-              Your balance updates here automatically.
+              {t('dashboard.paymentsNote')}
             </p>
           </motion.div>
         )}
 
-        {/* Reminders */}
         {reminders.length > 0 && (
           <div className="mb-6 space-y-3">
             {reminders.map(({ loan, reminder }) => {
@@ -223,7 +234,7 @@ export function DashboardPage() {
                 >
                   <Icon className="mt-0.5 h-5 w-5 shrink-0" />
                   <div className="text-sm">
-                    <p className="font-semibold">Repayment reminder</p>
+                    <p className="font-semibold">{t('dashboard.repaymentReminder')}</p>
                     <p>{reminder!.message}</p>
                   </div>
                 </motion.div>
@@ -234,24 +245,22 @@ export function DashboardPage() {
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-brand-900">Your Loan Files</h2>
-            <p className="text-sm text-brand-600">
-              Active loans and your full borrowing history are separated below.
-            </p>
+            <h2 className="text-xl font-semibold text-brand-900">{t('dashboard.loanFiles')}</h2>
+            <p className="text-sm text-brand-600">{t('dashboard.loanFilesSubtitle')}</p>
           </div>
           {isReturningCustomer && (
             <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-              Returning borrower · {settledLoans.length} settled
+              {t('dashboard.returningBorrower', { count: settledLoans.length })}
             </span>
           )}
           {hasActiveLoan ? (
             <Button size="sm" disabled title="Finish repaying your current loan to apply again">
-              <Plus className="h-4 w-4" /> New Application
+              <Plus className="h-4 w-4" /> {t('dashboard.newApplication')}
             </Button>
           ) : (
             <Link to="/apply">
               <Button size="sm">
-                <Plus className="h-4 w-4" /> New Application
+                <Plus className="h-4 w-4" /> {t('dashboard.newApplication')}
               </Button>
             </Link>
           )}
@@ -260,46 +269,46 @@ export function DashboardPage() {
         {hasActiveLoan && (
           <div className="mb-6 flex items-start gap-2 rounded-xl border border-brand-100 bg-brand-50/70 p-3 text-sm text-brand-700">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand-500" />
-            <p>
-              You have an active loan. You&apos;ll be able to apply for a new one once your current
-              loan is fully repaid.
-            </p>
+            <p>{t('dashboard.activeLoanBlock')}</p>
           </div>
         )}
 
         {loading ? (
           <div className="space-y-4">
             {[1, 2].map((i) => (
-              <div key={i} className="skeleton h-32 rounded-2xl" />
+              <div key={i} className="skeleton h-24 rounded-2xl" />
             ))}
           </div>
         ) : loans.length === 0 ? (
           <Card className="text-center">
             <FileText className="mx-auto h-12 w-12 text-brand-300" />
-            <h3 className="mt-4 text-lg font-semibold text-brand-900">No Applications Yet</h3>
-            <p className="mt-2 text-brand-600">Submit your first loan application to get started.</p>
+            <h3 className="mt-4 text-lg font-semibold text-brand-900">
+              {t('dashboard.noApplications')}
+            </h3>
+            <p className="mt-2 text-brand-600">{t('dashboard.noApplicationsHint')}</p>
             <Link to="/apply" className="mt-6 inline-block">
-              <Button>Apply for a Loan</Button>
+              <Button>{t('dashboard.applyForLoan')}</Button>
             </Link>
           </Card>
         ) : (
           <div className="space-y-8">
             <LoanFileSection
-              title="Active Loans"
+              title={t('dashboard.activeLoans')}
               subtitle={
                 activeLoans.length > 0
-                  ? 'Loans currently in progress.'
-                  : 'No active loans right now.'
+                  ? t('dashboard.activeLoansSubtitle')
+                  : t('dashboard.noActiveLoans')
               }
               loans={activeLoans}
               payments={payments}
+              defaultExpanded
             />
             <LoanFileSection
-              title="Loan History"
+              title={t('dashboard.loanHistory')}
               subtitle={
                 historyLoans.length > 0
-                  ? 'Your previous loan applications and outcomes.'
-                  : 'No loan history yet.'
+                  ? t('dashboard.loanHistorySubtitle')
+                  : t('dashboard.noLoanHistory')
               }
               loans={historyLoans}
               payments={payments}
@@ -316,11 +325,13 @@ function LoanFileSection({
   subtitle,
   loans,
   payments,
+  defaultExpanded = false,
 }: {
   title: string
   subtitle: string
   loans: LoanRequest[]
   payments: LoanPayment[]
+  defaultExpanded?: boolean
 }) {
   return (
     <div>
@@ -336,77 +347,163 @@ function LoanFileSection({
       {loans.length === 0 ? (
         <Card className="text-sm text-brand-600">{subtitle}</Card>
       ) : (
-        <div className="space-y-4">
-          {loans.map((loan, i) => {
-            const loanPayments = payments.filter((p) => p.loan_id === loan.id)
-            return (
-              <motion.div
-                key={loan.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <Card className="overflow-hidden !p-0">
-                  <div className="flex flex-wrap items-start justify-between gap-3 border-b border-brand-100 bg-brand-50/50 px-5 py-4">
-                    <div>
-                      <p className="text-2xl font-bold text-brand-900">{formatPula(loan.loan_amount)}</p>
-                      <p className="mt-0.5 text-sm text-brand-600">
-                        {loan.loan_purpose}
-                        {loan.term_months ? ` · ${loan.term_months}-month term` : ''}
-                      </p>
-                    </div>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusBadgeClass(loan.status)}`}
-                    >
-                      {loan.status}
-                    </span>
-                  </div>
-
-                  <div className="p-5">
-                    <div className="flex items-center gap-1.5 text-xs text-brand-500">
-                      <Clock className="h-3.5 w-3.5" />
-                      Applied{' '}
-                      {new Date(loan.created_at).toLocaleDateString('en-GB', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </div>
-
-                    <LoanStatusBanner status={loan.status as LoanStatus} />
-
-                    {loan.status !== 'rejected' && loan.status !== 'discontinued' && (
-                      <RepaymentSummary loan={loan} payments={loanPayments} />
-                    )}
-
-                    {loan.admin_notes && (
-                      <p className="mt-3 rounded-lg bg-brand-50 p-3 text-sm text-brand-700">
-                        <span className="font-medium">Note from team:</span> {loan.admin_notes}
-                      </p>
-                    )}
-                  </div>
-                </Card>
-              </motion.div>
-            )
-          })}
+        <div className="space-y-3">
+          {loans.map((loan, i) => (
+            <motion.div
+              key={loan.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <LoanFileCard
+                loan={loan}
+                payments={payments.filter((p) => p.loan_id === loan.id)}
+                defaultExpanded={defaultExpanded}
+              />
+            </motion.div>
+          ))}
         </div>
       )}
     </div>
   )
 }
 
-function LoanStatusBanner({ status }: { status: LoanStatus }) {
-  const meta = LOAN_STATUS_META[status]
+function LoanFileCard({
+  loan,
+  payments,
+  defaultExpanded = false,
+}: {
+  loan: LoanRequest
+  payments: LoanPayment[]
+  defaultExpanded?: boolean
+}) {
+  const { t } = useLanguage()
+  const [expanded, setExpanded] = useState(defaultExpanded)
+  const statusKey = normalizeStatus(loan.status)
+  const statusTitle = t(`statusMessage.${statusKey}.title` as DashboardTranslationKey)
+
+  const appliedDate = new Date(loan.created_at).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+
+  return (
+    <Card className="overflow-hidden !p-0">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-start justify-between gap-3 border-b border-brand-100 bg-brand-50/50 px-4 py-4 text-left transition hover:bg-brand-50 sm:px-5"
+        aria-expanded={expanded}
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xl font-bold text-brand-900 sm:text-2xl">
+              {formatPula(loan.loan_amount)}
+            </p>
+            <StatusBadge status={loan.status} />
+          </div>
+          <p className="mt-1 text-sm text-brand-600">
+            {loan.loan_purpose}
+            {loan.term_months
+              ? ` · ${t('dashboard.monthTerm', { count: loan.term_months })}`
+              : ''}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-brand-500">
+            <span className="inline-flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              {t('dashboard.applied')} {appliedDate}
+            </span>
+            {!expanded && <span className="text-brand-700">· {statusTitle}</span>}
+          </div>
+        </div>
+        <ChevronDown
+          className={`mt-1 h-5 w-5 shrink-0 text-brand-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      <div className="flex items-center justify-between border-b border-brand-100 px-4 py-2 sm:px-5">
+        <p className="text-xs text-brand-500">
+          {expanded ? t('dashboard.hideDetails') : t('dashboard.showDetails')}
+        </p>
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="text-xs font-semibold text-brand-700 underline-offset-2 hover:underline"
+        >
+          {expanded ? t('dashboard.hideDetails') : t('dashboard.showDetails')}
+        </button>
+      </div>
+
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="space-y-4 p-4 sm:p-5">
+              <LoanStatusBanner status={statusKey} />
+
+              {loan.status !== 'rejected' && loan.status !== 'discontinued' && (
+                <RepaymentSummary loan={loan} payments={payments} />
+              )}
+
+              {loan.admin_notes && (
+                <p className="rounded-lg bg-brand-50 p-3 text-sm text-brand-700">
+                  <span className="font-medium">{t('dashboard.noteFromTeam')}</span> {loan.admin_notes}
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Card>
+  )
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const { t } = useLanguage()
+  const key = normalizeStatus(status)
+  return (
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClass(status)}`}
+    >
+      {t(`status.${key}` as DashboardTranslationKey)}
+    </span>
+  )
+}
+
+function LoanStatusBanner({ status }: { status: ClientStatusKey }) {
+  const { t } = useLanguage()
+  const metaKey = status
+  const tone =
+    status === 'paid'
+      ? 'emerald'
+      : status === 'rejected' || status === 'discontinued'
+        ? 'red'
+        : status === 'approved'
+          ? 'green'
+          : status === 'disbursed'
+            ? 'brand'
+            : 'blue'
+
   const Icon = status === 'paid' ? PartyPopper : Info
 
   return (
     <div
-      className={`mt-4 flex items-start gap-2.5 rounded-xl border p-3.5 text-sm ${clientStatusBannerClass(meta.tone)}`}
+      className={`flex items-start gap-2.5 rounded-xl border p-3.5 text-sm ${clientStatusBannerClass(tone)}`}
     >
       <Icon className="mt-0.5 h-5 w-5 shrink-0" />
       <div>
-        <p className="font-semibold">{meta.clientTitle}</p>
-        <p className="mt-0.5 leading-relaxed opacity-90">{meta.clientMessage}</p>
+        <p className="font-semibold">
+          {t(`statusMessage.${metaKey}.title` as DashboardTranslationKey)}
+        </p>
+        <p className="mt-0.5 leading-relaxed opacity-90">
+          {t(`statusMessage.${metaKey}.body` as DashboardTranslationKey)}
+        </p>
       </div>
     </div>
   )
@@ -419,10 +516,9 @@ function RepaymentSummary({
   loan: LoanRequest
   payments: LoanPayment[]
 }) {
+  const { t } = useLanguage()
   const total =
-    loan.total_repayable != null
-      ? toNumber(loan.total_repayable)
-      : getEstimatedTotalRepayable(loan)
+    loan.total_repayable != null ? toNumber(loan.total_repayable) : getEstimatedTotalRepayable(loan)
   const paid = toNumber(loan.amount_paid)
   const balance = getOutstandingBalance(loan) ?? Math.max(total - paid, 0)
   const pct = total > 0 ? Math.min(Math.round((paid / total) * 100), 100) : 0
@@ -430,30 +526,32 @@ function RepaymentSummary({
   const fees = getInterestAndFeesAmount(loan)
 
   return (
-    <div className="mt-4 space-y-3">
+    <div className="space-y-3">
       <div className="rounded-2xl bg-gradient-to-br from-emerald-50 to-brand-50 p-4 ring-1 ring-emerald-100">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-emerald-700">
               <TrendingDown className="h-3.5 w-3.5" />
-              Outstanding
+              {t('dashboard.outstanding')}
             </p>
             <p className="text-2xl font-bold text-emerald-900">
-              {termsSet || loan.status === 'paid' ? formatPula(balance) : 'Pending'}
+              {termsSet || loan.status === 'paid' ? formatPula(balance) : t('dashboard.pending')}
             </p>
             {!termsSet && loan.status !== 'paid' && (
-              <p className="mt-0.5 text-xs text-brand-500">
-                Final amount will be confirmed once your loan is approved
-              </p>
+              <p className="mt-0.5 text-xs text-brand-500">{t('dashboard.pendingAmountHint')}</p>
             )}
           </div>
           <div className="text-right text-sm text-brand-700">
             <p>
-              Paid <strong>{formatPula(paid)}</strong>
+              {t('dashboard.paid')} <strong>{formatPula(paid)}</strong>
             </p>
-            <p className="text-xs text-brand-500">of {formatPula(total)} total</p>
+            <p className="text-xs text-brand-500">
+              {t('dashboard.ofTotal', { total: formatPula(total) })}
+            </p>
             {fees != null && fees > 0 && (
-              <p className="text-xs text-amber-700">Includes {formatPula(fees)} interest/fees</p>
+              <p className="text-xs text-amber-700">
+                {t('dashboard.includesFees', { amount: formatPula(fees) })}
+              </p>
             )}
           </div>
         </div>
@@ -467,11 +565,12 @@ function RepaymentSummary({
         )}
         {loan.due_date && (
           <p className="mt-2 flex items-center gap-1.5 text-xs text-brand-500">
-            <CalendarClock className="h-3.5 w-3.5" /> Due {formatDueDate(loan.due_date)}
+            <CalendarClock className="h-3.5 w-3.5" />{' '}
+            {t('dashboard.due', { date: formatDueDate(loan.due_date) })}
           </p>
         )}
         {loan.interest_rate === 0 && (
-          <p className="mt-1 text-xs text-brand-500">0% interest — principal only</p>
+          <p className="mt-1 text-xs text-brand-500">{t('dashboard.zeroInterest')}</p>
         )}
       </div>
 
@@ -479,7 +578,7 @@ function RepaymentSummary({
         <div className="rounded-xl border border-brand-100 bg-white p-3">
           <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-600">
             <History className="h-3.5 w-3.5" />
-            Payment history
+            {t('dashboard.paymentHistory')}
           </p>
           <ul className="space-y-1.5">
             {payments.map((p) => (
@@ -491,12 +590,12 @@ function RepaymentSummary({
                   <span className="font-medium text-brand-900">{formatPula(p.amount)}</span>
                   {(p.interest_rate_snapshot != null || p.total_repayable_snapshot != null) && (
                     <p className="text-[11px] text-brand-500">
-                      Terms at payment:
+                      {t('dashboard.termsAtPayment')}{' '}
                       {p.interest_rate_snapshot != null
-                        ? ` ${p.interest_rate_snapshot}% interest`
-                        : ' interest N/A'}
+                        ? t('dashboard.interest', { rate: p.interest_rate_snapshot })
+                        : t('dashboard.interestNa')}
                       {p.total_repayable_snapshot != null
-                        ? ` · total ${formatPula(p.total_repayable_snapshot)}`
+                        ? ` · ${t('dashboard.total', { amount: formatPula(p.total_repayable_snapshot) })}`
                         : ''}
                     </p>
                   )}

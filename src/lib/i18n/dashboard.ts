@@ -1,0 +1,171 @@
+import type { Language } from './types'
+
+const en = {
+  'dashboard.title': 'My Dashboard',
+  'dashboard.welcome': 'Welcome back, {name}',
+  'dashboard.activeLoan': 'Active loan',
+  'dashboard.outstandingBalance': 'Outstanding balance',
+  'dashboard.principalAmount': 'Principal amount',
+  'dashboard.months': '{count} months',
+  'dashboard.monthTerm': '{count}-month term',
+  'dashboard.paidOf': 'Paid {paid} of {total}',
+  'dashboard.due': 'Due {date}',
+  'dashboard.appliedAmount': 'Applied {amount}',
+  'dashboard.paymentsNote':
+    'Payments are recorded by our team when received (e.g. via WhatsApp or bank transfer). Your balance updates here automatically.',
+  'dashboard.repaymentReminder': 'Repayment reminder',
+  'dashboard.loanFiles': 'Your Loan Files',
+  'dashboard.loanFilesSubtitle': 'Active loans and your full borrowing history are separated below.',
+  'dashboard.returningBorrower': 'Returning borrower · {count} settled',
+  'dashboard.newApplication': 'New Application',
+  'dashboard.activeLoanBlock':
+    "You have an active loan. You'll be able to apply for a new one once your current loan is fully repaid.",
+  'dashboard.noApplications': 'No Applications Yet',
+  'dashboard.noApplicationsHint': 'Submit your first loan application to get started.',
+  'dashboard.applyForLoan': 'Apply for a Loan',
+  'dashboard.activeLoans': 'Active Loans',
+  'dashboard.activeLoansSubtitle': 'Loans currently in progress.',
+  'dashboard.noActiveLoans': 'No active loans right now.',
+  'dashboard.loanHistory': 'Loan History',
+  'dashboard.loanHistorySubtitle': 'Your previous loan applications and outcomes.',
+  'dashboard.noLoanHistory': 'No loan history yet.',
+  'dashboard.applied': 'Applied',
+  'dashboard.showDetails': 'Show details',
+  'dashboard.hideDetails': 'Hide details',
+  'dashboard.noteFromTeam': 'Note from team:',
+  'dashboard.outstanding': 'Outstanding',
+  'dashboard.pending': 'Pending',
+  'dashboard.pendingAmountHint': 'Final amount will be confirmed once your loan is approved',
+  'dashboard.paid': 'Paid',
+  'dashboard.ofTotal': 'of {total} total',
+  'dashboard.includesFees': 'Includes {amount} interest/fees',
+  'dashboard.zeroInterest': '0% interest — principal only',
+  'dashboard.paymentHistory': 'Payment history',
+  'dashboard.termsAtPayment': 'Terms at payment:',
+  'dashboard.interest': '{rate}% interest',
+  'dashboard.interestNa': 'interest N/A',
+  'dashboard.total': 'total {amount}',
+  'status.pending': 'In review',
+  'status.reviewing': 'In review',
+  'status.approved': 'Approved',
+  'status.disbursed': 'Disbursed',
+  'status.paid': 'Paid',
+  'status.rejected': 'Rejected',
+  'status.discontinued': 'Discontinued',
+  'statusMessage.pending.title': 'Under review',
+  'statusMessage.pending.body':
+    'Our team is reviewing your application. We may contact you if we need any additional information.',
+  'statusMessage.reviewing.title': 'Under review',
+  'statusMessage.reviewing.body':
+    'Our team is reviewing your application. We may contact you if we need any additional information.',
+  'statusMessage.approved.title': 'Application approved',
+  'statusMessage.approved.body':
+    'Your loan has been approved. Repayment terms will be confirmed before or when funds are disbursed.',
+  'statusMessage.disbursed.title': 'Loan disbursed',
+  'statusMessage.disbursed.body':
+    'Your loan has been disbursed. Make repayments as agreed; your balance updates here when payments are recorded.',
+  'statusMessage.paid.title': 'Loan fully repaid',
+  'statusMessage.paid.body':
+    'Congratulations! This loan is fully repaid. You may apply for a new loan when you are ready.',
+  'statusMessage.rejected.title': 'Application not approved',
+  'statusMessage.rejected.body':
+    'Unfortunately this application was not approved. Contact us if you have questions or would like to discuss options.',
+  'statusMessage.discontinued.title': 'Request discontinued',
+  'statusMessage.discontinued.body':
+    'This loan request was discontinued. You may submit a new application when you are ready, or contact us if you have questions.',
+} as const
+
+const tn: Record<keyof typeof en, string> = {
+  'dashboard.title': 'Boto jwa Me',
+  'dashboard.welcome': 'O amogetšwe gape, {name}',
+  'dashboard.activeLoan': 'Koloto e e dirang',
+  'dashboard.outstandingBalance': 'Palomoka e e setseng',
+  'dashboard.principalAmount': 'Palomoka ya motheo',
+  'dashboard.months': 'dikgwedi tse {count}',
+  'dashboard.monthTerm': 'nakô ya dikgwedi tse {count}',
+  'dashboard.paidOf': 'E lefišitšwe {paid} go tswa mo {total}',
+  'dashboard.due': 'Letsatsi la tefo: {date}',
+  'dashboard.appliedAmount': 'Kopo ya {amount}',
+  'dashboard.paymentsNote':
+    'Re ngwala ditefelo fa di amogetšwe (ka WhatsApp kgotsa transfer). Palomoka ya gago e mpshafatswa fano ka boya.',
+  'dashboard.repaymentReminder': 'Segopotšo sa go busetsa madi',
+  'dashboard.loanFiles': 'Dikoloto tsa Gago',
+  'dashboard.loanFilesSubtitle':
+    'Dikoloto tse di dirang le histori ya gago di arolwa fa tlase.',
+  'dashboard.returningBorrower': 'Mokgatši · dikoloto tse {count} di lefšitšwe',
+  'dashboard.newApplication': 'Kopo ya Koloto e Ntšha',
+  'dashboard.activeLoanBlock':
+    'O na le koloto e e dirang. O tla kgona go kopa e ntšha fa e lefšitšwe ka botlalo.',
+  'dashboard.noApplications': 'Ga o na Kopo go Fitlha Jaanong',
+  'dashboard.noApplicationsHint': 'Romela kopo ya gago ya koloto ya ntlha go simolola.',
+  'dashboard.applyForLoan': 'Kopa Koloto',
+  'dashboard.activeLoans': 'Dikoloto tse di Dirang',
+  'dashboard.activeLoansSubtitle': 'Dikoloto tse di sa lefšweng ka botlalo.',
+  'dashboard.noActiveLoans': 'Ga go na dikoloto tse di dirang jaanong.',
+  'dashboard.loanHistory': 'Histori ya Dikoloto',
+  'dashboard.loanHistorySubtitle': 'Dikopo tsa gago tse di fetileng le diphetho tsa tsona.',
+  'dashboard.noLoanHistory': 'Ga go na histori ya dikoloto go fitlha jaanong.',
+  'dashboard.applied': 'E kopišitswe',
+  'dashboard.showDetails': 'Bontsha dintlha',
+  'dashboard.hideDetails': 'Fitlha dintlha',
+  'dashboard.noteFromTeam': 'Temoso go tswa mo sehlopheng:',
+  'dashboard.outstanding': 'Palomoka e e Setseng',
+  'dashboard.pending': 'E sa Netefatšwa',
+  'dashboard.pendingAmountHint':
+    'Palomoka ya mafelo a mafelelo e tla netefatšwa fa koloto ya gago e amogetšwe.',
+  'dashboard.paid': 'E lefišitšwe',
+  'dashboard.ofTotal': 'ya {total} ka botlalo',
+  'dashboard.includesFees': 'E akaretša {amount} ya tshomišo/mefuta',
+  'dashboard.zeroInterest': 'Ga go na tshomišo (0%) — motheo fela',
+  'dashboard.paymentHistory': 'Histori ya Ditefelo',
+  'dashboard.termsAtPayment': 'Melawana fa go lefišwa:',
+  'dashboard.interest': 'tshomišo ya {rate}%',
+  'dashboard.interestNa': 'ga go na tshomišo',
+  'dashboard.total': 'ka botlalo {amount}',
+  'status.pending': 'E lekodišwa',
+  'status.reviewing': 'E lekodišwa',
+  'status.approved': 'E amogetšwe',
+  'status.disbursed': 'Madi a neelotswe',
+  'status.paid': 'E lefšitšwe',
+  'status.rejected': 'Ga e a amogelwa',
+  'status.discontinued': 'E khutlisiweng',
+  'statusMessage.pending.title': 'E lekodišwa',
+  'statusMessage.pending.body':
+    'Sehlopha sa rona se lekola kopo ya gago. Re ka ikopanya le wena fa re tlhoka tshedimosetso e nngwe.',
+  'statusMessage.reviewing.title': 'E lekodišwa',
+  'statusMessage.reviewing.body':
+    'Sehlopha sa rona se lekola kopo ya gago. Re ka ikopanya le wena fa re tlhoka tshedimosetso e nngwe.',
+  'statusMessage.approved.title': 'Kopo e amogetšwe',
+  'statusMessage.approved.body':
+    'Koloto ya gago e amogetšwe. Melawana ya go busetsa madi e tla netefatšwa pele ga madi a neelwa.',
+  'statusMessage.disbursed.title': 'Madi a neelotswe',
+  'statusMessage.disbursed.body':
+    'Madi a koloto ya gago a neelotswe. Busetsa madi ka go ya ka tumellano; palomoka ya gago e mpshafatswa fano fa re ngwala ditefelo.',
+  'statusMessage.paid.title': 'Koloto e lefšitšwe ka botlalo',
+  'statusMessage.paid.body':
+    'Re a go lebogela! Koloto ena e lefšitšwe ka botlalo. O ka kopa koloto e ntšha fa o iketleetse.',
+  'statusMessage.rejected.title': 'Kopo ga e a amogelwa',
+  'statusMessage.rejected.body':
+    'Ka tušo, kopo ena ga e a amogelwa. Ikopanye le rona fa o na le dipotso kgotsa o batla go bua ka dikgetho.',
+  'statusMessage.discontinued.title': 'Kopo e khutlisiweng',
+  'statusMessage.discontinued.body':
+    'Kopo ya koloto ena e khutlisiweng. O ka romela kopo e ntšha fa o iketleetse, kgotsa o ikopanye le rona fa o na le dipotso.',
+}
+
+export type DashboardTranslationKey = keyof typeof en
+
+export const dashboardTranslations: Record<Language, Record<DashboardTranslationKey, string>> = {
+  en,
+  tn,
+}
+
+export function formatTranslation(
+  template: string,
+  vars?: Record<string, string | number>,
+): string {
+  if (!vars) return template
+  return Object.entries(vars).reduce(
+    (text, [key, value]) => text.replaceAll(`{${key}}`, String(value)),
+    template,
+  )
+}

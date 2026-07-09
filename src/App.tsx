@@ -5,6 +5,7 @@ import { ConfirmProvider } from '@/context/ConfirmContext'
 import { NotificationProvider } from '@/context/NotificationContext'
 import { NotificationPopupListener } from '@/components/NotificationPopupListener'
 import { ContentProvider } from '@/context/ContentContext'
+import { LanguageProvider } from '@/context/LanguageContext'
 import { Layout } from '@/components/Layout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { HomePage } from '@/pages/HomePage'
@@ -32,6 +33,7 @@ export default function App() {
         <NotificationProvider>
         <NotificationPopupListener />
         <ContentProvider>
+        <LanguageProvider>
         <HashRouter>
         <ScrollToTop />
         <RecoveryHandler />
@@ -75,6 +77,7 @@ export default function App() {
           </Route>
         </Routes>
         </HashRouter>
+        </LanguageProvider>
         </ContentProvider>
         </NotificationProvider>
         </ConfirmProvider>
