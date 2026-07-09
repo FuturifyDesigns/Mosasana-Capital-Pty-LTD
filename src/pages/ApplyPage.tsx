@@ -34,6 +34,7 @@ import { DisbursementFields } from '@/components/DisbursementFields'
 import { EditableText } from '@/components/editable/EditableText'
 import { formatPula } from '@/lib/format'
 import { normalizeBotswanaPhone } from '@/lib/phone'
+import { checkIdentityAvailability } from '@/lib/identityChecks'
 import { getOutstandingBalance } from '@/lib/loans'
 
 type ApplyMode = 'website' | 'whatsapp'
@@ -105,6 +106,7 @@ export function ApplyPage() {
     handleSubmit,
     watch,
     control,
+    setError,
     formState: { errors },
   } = useForm<LoanRequestFormData>({
     resolver: zodResolver(loanRequestSchema),
@@ -190,6 +192,32 @@ export function ApplyPage() {
 
     if (!user?.id) {
       setSubmitError(t('apply.error.signInRequired'))
+      setSubmitting(false)
+      return
+    }
+
+    const identity = await checkIdentityAvailability({
+      email: sanitizeText(data.email).toLowerCase(),
+      phone: normalizeBotswanaPhone(sanitizeText(data.phone)),
+      idNumber: sanitizeText(data.idNumber),
+      idType: data.idType,
+      excludeUserId: user.id,
+    })
+
+    let duplicateFound = false
+    if (identity.emailTaken) {
+      setError('email', { message: t('validation.email.taken') })
+      duplicateFound = true
+    }
+    if (identity.phoneTaken) {
+      setError('phone', { message: t('validation.phone.taken') })
+      duplicateFound = true
+    }
+    if (identity.idNumberTaken) {
+      setError('idNumber', { message: t('validation.idNumber.taken') })
+      duplicateFound = true
+    }
+    if (duplicateFound) {
       setSubmitting(false)
       return
     }

@@ -133,8 +133,7 @@ BEGIN
         'admin_delete_user',
         'admin_discontinue_loan',
         'admin_delete_loan_request',
-        'record_loan_payment',
-        'phone_taken'
+        'record_loan_payment'
       )
   LOOP
     EXECUTE format('REVOKE ALL ON FUNCTION %s FROM PUBLIC', fn.sig);

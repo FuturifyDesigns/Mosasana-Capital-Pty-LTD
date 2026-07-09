@@ -14,6 +14,7 @@ import { AuthLayout } from '@/components/auth/AuthLayout'
 import { AuthDivider, GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 import { Logo } from '@/components/Logo'
 import { PrivacyConsentField } from '@/components/PrivacyConsentField'
+import { checkIdentityAvailability } from '@/lib/identityChecks'
 import { normalizeBotswanaPhone } from '@/lib/phone'
 import { useLanguage } from '@/context/LanguageContext'
 
@@ -46,11 +47,19 @@ export function RegisterPage() {
     setLoading(true)
     setError(null)
 
-    const { data: phoneTaken, error: phoneErr } = await supabase.rpc('phone_taken', {
-      p_phone: normalizeBotswanaPhone(sanitizeText(data.phone)),
+    const identity = await checkIdentityAvailability({
+      email: sanitizeText(data.email).toLowerCase(),
+      phone: normalizeBotswanaPhone(sanitizeText(data.phone)),
     })
-    if (!phoneErr && phoneTaken) {
-      setError(t('auth.register.phoneTaken'))
+
+    if (identity.emailTaken) {
+      setError(t('validation.email.taken'))
+      setLoading(false)
+      return
+    }
+
+    if (identity.phoneTaken) {
+      setError(t('validation.phone.taken'))
       setLoading(false)
       return
     }
@@ -69,9 +78,11 @@ export function RegisterPage() {
 
     if (authError) {
       const msg = authError.message || ''
-      const friendly = /phone|duplicate|unique/i.test(msg)
-        ? t('auth.register.phoneTaken')
-        : msg
+      const friendly = /email|already registered|user already/i.test(msg)
+        ? t('validation.email.taken')
+        : /phone|duplicate|unique/i.test(msg)
+          ? t('validation.phone.taken')
+          : msg
       setError(friendly)
       setLoading(false)
       return

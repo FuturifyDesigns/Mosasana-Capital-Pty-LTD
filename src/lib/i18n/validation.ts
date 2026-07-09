@@ -48,6 +48,12 @@ export const en = {
   'validation.honeypot': 'Invalid submission',
   'validation.idFile.type': 'ID photo must be JPEG, PNG, or WebP',
   'validation.idFile.size': 'ID photo must be under 5MB',
+  'validation.email.taken':
+    'This email is already registered. Please sign in or use a different address.',
+  'validation.phone.taken':
+    'This phone number is already registered. Please sign in or use a different number.',
+  'validation.idNumber.taken':
+    'This ID or passport number is already on file. Please sign in or contact us if you need help.',
 } as const
 
 export const tn: Record<keyof typeof en, string> = {
@@ -100,4 +106,10 @@ export const tn: Record<keyof typeof en, string> = {
   'validation.honeypot': 'Tsenyo e e sa siamang',
   'validation.idFile.type': 'Setšoantšho sa ID se tshwanetše go nna JPEG, PNG, kgotsa WebP',
   'validation.idFile.size': 'Setšoantšho sa ID se tshwanetše go nna kwa tlase ga 5MB',
+  'validation.email.taken':
+    'Imeile ena e se e ngwaditswe. Tsena kgotsa šomiša aterese e nngwe.',
+  'validation.phone.taken':
+    'Nomoro eno ya founo e se e ngwaditswe. Tsena kgotsa šomiša nomoro e nngwe.',
+  'validation.idNumber.taken':
+    'Nomoro eno ya ID kgotsa passport e se e le mo rekoding. Tsena kgotsa ikopanye le rona fa o tlhoka thuso.',
 }
