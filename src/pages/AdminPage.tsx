@@ -23,8 +23,8 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { supabase, type LoanRequest, type ContactEnquiry, type AdminUser, type LoanPayment } from '@/lib/supabase'
-import { ENQUIRY_STATUSES, OPEN_LOAN_PIPELINE_STATUSES, CLOSED_LOAN_STATUSES } from '@/lib/constants'
-import { isLoanLocked, validateStatusChange } from '@/lib/loanStatus'
+import { ENQUIRY_STATUSES, IN_REVIEW_LOAN_STATUSES, OPEN_LOAN_PIPELINE_STATUSES, CLOSED_LOAN_STATUSES } from '@/lib/constants'
+import { formatLoanStatusLabel, isLoanLocked, validateStatusChange } from '@/lib/loanStatus'
 import { LoanRequestCard } from '@/components/admin/LoanRequestCard'
 import { ClientRecordsPanel } from '@/components/admin/ClientRecordsPanel'
 import { buildClientRecords, filterClientRecords } from '@/lib/clientRecords'
@@ -224,7 +224,7 @@ export function AdminPage() {
     }
 
     if (data) setLoans((prev) => prev.map((l) => (l.id === id ? (data as LoanRequest) : l)))
-    showToast(`Loan status updated to ${cap(status)}.`, 'success')
+    showToast(`Loan status updated to ${formatLoanStatusLabel(status)}.`, 'success')
   }
 
   const discontinueLoan = async (loan: LoanRequest) => {
@@ -309,7 +309,9 @@ export function AdminPage() {
   const stats = useMemo(
     () => ({
       totalLoans: loans.length,
-      pending: loans.filter((l) => l.status === 'pending').length,
+      inReview: loans.filter((l) =>
+        (IN_REVIEW_LOAN_STATUSES as readonly string[]).includes(l.status),
+      ).length,
       approved: loans.filter((l) => l.status === 'approved').length,
       disbursed: loans.filter((l) => l.status === 'disbursed').length,
       openPipeline: loans.filter((l) =>
@@ -334,7 +336,10 @@ export function AdminPage() {
 
     return loans.filter((l) => {
       const inPipeline = pipelineStatuses.includes(l.status)
-      const matchesStatus = statusFilter === 'all' || l.status === statusFilter
+      const matchesStatus =
+        statusFilter === 'all' ||
+        l.status === statusFilter ||
+        (statusFilter === 'reviewing' && l.status === 'pending')
       const matchesQuery =
         !q ||
         l.full_name.toLowerCase().includes(q) ||
@@ -405,7 +410,7 @@ export function AdminPage() {
       loanPipeline === 'active'
         ? [...OPEN_LOAN_PIPELINE_STATUSES]
         : [...CLOSED_LOAN_STATUSES]
-    return [{ value: 'all', label: 'All statuses' }, ...statuses.map((s) => ({ value: s, label: cap(s) }))]
+    return [{ value: 'all', label: 'All statuses' }, ...statuses.map((s) => ({ value: s, label: formatLoanStatusLabel(s) }))]
   }, [loanPipeline])
 
   const statusOptions =
@@ -431,7 +436,7 @@ export function AdminPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
           <StatCard icon={FileText} label="Total loans" value={stats.totalLoans} tone="brand" />
-          <StatCard icon={Clock} label="Pending" value={stats.pending} tone="yellow" highlight={stats.pending > 0} />
+          <StatCard icon={Clock} label="In review" value={stats.inReview} tone="blue" highlight={stats.inReview > 0} />
           <StatCard icon={CheckCircle2} label="Approved" value={stats.approved} tone="green" />
           <StatCard icon={Wallet} label="Settled" value={stats.archived} tone="emerald" />
           <StatCard icon={Archive} label="Funded clients" value={stats.fundedClients} tone="green" />
@@ -450,8 +455,8 @@ export function AdminPage() {
             >
               <FileText className="h-4 w-4" />
               Loan Requests
-              {stats.pending > 0 && (
-                <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">{stats.pending}</span>
+              {stats.inReview > 0 && (
+                <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">{stats.inReview}</span>
               )}
             </button>
             <button

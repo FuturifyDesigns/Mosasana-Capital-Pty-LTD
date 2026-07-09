@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS public.loan_requests (
   bank_account_number TEXT,
   bank_branch_code TEXT,
   bank_branch_name TEXT,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'reviewing', 'approved', 'rejected', 'disbursed', 'paid')),
+  status TEXT NOT NULL DEFAULT 'reviewing' CHECK (status IN ('pending', 'reviewing', 'approved', 'rejected', 'disbursed', 'paid')),
   total_repayable NUMERIC(12,2),
   amount_paid NUMERIC(12,2) NOT NULL DEFAULT 0,
   due_date DATE,

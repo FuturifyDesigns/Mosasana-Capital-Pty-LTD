@@ -217,7 +217,7 @@ export function ApplyPage() {
             : data.employmentStatus,
         monthly_income: data.monthlyIncome ?? null,
         ...payout,
-        status: 'pending',
+        status: 'reviewing',
         source: 'website',
       })
 

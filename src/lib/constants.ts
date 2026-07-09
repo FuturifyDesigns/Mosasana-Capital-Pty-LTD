@@ -72,8 +72,11 @@ export const LOAN_STATUSES = [
   'discontinued',
 ] as const
 
+/** Applications awaiting a decision (legacy `pending` rows are treated the same). */
+export const IN_REVIEW_LOAN_STATUSES = ['reviewing', 'pending'] as const
+
 /** Shown in the active admin pipeline (Loan Requests tab). */
-export const OPEN_LOAN_PIPELINE_STATUSES = ['pending', 'reviewing', 'approved', 'disbursed'] as const
+export const OPEN_LOAN_PIPELINE_STATUSES = ['reviewing', 'approved', 'disbursed'] as const
 
 /** Archived — settled or closed; shown under Client Records / archive view. */
 export const CLOSED_LOAN_STATUSES = ['paid', 'rejected', 'discontinued'] as const

@@ -19,7 +19,7 @@ import {
   type ClientRecordsFilter,
   type ClientRecord,
 } from '@/lib/clientRecords'
-import { statusBadgeClass } from '@/lib/loanStatus'
+import { formatLoanStatusLabel, statusBadgeClass } from '@/lib/loanStatus'
 import { DisbursementDetails } from '@/components/admin/DisbursementDetails'
 import type { AdminUser, LoanRequest } from '@/lib/supabase'
 
@@ -364,7 +364,7 @@ function LoanFileGroup({
                               <span
                                 className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${statusBadgeClass(loan.status)}`}
                               >
-                                {cap(loan.status)}
+                                {formatLoanStatusLabel(loan.status)}
                               </span>
                             </div>
                             <p className="mt-0.5 text-xs text-brand-500">

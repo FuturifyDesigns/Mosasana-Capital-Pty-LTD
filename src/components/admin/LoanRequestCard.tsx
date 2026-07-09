@@ -18,6 +18,7 @@ import { formatPula } from '@/lib/format'
 import { getRepaymentReminder } from '@/lib/loans'
 import {
   canAdminChangeStatus,
+  formatLoanStatusLabel,
   getAdminStatusOptions,
   isClosedLoanStatus,
   LOAN_STATUS_META,
@@ -95,7 +96,7 @@ export function LoanRequestCard({
               </span>
             )}
             <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
-              {cap(loan.status)}
+              {formatLoanStatusLabel(loan.status)}
             </span>
             <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-medium capitalize">
               {loan.source}

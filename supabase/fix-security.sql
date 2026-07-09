@@ -102,7 +102,7 @@ BEGIN
 
   IF TG_OP = 'INSERT' THEN
     NEW.user_id := auth.uid();
-    NEW.status := 'pending';
+    NEW.status := 'reviewing';
     RETURN NEW;
   END IF;
 

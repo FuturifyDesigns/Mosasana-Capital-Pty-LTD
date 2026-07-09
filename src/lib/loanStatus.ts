@@ -14,16 +14,16 @@ export interface LoanStatusMeta {
 
 export const LOAN_STATUS_META: Record<LoanStatus, LoanStatusMeta> = {
   pending: {
-    label: 'Pending',
-    adminHint: 'New application — move to Reviewing when you start processing.',
-    clientTitle: 'Application received',
+    label: 'In review',
+    adminHint: 'Approve or reject this application.',
+    clientTitle: 'Under review',
     clientMessage:
-      'We have received your application and will review it shortly. You will be notified when the status changes.',
-    tone: 'yellow',
+      'Our team is reviewing your application. We may contact you if we need any additional information.',
+    tone: 'blue',
   },
   reviewing: {
-    label: 'Reviewing',
-    adminHint: 'Under review — approve, reject, or request more information offline.',
+    label: 'In review',
+    adminHint: 'Approve or reject this application.',
     clientTitle: 'Under review',
     clientMessage:
       'Our team is reviewing your application. We may contact you if we need any additional information.',
@@ -72,7 +72,7 @@ export const LOAN_STATUS_META: Record<LoanStatus, LoanStatusMeta> = {
 }
 
 const TRANSITIONS: Record<LoanStatus, LoanStatus[]> = {
-  pending: ['pending', 'reviewing', 'approved', 'rejected'],
+  pending: ['pending', 'approved', 'rejected'],
   reviewing: ['reviewing', 'approved', 'rejected'],
   approved: ['approved', 'disbursed', 'rejected'],
   disbursed: ['disbursed', 'rejected'],
@@ -89,14 +89,32 @@ export function isLoanLocked(loan: LoanRequest): boolean {
   return isClosedLoanStatus(loan.status)
 }
 
+export function isInReviewLoanStatus(status: string): boolean {
+  return status === 'reviewing' || status === 'pending'
+}
+
+export function formatLoanStatusLabel(status: string): string {
+  if (isInReviewLoanStatus(status)) return LOAN_STATUS_META.reviewing.label
+  const meta = LOAN_STATUS_META[status as LoanStatus]
+  return meta?.label ?? status.charAt(0).toUpperCase() + status.slice(1)
+}
+
 export function getAdminStatusOptions(loan: LoanRequest): { value: string; label: string }[] {
   const current = loan.status as LoanStatus
   if (!LOAN_STATUSES.includes(current)) {
-    return LOAN_STATUSES.map((s) => ({ value: s, label: LOAN_STATUS_META[s].label }))
+    return LOAN_STATUSES.map((s) => ({ value: s, label: formatLoanStatusLabel(s) }))
   }
 
   if (isLoanLocked(loan)) {
-    return [{ value: current, label: LOAN_STATUS_META[current].label }]
+    return [{ value: current, label: formatLoanStatusLabel(current) }]
+  }
+
+  if (isInReviewLoanStatus(current)) {
+    return [
+      { value: current, label: LOAN_STATUS_META.reviewing.label },
+      { value: 'approved', label: LOAN_STATUS_META.approved.label },
+      { value: 'rejected', label: LOAN_STATUS_META.rejected.label },
+    ]
   }
 
   const allowed = TRANSITIONS[current]
@@ -135,6 +153,7 @@ export function validateStatusChange(loan: LoanRequest, nextStatus: string): str
 }
 
 export function statusBadgeClass(status: string): string {
+  if (isInReviewLoanStatus(status)) return 'bg-blue-100 text-blue-800'
   const map: Record<string, string> = {
     pending: 'bg-yellow-100 text-yellow-800',
     reviewing: 'bg-blue-100 text-blue-800',
