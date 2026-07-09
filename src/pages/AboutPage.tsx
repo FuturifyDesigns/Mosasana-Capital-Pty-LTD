@@ -136,17 +136,14 @@ export function AboutPage() {
             </EditableText>
           </Reveal>
 
-          <Reveal direction="left" className="relative overflow-hidden">
-            <div className="absolute -inset-3 rounded-[2.5rem] bg-gradient-to-br from-brand-300/25 to-gold-400/15 blur-2xl" />
-            <div className="relative flex items-center justify-center rounded-3xl border border-white/60 bg-gradient-to-br from-brand-50 to-white p-10 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:shadow-brand-500/25 sm:p-14">
-              <EditableImage
-                contentKey="about.who.image"
-                src={`${BASE}logo-transparent.png`}
-                alt={COMPANY.name}
-                className="w-full max-w-xs transition-transform duration-500 ease-out hover:scale-[1.03]"
-                wrapperClassName="max-w-xs"
-              />
-            </div>
+          <Reveal direction="left" className="overflow-hidden">
+            <EditableImage
+              contentKey="about.who.image"
+              src={`${BASE}logo-transparent.png`}
+              alt={COMPANY.name}
+              className="w-full max-w-xs transition-transform duration-500 ease-out hover:scale-[1.03]"
+              wrapperClassName="max-w-xs flex items-center justify-center rounded-3xl bg-gradient-to-br from-brand-50 to-white p-10 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:shadow-brand-500/25 sm:p-14"
+            />
           </Reveal>
         </div>
       </section>

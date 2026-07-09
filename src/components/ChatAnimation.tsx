@@ -2,31 +2,25 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { ArrowLeft, Video, Phone, MoreVertical, Smile, Paperclip, Camera, Mic, CheckCheck } from 'lucide-react'
 import { COMPANY } from '@/lib/constants'
+import { useLanguage } from '@/context/LanguageContext'
+import type { TranslationKey } from '@/lib/i18n'
 
 type Sender = 'customer' | 'mosasana'
 
 interface Message {
   from: Sender
-  text?: string
+  textKey?: TranslationKey
   image?: boolean
   time: string
 }
 
 const CONVERSATION: Message[] = [
-  { from: 'customer', text: "Hi Mosasana 👋 I'd like to apply for a loan of P3,000.", time: '19:38' },
-  {
-    from: 'mosasana',
-    text: 'Hello Thabo! 😊 Please share your full name, email, phone, ID type and number, address, repayment period, loan purpose, employment status, monthly income, and where we should pay your loan — then attach a photo of your ID.',
-    time: '19:38',
-  },
-  {
-    from: 'customer',
-    text: `*Loan Application - ${COMPANY.shortName}*\n\nName: Thabo Nkile\nEmail: thabo@example.com\nPhone: 71234567\nID Type: Omang / National ID\nOmang / ID Number: 123456789\nAddress: Plot 456, Gaborone\nAmount: P3000\nRepayment period: 3 month(s)\nPurpose: Rent for this month\nEmployment: employed\nMonthly Income: P12000\n\n*Loan disbursement*\nBank / Wallet: Orange Money\nName on account: Thabo Nkile\nAccount / wallet number: 71234567`,
-    time: '19:39',
-  },
+  { from: 'customer', textKey: 'home.anim.chat.greeting', time: '19:38' },
+  { from: 'mosasana', textKey: 'home.anim.chat.prompt', time: '19:38' },
+  { from: 'customer', textKey: 'home.anim.chat.application', time: '19:39' },
   { from: 'customer', image: true, time: '19:39' },
-  { from: 'mosasana', text: "Received ✅ Thank you! We're reviewing your application now.", time: '19:40' },
-  { from: 'mosasana', text: "You're approved! 🎉 Funds are on the way. 💚", time: '19:41' },
+  { from: 'mosasana', textKey: 'home.anim.chat.received', time: '19:40' },
+  { from: 'mosasana', textKey: 'home.anim.chat.approved', time: '19:41' },
 ]
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -96,6 +90,7 @@ function IdCard() {
 }
 
 export function ChatAnimation() {
+  const { t } = useLanguage()
   const reduce = useReducedMotion()
   const [visibleCount, setVisibleCount] = useState(reduce ? CONVERSATION.length : 0)
   const [typing, setTyping] = useState(false)
@@ -123,7 +118,8 @@ export function ChatAnimation() {
           }
           if (cancelled) return
           setVisibleCount(i + 1)
-          await wait(msg.image ? 1500 : (msg.text?.length ?? 0) > 45 ? 1900 : 1400)
+          const textLen = msg.textKey ? t(msg.textKey).length : 0
+          await wait(msg.image ? 1500 : textLen > 45 ? 1900 : 1400)
         }
         await wait(3400)
       }
@@ -133,7 +129,7 @@ export function ChatAnimation() {
     return () => {
       cancelled = true
     }
-  }, [reduce])
+  }, [reduce, t])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -205,7 +201,7 @@ export function ChatAnimation() {
                       </div>
                     ) : (
                       <div className="px-1">
-                        <p className="whitespace-pre-line">{msg.text}</p>
+                        <p className="whitespace-pre-line">{msg.textKey ? t(msg.textKey) : ''}</p>
                         <span
                           className={`mt-0.5 flex items-center justify-end gap-1 text-[10px] ${
                             msg.from === 'customer' ? 'text-[#8fb7ae]' : 'text-[#8696a0]'

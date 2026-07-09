@@ -2,7 +2,13 @@ import { useState, type ElementType } from 'react'
 import { Pencil } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useContent } from '@/context/ContentContext'
+import { useLanguage } from '@/context/LanguageContext'
+import { translate, translations, type TranslationKey } from '@/lib/i18n'
 import { EditTextModal } from './EditTextModal'
+
+function isTranslationKey(key: string): key is TranslationKey {
+  return key in translations.en
+}
 
 interface EditableTextProps {
   /** Unique content key, e.g. "home.hero.title" */
@@ -26,9 +32,14 @@ export function EditableText({
   const Tag = (as || 'span') as ElementType
   const { isAdmin } = useAuth()
   const { getText } = useContent()
+  const { language } = useLanguage()
   const [editing, setEditing] = useState(false)
 
-  const value = getText(contentKey, children)
+  const cmsValue = getText(contentKey, children)
+  const value =
+    language === 'tn' && isTranslationKey(contentKey)
+      ? translate('tn', contentKey)
+      : cmsValue
 
   if (!isAdmin) {
     return <Tag className={className}>{value}</Tag>
@@ -49,7 +60,7 @@ export function EditableText({
       {editing && (
         <EditTextModal
           contentKey={contentKey}
-          initial={value}
+          initial={cmsValue}
           multiline={multiline}
           onClose={() => setEditing(false)}
         />

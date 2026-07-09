@@ -11,6 +11,7 @@ import { en as homeEn, tn as homeTn } from './home'
 import { en as aboutEn, tn as aboutTn } from './about'
 import { en as legalEn, tn as legalTn } from './legal'
 import { en as validationEn, tn as validationTn } from './validation'
+import { en as siteEn, tn as siteTn } from './site'
 
 export const translations = {
   en: {
@@ -25,6 +26,7 @@ export const translations = {
     ...aboutEn,
     ...legalEn,
     ...validationEn,
+    ...siteEn,
   },
   tn: {
     ...dashboardTn,
@@ -38,6 +40,7 @@ export const translations = {
     ...aboutTn,
     ...legalTn,
     ...validationTn,
+    ...siteTn,
   },
 } as const
 

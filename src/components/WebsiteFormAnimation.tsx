@@ -1,38 +1,47 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Lock, Upload, CheckCircle2, ImageIcon, ChevronLeft, ChevronRight, RotateCw } from 'lucide-react'
-import { COMPANY } from '@/lib/constants'
+import { useLanguage } from '@/context/LanguageContext'
+import type { TranslationKey } from '@/lib/i18n'
 
 type FieldType = 'text' | 'select' | 'upload'
 
 interface Field {
-  label: string
+  labelKey: TranslationKey
   value: string
   type: FieldType
   required?: boolean
+  prefixAmount?: boolean
 }
 
 const FIELDS: Field[] = [
-  { label: 'Full Name', value: 'Thabo Nkile', type: 'text', required: true },
-  { label: 'Email', value: 'thabo@example.com', type: 'text', required: true },
-  { label: 'Phone', value: '71 234 567', type: 'text', required: true },
-  { label: 'Document Type', value: 'Omang / National ID', type: 'select', required: true },
-  { label: 'Omang / National ID Number', value: '123456789', type: 'text', required: true },
-  { label: 'ID Document Photo', value: 'omang-id.jpg', type: 'upload', required: true },
-  { label: 'Physical Address', value: 'Plot 456, Gaborone', type: 'text', required: true },
-  { label: 'Loan Amount (Pula)', value: '3000', type: 'text', required: true },
-  { label: 'Repayment Period', value: '3 months', type: 'select', required: true },
-  { label: 'Purpose of Loan', value: 'Rent for this month', type: 'text', required: true },
-  { label: 'Employment Status', value: 'Employed', type: 'select', required: true },
-  { label: 'Monthly Income (Pula, optional)', value: '12000', type: 'text' },
-  { label: 'Bank / Wallet', value: 'Orange Money', type: 'select', required: true },
-  { label: 'Name on Account', value: 'Thabo Nkile', type: 'text', required: true },
-  { label: 'Orange Money Number', value: '71234567', type: 'text', required: true },
+  { labelKey: 'home.anim.field.fullName', value: 'Thabo Nkile', type: 'text', required: true },
+  { labelKey: 'home.anim.field.email', value: 'thabo@example.com', type: 'text', required: true },
+  { labelKey: 'home.anim.field.phone', value: '71 234 567', type: 'text', required: true },
+  { labelKey: 'home.anim.field.idType', value: 'Omang / National ID', type: 'select', required: true },
+  { labelKey: 'home.anim.field.idNumber', value: '123456789', type: 'text', required: true },
+  { labelKey: 'home.anim.field.idPhoto', value: 'omang-id.jpg', type: 'upload', required: true },
+  { labelKey: 'home.anim.field.address', value: 'Plot 456, Gaborone', type: 'text', required: true },
+  {
+    labelKey: 'home.anim.field.loanAmount',
+    value: '3000',
+    type: 'text',
+    required: true,
+    prefixAmount: true,
+  },
+  { labelKey: 'home.anim.field.term', value: '3 months', type: 'select', required: true },
+  { labelKey: 'home.anim.field.purpose', value: 'Rent for this month', type: 'text', required: true },
+  { labelKey: 'home.anim.field.employment', value: 'Employed', type: 'select', required: true },
+  { labelKey: 'home.anim.field.income', value: '12000', type: 'text' },
+  { labelKey: 'home.anim.field.wallet', value: 'Orange Money', type: 'select', required: true },
+  { labelKey: 'home.anim.field.accountName', value: 'Thabo Nkile', type: 'text', required: true },
+  { labelKey: 'home.anim.field.walletNumber', value: '71234567', type: 'text', required: true },
 ]
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export function WebsiteFormAnimation() {
+  const { t } = useLanguage()
   const reduce = useReducedMotion()
   const [active, setActive] = useState(-1)
   const [typed, setTyped] = useState('')
@@ -137,21 +146,19 @@ export function WebsiteFormAnimation() {
             ref={scrollRef}
             className="h-full select-none overflow-hidden overscroll-contain px-4 py-4 sm:px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            <p className="font-display text-base font-bold text-brand-900">Secure Loan Application</p>
-            <p className="mt-0.5 text-[11px] text-brand-500">
-              All information is encrypted and securely stored.
-            </p>
+            <p className="font-display text-base font-bold text-brand-900">{t('home.anim.form.title')}</p>
+            <p className="mt-0.5 text-[11px] text-brand-500">{t('home.anim.form.subtitle')}</p>
 
             <div className="mt-3 space-y-2.5">
               {FIELDS.map((field, i) => (
                 <div
-                  key={field.label}
+                  key={field.labelKey}
                   ref={(el) => {
                     fieldRefs.current[i] = el
                   }}
                 >
                   <label className="block text-[11px] font-medium text-brand-800">
-                    {field.label}
+                    {t(field.labelKey)}
                     {field.required && <span className="ml-0.5 text-red-500">*</span>}
                   </label>
 
@@ -172,7 +179,7 @@ export function WebsiteFormAnimation() {
                       ) : (
                         <>
                           <Upload className="h-4 w-4 text-brand-400" />
-                          <span className="text-[11px] text-brand-400">JPEG, PNG or WebP — max 5MB</span>
+                          <span className="text-[11px] text-brand-400">{t('home.anim.uploadHint')}</span>
                         </>
                       )}
                     </div>
@@ -183,7 +190,7 @@ export function WebsiteFormAnimation() {
                       }`}
                     >
                       <span className="truncate text-brand-900">
-                        {field.label.includes('Amount') && valueFor(i) ? `P ${valueFor(i)}` : valueFor(i)}
+                        {field.prefixAmount && valueFor(i) ? `P ${valueFor(i)}` : valueFor(i)}
                       </span>
                       {i === active && field.type === 'text' && (
                         <motion.span
@@ -211,7 +218,7 @@ export function WebsiteFormAnimation() {
                     transition={{ duration: 0.7, repeat: Infinity, ease: 'linear' }}
                   />
                 ) : (
-                  'Submit Application'
+                  t('home.anim.submitButton')
                 )}
               </button>
             </div>
@@ -232,10 +239,8 @@ export function WebsiteFormAnimation() {
                 >
                   <CheckCircle2 className="h-16 w-16 text-growth-500" />
                 </motion.div>
-                <p className="font-display text-xl font-bold text-brand-900">Application Submitted!</p>
-                <p className="text-sm text-brand-600">
-                  {COMPANY.shortName} will review your request and get back to you shortly.
-                </p>
+                <p className="font-display text-xl font-bold text-brand-900">{t('home.anim.doneTitle')}</p>
+                <p className="text-sm text-brand-600">{t('home.anim.doneBody')}</p>
               </motion.div>
             )}
           </AnimatePresence>

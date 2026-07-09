@@ -119,7 +119,7 @@ export function HomePage() {
               contentKey="home.tailored.image"
               src={`${BASE}consultation.png`}
               alt="Mosasana Capital loan officer assisting a client"
-              className="relative w-full rounded-3xl border border-white/60 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25"
+              className="relative w-full rounded-3xl shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25"
             />
           </Reveal>
           <Reveal direction="left">
@@ -223,7 +223,7 @@ export function HomePage() {
               contentKey="home.testimonial.image"
               src={`${BASE}testimonial-client.png`}
               alt="Satisfied Mosasana Capital customer"
-              className="relative w-full rounded-3xl border border-white/60 shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25"
+              className="relative w-full rounded-3xl shadow-2xl transition duration-500 ease-out hover:-translate-y-1.5 hover:scale-[1.02] hover:shadow-brand-500/25"
             />
           </Reveal>
           <Reveal direction="left" className="order-1 lg:order-2">
@@ -461,7 +461,7 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
           transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
           onMouseMove={handleMove}
           onMouseLeave={handleLeave}
-          className="relative overflow-hidden [perspective:1000px]"
+          className="relative overflow-visible [perspective:1000px] pb-2 sm:pb-4"
         >
           <motion.div style={mobile ? undefined : { rotateX: rx, rotateY: ry, transformStyle: 'preserve-3d' }}>
             <EditableImage
@@ -469,19 +469,19 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
               src={`${BASE}hero-money.png`}
               alt="Happy Mosasana Capital client with cash"
               eager
-              className="relative w-full rounded-3xl border border-white/60 shadow-2xl"
+              className="relative w-full rounded-3xl shadow-2xl"
             />
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
               style={mobile ? undefined : { transform: 'translateZ(50px)' }}
-              className="absolute bottom-2 left-2 flex items-center gap-2 rounded-2xl border border-brand-100 bg-white/95 px-3 py-2.5 shadow-xl backdrop-blur-sm sm:-bottom-5 sm:-left-5 sm:gap-3 sm:px-4 sm:py-3"
+              className="absolute bottom-3 left-3 flex min-w-[9.5rem] items-center gap-2.5 rounded-2xl border border-brand-100 bg-white px-3.5 py-3 shadow-xl backdrop-blur-sm sm:bottom-4 sm:left-4 sm:gap-3 sm:px-4 sm:py-3.5"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-growth-500/10 text-growth-500">
                 <CheckCircle2 className="h-6 w-6" />
               </div>
-              <div className="leading-tight">
+              <div className="min-w-0 leading-snug">
                 <EditableText
                   as="p"
                   contentKey="home.hero.badge.title"
@@ -492,7 +492,7 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
                 <EditableText
                   as="p"
                   contentKey="home.hero.badge.subtitle"
-                  className="text-xs text-brand-500"
+                  className="text-xs leading-normal text-brand-500"
                 >
                   Funds on the way
                 </EditableText>
@@ -506,6 +506,7 @@ function HeroSection({ applyTarget }: { applyTarget: string }) {
 }
 
 function DashboardMock() {
+  const { t } = useLanguage()
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
@@ -525,8 +526,8 @@ function DashboardMock() {
       <div className="relative overflow-hidden rounded-3xl border border-brand-100 bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-brand-50 px-5 py-3.5">
           <div>
-            <p className="text-xs text-brand-400">My Dashboard</p>
-            <p className="font-display text-base font-bold text-brand-900">Welcome back, Client</p>
+            <p className="text-xs text-brand-400">{t('home.mock.dashboard')}</p>
+            <p className="font-display text-base font-bold text-brand-900">{t('home.mock.welcomeBack')}</p>
           </div>
           <span className="flex items-center gap-1.5 rounded-full bg-growth-500/10 px-2.5 py-1 text-[11px] font-semibold text-growth-600">
             <motion.span
@@ -534,7 +535,7 @@ function DashboardMock() {
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             />
-            Live
+            {t('home.mock.live')}
           </span>
         </div>
 
@@ -548,21 +549,21 @@ function DashboardMock() {
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-medium text-brand-100">Active loan</p>
+                <p className="text-xs font-medium text-brand-100">{t('home.mock.activeLoan')}</p>
                 <p className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
                   {formatPula(outstanding)}
                 </p>
-                <p className="mt-1 text-xs text-brand-100">Outstanding balance · Groceries · 2 months</p>
+                <p className="mt-1 text-xs text-brand-100">{t('home.mock.outstandingMeta')}</p>
               </div>
               <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[11px] font-semibold capitalize text-brand-800">
-                disbursed
+                {t('home.mock.disbursed')}
               </span>
             </div>
 
             <div className="mt-4">
               <div className="flex justify-between text-[11px] text-brand-100">
                 <span>
-                  Paid {formatPula(paid)} of {formatPula(totalDue)}
+                  {t('home.mock.paidOf', { paid: formatPula(paid), total: formatPula(totalDue) })}
                 </span>
                 <span>{pct}%</span>
               </div>
@@ -579,11 +580,11 @@ function DashboardMock() {
             <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-brand-100">
               <span className="flex items-center gap-1">
                 <CalendarClock className="h-3.5 w-3.5" />
-                Due 15 Jul 2026
+                {t('home.mock.due')}
               </span>
               <span className="flex items-center gap-1">
                 <Wallet className="h-3.5 w-3.5" />
-                Applied {formatPula(principal)}
+                {t('home.mock.applied', { amount: formatPula(principal) })}
               </span>
             </div>
           </motion.div>
@@ -598,10 +599,10 @@ function DashboardMock() {
             <div className="flex items-start justify-between gap-3 border-b border-brand-100 bg-brand-50/50 px-4 py-3">
               <div>
                 <p className="text-xl font-bold text-brand-900">{formatPula(principal)}</p>
-                <p className="mt-0.5 text-xs text-brand-600">Groceries · 2-month term</p>
+                <p className="mt-0.5 text-xs text-brand-600">{t('home.mock.loanMeta')}</p>
               </div>
               <span className="rounded-full bg-brand-100 px-2.5 py-0.5 text-[11px] font-semibold capitalize text-brand-800">
-                disbursed
+                {t('home.mock.disbursed')}
               </span>
             </div>
 
@@ -611,15 +612,17 @@ function DashboardMock() {
                   <div>
                     <p className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-emerald-700">
                       <TrendingDown className="h-3 w-3" />
-                      Outstanding
+                      {t('home.mock.outstanding')}
                     </p>
                     <p className="text-xl font-bold text-emerald-900">{formatPula(outstanding)}</p>
                   </div>
                   <div className="text-right text-xs text-brand-700">
                     <p>
-                      Paid <strong>{formatPula(paid)}</strong>
+                      {t('home.mock.paidShort')} <strong>{formatPula(paid)}</strong>
                     </p>
-                    <p className="text-[10px] text-brand-500">of {formatPula(totalDue)} total</p>
+                    <p className="text-[10px] text-brand-500">
+                      {t('home.mock.ofTotal', { total: formatPula(totalDue) })}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-emerald-100">
@@ -631,14 +634,14 @@ function DashboardMock() {
                   />
                 </div>
                 <p className="mt-2 flex items-center gap-1 text-[10px] text-brand-500">
-                  <CalendarClock className="h-3 w-3" /> Due 15 Jul 2026
+                  <CalendarClock className="h-3 w-3" /> {t('home.mock.due')}
                 </p>
               </div>
 
               <div className="rounded-xl border border-brand-100 bg-white p-2.5">
                 <p className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brand-600">
                   <History className="h-3 w-3" />
-                  Payment history
+                  {t('home.mock.paymentHistory')}
                 </p>
                 <ul className="space-y-1">
                   {[

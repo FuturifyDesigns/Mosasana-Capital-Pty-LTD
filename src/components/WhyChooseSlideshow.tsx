@@ -37,7 +37,7 @@ export function WhyChooseSlideshow() {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="relative aspect-[16/10] overflow-hidden rounded-3xl border border-white/60 bg-brand-50 shadow-2xl sm:aspect-[16/9]">
+      <div className="relative aspect-[16/10] overflow-hidden rounded-3xl shadow-2xl sm:aspect-[16/9]">
         <AnimatePresence mode="wait">
           <motion.div
             key={index}
