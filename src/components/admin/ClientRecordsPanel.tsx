@@ -215,6 +215,11 @@ function ClientRecordCard({
                   {record.paidCount} settled
                 </span>
               )}
+              {record.paidCount > 0 && (
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                  Returning borrower
+                </span>
+              )}
             </div>
 
             <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-brand-600">
@@ -279,8 +284,56 @@ function ClientRecordCard({
                   bankBranchName={record.bankBranchName}
                 />
 
-                <div className="space-y-2">
-                  {record.loans.map((loan) => {
+                <LoanFileGroup
+                  title="Active Loans"
+                  loans={record.loans.filter((loan) => !['paid', 'rejected', 'discontinued'].includes(loan.status))}
+                  expandedLoanId={expandedLoanId}
+                  onToggleLoan={onToggleLoan}
+                  idDocUrls={idDocUrls}
+                  onPreviewDoc={onPreviewDoc}
+                />
+                <LoanFileGroup
+                  title="Loan History"
+                  loans={record.loans.filter((loan) => ['paid', 'rejected', 'discontinued'].includes(loan.status))}
+                  expandedLoanId={expandedLoanId}
+                  onToggleLoan={onToggleLoan}
+                  idDocUrls={idDocUrls}
+                  onPreviewDoc={onPreviewDoc}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+    </motion.div>
+  )
+}
+
+function LoanFileGroup({
+  title,
+  loans,
+  expandedLoanId,
+  onToggleLoan,
+  idDocUrls,
+  onPreviewDoc,
+}: {
+  title: string
+  loans: LoanRequest[]
+  expandedLoanId: string | null
+  onToggleLoan: (loanId: string) => void
+  idDocUrls: Record<string, string>
+  onPreviewDoc: (name: string, url: string) => void
+}) {
+  if (loans.length === 0) return null
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-500">{title}</p>
+        <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-brand-600 ring-1 ring-brand-100">
+          {loans.length}
+        </span>
+      </div>
+      {loans.map((loan) => {
                     const loanExpanded = expandedLoanId === loan.id
                     const idUrl = loan.id_photo_path ? idDocUrls[loan.id_photo_path] : undefined
                     const paid = toNumber(loan.amount_paid)
@@ -406,14 +459,8 @@ function ClientRecordCard({
                         </AnimatePresence>
                       </div>
                     )
-                  })}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </Card>
-    </motion.div>
+      })}
+    </div>
   )
 }
 

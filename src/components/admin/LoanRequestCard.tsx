@@ -34,6 +34,7 @@ interface ReminderLogRow {
 
 interface LoanRequestCardProps {
   loan: LoanRequest
+  isReturningBorrower?: boolean
   payments: LoanPayment[]
   remindersByLoan: Map<string, ReminderLogRow[]>
   reminderKindLabel: Record<string, string>
@@ -57,6 +58,7 @@ interface LoanRequestCardProps {
 
 export function LoanRequestCard({
   loan,
+  isReturningBorrower = false,
   payments,
   remindersByLoan,
   reminderKindLabel,
@@ -87,6 +89,11 @@ export function LoanRequestCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-lg font-semibold">{loan.full_name}</p>
+            {isReturningBorrower && (
+              <span className="rounded-full bg-emerald-200/90 px-2.5 py-0.5 text-xs font-semibold text-emerald-900">
+                Returning borrower
+              </span>
+            )}
             <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold">
               {cap(loan.status)}
             </span>

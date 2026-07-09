@@ -379,6 +379,17 @@ export function AdminPage() {
     )
   }, [users, query])
 
+  const returningBorrowers = useMemo(() => {
+    const settledByUser = new Set<string>()
+    const settledByEmail = new Set<string>()
+    for (const loan of loans) {
+      if (loan.status !== 'paid') continue
+      if (loan.user_id) settledByUser.add(loan.user_id)
+      settledByEmail.add(loan.email.trim().toLowerCase())
+    }
+    return { settledByUser, settledByEmail }
+  }, [loans])
+
   const loanStatusOptions = useMemo(() => {
     const statuses =
       loanPipeline === 'active'
@@ -566,6 +577,10 @@ export function AdminPage() {
                   >
                     <LoanRequestCard
                       loan={loan}
+                      isReturningBorrower={
+                        (loan.user_id && returningBorrowers.settledByUser.has(loan.user_id)) ||
+                        returningBorrowers.settledByEmail.has(loan.email.trim().toLowerCase())
+                      }
                       payments={payments}
                       remindersByLoan={remindersByLoan}
                       reminderKindLabel={reminderKindLabel}

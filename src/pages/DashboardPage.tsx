@@ -93,6 +93,17 @@ export function DashboardPage() {
     [loans],
   )
 
+  const activeLoans = useMemo(
+    () => loans.filter((l) => (ACTIVE_LOAN_STATUSES as unknown as string[]).includes(l.status)),
+    [loans],
+  )
+  const historyLoans = useMemo(
+    () => loans.filter((l) => !(ACTIVE_LOAN_STATUSES as unknown as string[]).includes(l.status)),
+    [loans],
+  )
+  const settledLoans = useMemo(() => loans.filter((l) => l.status === 'paid'), [loans])
+  const isReturningCustomer = settledLoans.length > 0
+
   const hasActiveLoan = !!activeLoan
 
   const reminders = useMemo(
@@ -222,7 +233,17 @@ export function DashboardPage() {
         )}
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-          <h2 className="text-xl font-semibold text-brand-900">Your Loan Applications</h2>
+          <div>
+            <h2 className="text-xl font-semibold text-brand-900">Your Loan Files</h2>
+            <p className="text-sm text-brand-600">
+              Active loans and your full borrowing history are separated below.
+            </p>
+          </div>
+          {isReturningCustomer && (
+            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+              Returning borrower · {settledLoans.length} settled
+            </span>
+          )}
           {hasActiveLoan ? (
             <Button size="sm" disabled title="Finish repaying your current loan to apply again">
               <Plus className="h-4 w-4" /> New Application
@@ -262,67 +283,115 @@ export function DashboardPage() {
             </Link>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {loans.map((loan, i) => {
-              const loanPayments = payments.filter((p) => p.loan_id === loan.id)
-              return (
-                <motion.div
-                  key={loan.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <Card className="overflow-hidden !p-0">
-                    <div className="flex flex-wrap items-start justify-between gap-3 border-b border-brand-100 bg-brand-50/50 px-5 py-4">
-                      <div>
-                        <p className="text-2xl font-bold text-brand-900">
-                          {formatPula(loan.loan_amount)}
-                        </p>
-                        <p className="mt-0.5 text-sm text-brand-600">
-                          {loan.loan_purpose}
-                          {loan.term_months ? ` · ${loan.term_months}-month term` : ''}
-                        </p>
-                      </div>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                          statusBadgeClass(loan.status)
-                        }`}
-                      >
-                        {loan.status}
-                      </span>
-                    </div>
-
-                    <div className="p-5">
-                      <div className="flex items-center gap-1.5 text-xs text-brand-500">
-                        <Clock className="h-3.5 w-3.5" />
-                        Applied{' '}
-                        {new Date(loan.created_at).toLocaleDateString('en-GB', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </div>
-
-                      <LoanStatusBanner status={loan.status as LoanStatus} />
-
-                      {loan.status !== 'rejected' && loan.status !== 'discontinued' && (
-                        <RepaymentSummary loan={loan} payments={loanPayments} />
-                      )}
-
-                      {loan.admin_notes && (
-                        <p className="mt-3 rounded-lg bg-brand-50 p-3 text-sm text-brand-700">
-                          <span className="font-medium">Note from team:</span> {loan.admin_notes}
-                        </p>
-                      )}
-                    </div>
-                  </Card>
-                </motion.div>
-              )
-            })}
+          <div className="space-y-8">
+            <LoanFileSection
+              title="Active Loans"
+              subtitle={
+                activeLoans.length > 0
+                  ? 'Loans currently in progress.'
+                  : 'No active loans right now.'
+              }
+              loans={activeLoans}
+              payments={payments}
+            />
+            <LoanFileSection
+              title="Loan History"
+              subtitle={
+                historyLoans.length > 0
+                  ? 'Your previous loan applications and outcomes.'
+                  : 'No loan history yet.'
+              }
+              loans={historyLoans}
+              payments={payments}
+            />
           </div>
         )}
       </section>
     </>
+  )
+}
+
+function LoanFileSection({
+  title,
+  subtitle,
+  loans,
+  payments,
+}: {
+  title: string
+  subtitle: string
+  loans: LoanRequest[]
+  payments: LoanPayment[]
+}) {
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-semibold text-brand-900">{title}</h3>
+          <p className="text-sm text-brand-600">{subtitle}</p>
+        </div>
+        <span className="rounded-full bg-brand-100 px-2.5 py-1 text-xs font-semibold text-brand-700">
+          {loans.length}
+        </span>
+      </div>
+      {loans.length === 0 ? (
+        <Card className="text-sm text-brand-600">{subtitle}</Card>
+      ) : (
+        <div className="space-y-4">
+          {loans.map((loan, i) => {
+            const loanPayments = payments.filter((p) => p.loan_id === loan.id)
+            return (
+              <motion.div
+                key={loan.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <Card className="overflow-hidden !p-0">
+                  <div className="flex flex-wrap items-start justify-between gap-3 border-b border-brand-100 bg-brand-50/50 px-5 py-4">
+                    <div>
+                      <p className="text-2xl font-bold text-brand-900">{formatPula(loan.loan_amount)}</p>
+                      <p className="mt-0.5 text-sm text-brand-600">
+                        {loan.loan_purpose}
+                        {loan.term_months ? ` · ${loan.term_months}-month term` : ''}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusBadgeClass(loan.status)}`}
+                    >
+                      {loan.status}
+                    </span>
+                  </div>
+
+                  <div className="p-5">
+                    <div className="flex items-center gap-1.5 text-xs text-brand-500">
+                      <Clock className="h-3.5 w-3.5" />
+                      Applied{' '}
+                      {new Date(loan.created_at).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </div>
+
+                    <LoanStatusBanner status={loan.status as LoanStatus} />
+
+                    {loan.status !== 'rejected' && loan.status !== 'discontinued' && (
+                      <RepaymentSummary loan={loan} payments={loanPayments} />
+                    )}
+
+                    {loan.admin_notes && (
+                      <p className="mt-3 rounded-lg bg-brand-50 p-3 text-sm text-brand-700">
+                        <span className="font-medium">Note from team:</span> {loan.admin_notes}
+                      </p>
+                    )}
+                  </div>
+                </Card>
+              </motion.div>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 
