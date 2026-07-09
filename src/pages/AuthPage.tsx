@@ -17,13 +17,13 @@ const panels = {
   in: {
     prefix: 'auth.panel.signIn',
     to: '/login',
-    image: `${BASE}auth-signin.png`,
+    image: `${BASE}auth-signin-thumb.png`,
     icon: LogIn,
   },
   up: {
     prefix: 'auth.panel.signUp',
     to: '/register',
-    image: `${BASE}auth-signup.png`,
+    image: `${BASE}auth-signup-thumb.png`,
     icon: UserPlus,
   },
 } as const
