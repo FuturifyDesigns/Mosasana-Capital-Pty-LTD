@@ -133,6 +133,8 @@ BEGIN
         'admin_delete_user',
         'admin_discontinue_loan',
         'admin_delete_loan_request',
+        'admin_delete_archived_loan',
+        'admin_delete_enquiry',
         'record_loan_payment'
       )
   LOOP

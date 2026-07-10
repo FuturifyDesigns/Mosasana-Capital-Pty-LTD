@@ -58,11 +58,20 @@ export const en = {
   'admin.confirm.deleteLoan.title': 'Delete this request permanently?',
   'admin.confirm.deleteLoan.message':
     "{name}'s application will be removed. The client will be notified. This cannot be undone.",
+  'admin.confirm.deleteArchivedLoan.title': 'Remove this archived loan?',
+  'admin.confirm.deleteArchivedLoan.message':
+    "Remove {name}'s {status} loan from the archive? Payments and reminders linked to it will be removed. This cannot be undone.",
+  'admin.confirm.deleteEnquiry.title': 'Delete this enquiry?',
+  'admin.confirm.deleteEnquiry.message':
+    "Delete the enquiry from {name} about \"{subject}\"? This cannot be undone.",
+  'admin.enquiry.delete': 'Delete',
   'admin.toast.userBanned': 'User banned.',
   'admin.toast.userUnbanned': 'User unbanned.',
   'admin.toast.userDeleted': 'User deleted.',
   'admin.toast.loanDiscontinued': 'Loan request discontinued. Client notified.',
   'admin.toast.loanDeleted': 'Loan request deleted. Client notified.',
+  'admin.toast.archivedLoanDeleted': 'Archived loan removed.',
+  'admin.toast.enquiryDeleted': 'Enquiry deleted.',
   'admin.toast.statusUpdated': 'Loan status updated to {status}.',
   'admin.toast.enquiryMarkedRead': 'Enquiry marked as read.',
   'admin.toast.paidRejectedLocked': 'Paid and rejected loans are locked.',
@@ -246,11 +255,20 @@ export const tn: Record<keyof typeof en, string> = {
   'admin.confirm.deleteLoan.title': 'Phimola kopo eno ka go sa boele morago?',
   'admin.confirm.deleteLoan.message':
     'Kopo ya {name} e tla tlosiwa. Moreki o tla itsisišwa. Se ga se ka se boelwa morago.',
+  'admin.confirm.deleteArchivedLoan.title': 'Tlosa koloto e e bolokilweng?',
+  'admin.confirm.deleteArchivedLoan.message':
+    'Tlosa koloto ya {name} e e leng {status} mo bolokelong? Ditlhwatlhwa le dikitsiso di tla tlosiwa. Se ga se ka se boelwa morago.',
+  'admin.confirm.deleteEnquiry.title': 'Phimola potso eno?',
+  'admin.confirm.deleteEnquiry.message':
+    'Phimola potso ya {name} e e mabapi le "{subject}"? Se ga se ka se boelwa morago.',
+  'admin.enquiry.delete': 'Phimola',
   'admin.toast.userBanned': 'Mošomiši o thibetšwe.',
   'admin.toast.userUnbanned': 'Mošomiši o tlogilwe go thibela.',
   'admin.toast.userDeleted': 'Mošomiši o phimolotswe.',
   'admin.toast.loanDiscontinued': 'Kopo ya koloto e khutlisiweng. Moreki o itsisišitswe.',
   'admin.toast.loanDeleted': 'Kopo ya koloto e phimolotswe. Moreki o itsisišitswe.',
+  'admin.toast.archivedLoanDeleted': 'Koloto e e bolokilweng e tlosiwe.',
+  'admin.toast.enquiryDeleted': 'Potso e phimolotswe.',
   'admin.toast.statusUpdated': 'Maemo a koloto a mpshafaditswe go {status}.',
   'admin.toast.enquiryMarkedRead': 'Potso e tserwe e le e baliwe.',
   'admin.toast.paidRejectedLocked': 'Dikoloto tse di lefšweng le tse di ganetsweng di notletšwe.',

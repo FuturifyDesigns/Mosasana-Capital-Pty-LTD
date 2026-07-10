@@ -40,6 +40,7 @@ interface ReminderLogRow {
 
 interface LoanRequestCardProps {
   loan: LoanRequest
+  archiveMode?: boolean
   isReturningBorrower?: boolean
   payments: LoanPayment[]
   remindersByLoan: Map<string, ReminderLogRow[]>
@@ -63,6 +64,7 @@ interface LoanRequestCardProps {
 
 export function LoanRequestCard({
   loan,
+  archiveMode = false,
   isReturningBorrower = false,
   payments,
   remindersByLoan,
@@ -78,7 +80,8 @@ export function LoanRequestCard({
 }: LoanRequestCardProps) {
   const { t } = useLanguage()
   const canDiscontinue = !isClosedLoanStatus(loan.status)
-  const canDelete = ['pending', 'reviewing'].includes(loan.status)
+  const canDeleteEarly = ['pending', 'reviewing'].includes(loan.status)
+  const canDeleteArchived = archiveMode && isClosedLoanStatus(loan.status)
 
   const reminder = getRepaymentReminder(loan)
   const sent = remindersByLoan.get(loan.id) ?? []
@@ -97,12 +100,13 @@ export function LoanRequestCard({
 
   return (
     <Card className="overflow-hidden !p-0">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-start gap-3 bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-4 text-left text-white transition hover:from-brand-700 hover:to-brand-600 sm:px-5"
-        aria-expanded={expanded}
-      >
+      <div className="flex items-stretch">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex flex-1 items-start gap-3 bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-4 text-left text-white transition hover:from-brand-700 hover:to-brand-600 sm:px-5"
+          aria-expanded={expanded}
+        >
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-lg font-semibold">{loan.full_name}</p>
@@ -132,7 +136,19 @@ export function LoanRequestCard({
         <ChevronDown
           className={`mt-1 h-5 w-5 shrink-0 transition ${expanded ? 'rotate-180' : ''}`}
         />
-      </button>
+        </button>
+        {canDeleteArchived && (
+          <button
+            type="button"
+            onClick={() => onDelete(loan)}
+            className="flex shrink-0 items-center justify-center border-l border-white/20 bg-brand-700/80 px-4 text-white transition hover:bg-red-600"
+            aria-label={t('admin.loan.delete')}
+            title={t('admin.loan.delete')}
+          >
+            <Trash2 className="h-5 w-5" />
+          </button>
+        )}
+      </div>
 
       <AnimatePresence initial={false}>
         {expanded && (
@@ -277,7 +293,7 @@ export function LoanRequestCard({
                     </div>
                   )}
 
-                  {(canDiscontinue || canDelete) && (
+                  {(canDiscontinue || canDeleteEarly) && (
                     <div className="flex flex-col gap-2 border-t border-brand-100 pt-3">
                       {canDiscontinue && (
                         <Button
@@ -290,7 +306,7 @@ export function LoanRequestCard({
                           {t('admin.loan.discontinue')}
                         </Button>
                       )}
-                      {canDelete && !['paid', 'disbursed'].includes(loan.status) && (
+                      {canDeleteEarly && (
                         <Button
                           variant="outline"
                           size="sm"

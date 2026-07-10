@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { supabase, type LoanRequest, type ContactEnquiry, type AdminUser, type LoanPayment } from '@/lib/supabase'
 import { IN_REVIEW_LOAN_STATUSES, OPEN_LOAN_PIPELINE_STATUSES, CLOSED_LOAN_STATUSES } from '@/lib/constants'
-import { getLoanStatusLabelKey, isLoanLocked, validateStatusChange } from '@/lib/loanStatus'
+import { getLoanStatusLabelKey, isClosedLoanStatus, isLoanLocked, validateStatusChange } from '@/lib/loanStatus'
 import { LoanRequestCard } from '@/components/admin/LoanRequestCard'
 import { ClientRecordsPanel } from '@/components/admin/ClientRecordsPanel'
 import { buildClientRecords, filterClientRecords } from '@/lib/clientRecords'
@@ -303,23 +303,60 @@ export function AdminPage() {
   }
 
   const deleteLoanRequest = async (loan: LoanRequest) => {
+    const isArchived = isClosedLoanStatus(loan.status)
     const ok = await confirm({
-      title: t('admin.confirm.deleteLoan.title'),
-      message: t('admin.confirm.deleteLoan.message', { name: loan.full_name }),
+      title: isArchived
+        ? t('admin.confirm.deleteArchivedLoan.title')
+        : t('admin.confirm.deleteLoan.title'),
+      message: isArchived
+        ? t('admin.confirm.deleteArchivedLoan.message', {
+            name: loan.full_name,
+            status: t(getLoanStatusLabelKey(loan.status)),
+          })
+        : t('admin.confirm.deleteLoan.message', { name: loan.full_name }),
       confirmLabel: t('common.delete'),
       cancelLabel: t('common.cancel'),
       tone: 'danger',
     })
     if (!ok) return
 
-    const { error } = await supabase.rpc('admin_delete_loan_request', { p_loan_id: loan.id })
+    const { error } = isArchived
+      ? await supabase.rpc('admin_delete_archived_loan', { p_loan_id: loan.id })
+      : await supabase.rpc('admin_delete_loan_request', { p_loan_id: loan.id })
+
     if (error) {
       showToast(error.message || 'Could not delete loan request.', 'error')
       return
     }
     setLoans((prev) => prev.filter((l) => l.id !== loan.id))
+    setPayments((prev) => prev.filter((p) => p.loan_id !== loan.id))
     setExpandedLoanId((id) => (id === loan.id ? null : id))
-    showToast(t('admin.toast.loanDeleted'), 'success')
+    showToast(
+      isArchived ? t('admin.toast.archivedLoanDeleted') : t('admin.toast.loanDeleted'),
+      'success',
+    )
+  }
+
+  const deleteEnquiry = async (enquiry: ContactEnquiry) => {
+    const ok = await confirm({
+      title: t('admin.confirm.deleteEnquiry.title'),
+      message: t('admin.confirm.deleteEnquiry.message', {
+        name: enquiry.full_name,
+        subject: enquiry.subject,
+      }),
+      confirmLabel: t('common.delete'),
+      cancelLabel: t('common.cancel'),
+      tone: 'danger',
+    })
+    if (!ok) return
+
+    const { error } = await supabase.rpc('admin_delete_enquiry', { p_enquiry_id: enquiry.id })
+    if (error) {
+      showToast(error.message || 'Could not delete enquiry.', 'error')
+      return
+    }
+    setEnquiries((prev) => prev.filter((e) => e.id !== enquiry.id))
+    showToast(t('admin.toast.enquiryDeleted'), 'success')
   }
 
   const saveRepaymentTerms = async (
@@ -694,6 +731,7 @@ export function AdminPage() {
                   >
                     <LoanRequestCard
                       loan={loan}
+                      archiveMode={loanPipeline === 'archive'}
                       isReturningBorrower={
                         (() => {
                           const emailKey = (loan.email ?? '').trim().toLowerCase()
@@ -781,6 +819,14 @@ export function AdminPage() {
                                 <CheckCircle2 className="h-4 w-4" /> {t('admin.enquiry.markRead')}
                               </Button>
                             )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-red-200 text-red-700 hover:bg-red-50"
+                              onClick={() => void deleteEnquiry(enquiry)}
+                            >
+                              <Trash2 className="h-4 w-4" /> {t('admin.enquiry.delete')}
+                            </Button>
                           </div>
                         </div>
                       </div>
