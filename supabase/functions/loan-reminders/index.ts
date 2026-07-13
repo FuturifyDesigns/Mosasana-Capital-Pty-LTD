@@ -1,26 +1,91 @@
-// Supabase Edge Function: loan-reminders
+// Supabase Edge Function: loan-reminders (deploy as "Reminder")
 //
-// Sends repayment reminder emails to clients via Brevo SMTP. Intended to be
-// invoked once a day by a pg_cron schedule (see supabase/schema.sql).
-//
-// Deploy:
-//   supabase functions deploy loan-reminders --no-verify-jwt
-//
-// Required secrets (supabase secrets set KEY=value):
-//   BREVO_SMTP_LOGIN    - your Brevo account login email (SMTP username)
-//   BREVO_SMTP_KEY      - your Brevo SMTP key (starts with xsmtpsib-)
-//   BREVO_SENDER_EMAIL  - a verified sender, e.g. noreply@mosasanacapital.com
-//   BREVO_SENDER_NAME   - e.g. "Mosasana Capital"
-// Optional:
-//   BREVO_SMTP_HOST     - defaults to smtp-relay.brevo.com
-//   BREVO_SMTP_PORT     - defaults to 587
-//   CRON_SECRET         - shared secret; callers must send it as the
-//                         x-cron-secret header (protects this endpoint)
-//
-// SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided automatically.
+// Required secrets: BREVO_API_KEY, BREVO_SENDER_EMAIL, CRON_SECRET
+// Optional: BREVO_SENDER_NAME
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
+
+const SITE_URL = 'https://mosasanacapital.com'
+const BRAND = '#2f6d9a'
+const BRAND_DARK = '#1f3f57'
+const MUTED = '#64748b'
+const FOOTER = 'Mosasana Capital (PTY) LTD · Gaborone, Botswana · NBFIRA 11/1/6(243)'
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+function htmlToText(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/tr>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+function wrapEmail(opts: {
+  preheader: string
+  title: string
+  intro?: string
+  bodyHtml: string
+  ctaLabel?: string
+  ctaUrl?: string
+}): string {
+  const { preheader, title, intro, bodyHtml, ctaLabel, ctaUrl } = opts
+  const ctaBlock =
+    ctaLabel && ctaUrl
+      ? `<tr><td style="padding:24px 32px 8px"><a href="${ctaUrl}" style="display:inline-block;background:${BRAND};color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">${escapeHtml(ctaLabel)}</a></td></tr>`
+      : ''
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title></head>
+<body style="margin:0;padding:0;background:#eef4f8;font-family:Arial,Helvetica,sans-serif">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0">${escapeHtml(preheader)}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef4f8;padding:24px 12px"><tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(31,63,87,0.08)">
+<tr><td style="background:${BRAND};padding:20px 32px"><p style="margin:0;font-size:13px;color:rgba(255,255,255,0.85);letter-spacing:0.04em;text-transform:uppercase">Mosasana Capital</p>
+<h1 style="margin:6px 0 0;font-size:22px;font-weight:700;color:#ffffff;line-height:1.3">${escapeHtml(title)}</h1></td></tr>
+${intro ? `<tr><td style="padding:24px 32px 0;font-size:15px;line-height:1.6;color:${BRAND_DARK}">${intro}</td></tr>` : ''}
+<tr><td style="padding:24px 32px;font-size:15px;line-height:1.6;color:${BRAND_DARK}">${bodyHtml}</td></tr>${ctaBlock}
+<tr><td style="padding:24px 32px 28px;border-top:1px solid #e8eef3"><p style="margin:0;font-size:12px;line-height:1.5;color:${MUTED}">${FOOTER}</p>
+<p style="margin:8px 0 0;font-size:12px;color:${MUTED}"><a href="https://mosasanacapital.com" style="color:${BRAND};text-decoration:none">mosasanacapital.com</a></p></td></tr>
+</table></td></tr></table></body></html>`
+}
+
+async function sendBrevoEmail(opts: {
+  apiKey: string
+  senderEmail: string
+  senderName: string
+  toEmail: string
+  toName?: string
+  subject: string
+  html: string
+  tags?: string[]
+}): Promise<{ ok: boolean; detail: string }> {
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: { 'api-key': opts.apiKey, 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      sender: { name: opts.senderName, email: opts.senderEmail },
+      to: [{ email: opts.toEmail, name: opts.toName ?? opts.toEmail }],
+      subject: opts.subject,
+      htmlContent: opts.html,
+      textContent: htmlToText(opts.html),
+      tags: opts.tags,
+    }),
+  })
+  if (!res.ok) return { ok: false, detail: `${res.status} ${await res.text()}` }
+  return { ok: true, detail: 'sent' }
+}
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const ACTIVE_STATUSES = ['approved', 'disbursed']
@@ -50,7 +115,6 @@ function getDueDate(loan: LoanRow): Date | null {
   return null
 }
 
-/** Which reminder milestone (if any) applies today. */
 function milestoneFor(daysLeft: number): string | null {
   if (daysLeft === 7) return 'd-7'
   if (daysLeft === 3) return 'd-3'
@@ -65,86 +129,112 @@ function messageFor(
   daysLeft: number,
   balanceLabel: string,
   dueDate: Date,
-): { subject: string; html: string } {
+): { subject: string; html: string; preheader: string; title: string } {
   const dueStr = dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-  let subject: string
-  let line: string
+  const firstName = loan.full_name.split(' ')[0] || loan.full_name
+
   if (daysLeft < 0) {
-    subject = 'Your Mosasana Capital loan repayment is overdue'
-    line = `Your loan repayment of <strong>${balanceLabel}</strong> was due on ${dueStr} and is now overdue by ${Math.abs(daysLeft)} day(s). Please make your payment as soon as possible to avoid additional charges.`
-  } else if (daysLeft === 0) {
-    subject = 'Your Mosasana Capital loan repayment is due today'
-    line = `This is a friendly reminder that your loan repayment of <strong>${balanceLabel}</strong> is due today (${dueStr}).`
-  } else {
-    subject = `Reminder: loan repayment due in ${daysLeft} day(s)`
-    line = `Your loan repayment of <strong>${balanceLabel}</strong> is due in ${daysLeft} day(s), on ${dueStr}. Please ensure funds are available.`
-  }
-
-  const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#1f3f57;line-height:1.6">
-    <p>Hi ${loan.full_name},</p>
-    <p>${line}</p>
-    <p>Thank you,<br>Mosasana Capital</p>
-  </div>`
-  return { subject, html }
-}
-
-Deno.serve(async (req) => {
-  // Protect the endpoint: only callers presenting the shared secret may run it.
-  const cronSecret = Deno.env.get('CRON_SECRET')
-  if (cronSecret) {
-    const provided = req.headers.get('x-cron-secret')
-    if (provided !== cronSecret) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      })
+    return {
+      subject: `Mosasana Capital — Payment overdue (${balanceLabel})`,
+      title: 'Payment overdue',
+      preheader: `Your repayment of ${balanceLabel} is overdue. Please pay as soon as possible.`,
+      html: wrapEmail({
+        preheader: `Your repayment of ${balanceLabel} is overdue.`,
+        title: 'Payment overdue',
+        intro: `Hi ${escapeHtml(firstName)},`,
+        bodyHtml: `<p style="margin:0 0 16px">Your loan repayment of <strong>${escapeHtml(balanceLabel)}</strong> was due on <strong>${escapeHtml(dueStr)}</strong> and is now overdue by <strong>${Math.abs(daysLeft)} day(s)</strong>.</p>
+          <p style="margin:0">Please make your payment as soon as possible to avoid additional charges. If you have already paid, please disregard this message.</p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;border:1px solid #fde8e8;border-radius:8px;background:#fff8f8">
+            <tr><td style="padding:14px 16px;font-size:14px;color:#1f3f57"><strong>Amount due:</strong> ${escapeHtml(balanceLabel)}</td></tr>
+          </table>`,
+        ctaLabel: 'View your loan',
+        ctaUrl: `${SITE_URL}/#/dashboard`,
+      }),
     }
   }
 
-  const smtpLogin = Deno.env.get('BREVO_SMTP_LOGIN')
-  const smtpKey = Deno.env.get('BREVO_SMTP_KEY')
-  const senderEmail = Deno.env.get('BREVO_SENDER_EMAIL')
-  const senderName = Deno.env.get('BREVO_SENDER_NAME') ?? 'Mosasana Capital'
-  const smtpHost = Deno.env.get('BREVO_SMTP_HOST') ?? 'smtp-relay.brevo.com'
-  const smtpPort = Number(Deno.env.get('BREVO_SMTP_PORT') ?? '587')
-
-  if (!smtpLogin || !smtpKey || !senderEmail) {
-    return new Response(
-      JSON.stringify({ error: 'Missing BREVO_SMTP_LOGIN / BREVO_SMTP_KEY / BREVO_SENDER_EMAIL' }),
-      { status: 500 },
-    )
+  if (daysLeft === 0) {
+    return {
+      subject: `Mosasana Capital — Payment due today (${balanceLabel})`,
+      title: 'Payment due today',
+      preheader: `Your repayment of ${balanceLabel} is due today.`,
+      html: wrapEmail({
+        preheader: `Your repayment of ${balanceLabel} is due today.`,
+        title: 'Payment due today',
+        intro: `Hi ${escapeHtml(firstName)},`,
+        bodyHtml: `<p style="margin:0 0 16px">This is a friendly reminder that your loan repayment of <strong>${escapeHtml(balanceLabel)}</strong> is <strong>due today</strong> (${escapeHtml(dueStr)}).</p>
+          <p style="margin:0">Please ensure funds are available. Thank you for choosing Mosasana Capital.</p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;border:1px solid #e8eef3;border-radius:8px;background:#f8fafc">
+            <tr><td style="padding:14px 16px;font-size:14px;color:#1f3f57"><strong>Amount due:</strong> ${escapeHtml(balanceLabel)}</td></tr>
+          </table>`,
+        ctaLabel: 'View your loan',
+        ctaUrl: `${SITE_URL}/#/dashboard`,
+      }),
+    }
   }
 
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-  )
-
-  const { data: loans, error } = await supabase
-    .from('loan_requests')
-    .select(
-      'id, full_name, email, loan_amount, total_repayable, amount_paid, due_date, term_months, created_at, status',
-    )
-    .in('status', ACTIVE_STATUSES)
-
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 })
+  return {
+    subject: `Mosasana Capital — Payment due in ${daysLeft} day(s)`,
+    title: `Payment due in ${daysLeft} day(s)`,
+    preheader: `Your repayment of ${balanceLabel} is due on ${dueStr}.`,
+    html: wrapEmail({
+      preheader: `Your repayment of ${balanceLabel} is due on ${dueStr}.`,
+      title: `Payment due in ${daysLeft} day(s)`,
+      intro: `Hi ${escapeHtml(firstName)},`,
+      bodyHtml: `<p style="margin:0 0 16px">Your loan repayment of <strong>${escapeHtml(balanceLabel)}</strong> is due in <strong>${daysLeft} day(s)</strong>, on <strong>${escapeHtml(dueStr)}</strong>.</p>
+        <p style="margin:0">Please ensure funds are available before the due date.</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;border:1px solid #e8eef3;border-radius:8px;background:#f8fafc">
+          <tr><td style="padding:14px 16px;font-size:14px;color:#1f3f57"><strong>Amount due:</strong> ${escapeHtml(balanceLabel)}</td></tr>
+        </table>`,
+      ctaLabel: 'View your loan',
+      ctaUrl: `${SITE_URL}/#/dashboard`,
+    }),
   }
+}
 
-  const client = new SMTPClient({
-    connection: {
-      hostname: smtpHost,
-      port: smtpPort,
-      tls: false, // STARTTLS is negotiated automatically on port 587
-      auth: { username: smtpLogin, password: smtpKey },
-    },
-  })
-
-  const now = new Date()
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  let emailsSent = 0
-
+Deno.serve(async (req) => {
   try {
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 })
+    }
+
+    const cronSecret = Deno.env.get('CRON_SECRET')
+    if (cronSecret && req.headers.get('x-cron-secret') !== cronSecret) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+    }
+
+    const apiKey = Deno.env.get('BREVO_API_KEY')
+    const senderEmail = Deno.env.get('BREVO_SENDER_EMAIL')
+    const senderName = Deno.env.get('BREVO_SENDER_NAME') ?? 'Mosasana Capital'
+
+    if (!apiKey || !senderEmail) {
+      return new Response(
+        JSON.stringify({ error: 'Missing BREVO_API_KEY or BREVO_SENDER_EMAIL' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } },
+      )
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    )
+
+    const { data: loans, error } = await supabase
+      .from('loan_requests')
+      .select(
+        'id, full_name, email, loan_amount, total_repayable, amount_paid, due_date, term_months, created_at, status',
+      )
+      .in('status', ACTIVE_STATUSES)
+
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), { status: 500 })
+    }
+
+    const now = new Date()
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    let emailsSent = 0
+    const errors: string[] = []
+
     for (const loan of (loans as LoanRow[]) ?? []) {
       if (!loan.email) continue
       const dueDate = getDueDate(loan)
@@ -155,7 +245,6 @@ Deno.serve(async (req) => {
       const kind = milestoneFor(daysLeft)
       if (!kind) continue
 
-      // Skip if we already sent this milestone email for this loan.
       const { data: existing } = await supabase
         .from('loan_reminder_log')
         .select('id')
@@ -169,27 +258,34 @@ Deno.serve(async (req) => {
         loan.total_repayable != null
           ? Math.max(loan.total_repayable - (loan.amount_paid ?? 0), 0)
           : loan.loan_amount
-      const balanceLabel = `P${balance.toLocaleString()}`
+      const balanceLabel = `P${balance.toLocaleString('en-GB')}`
       const { subject, html } = messageFor(loan, daysLeft, balanceLabel, dueDate)
 
-      try {
-        await client.send({
-          from: `${senderName} <${senderEmail}>`,
-          to: `${loan.full_name} <${loan.email}>`,
-          subject,
-          html,
-        })
+      const result = await sendBrevoEmail({
+        apiKey,
+        senderEmail,
+        senderName,
+        toEmail: loan.email,
+        toName: loan.full_name,
+        subject,
+        html,
+        tags: ['loan-reminder', kind],
+      })
+
+      if (result.ok) {
         await supabase.from('loan_reminder_log').insert({ loan_id: loan.id, kind, channel: 'email' })
         emailsSent++
-      } catch (sendErr) {
-        console.error('Failed to send to', loan.email, sendErr)
+      } else {
+        errors.push(`${loan.email}: ${result.detail}`)
       }
     }
-  } finally {
-    await client.close()
-  }
 
-  return new Response(JSON.stringify({ ok: true, emailsSent }), {
-    headers: { 'Content-Type': 'application/json' },
-  })
+    return new Response(
+      JSON.stringify({ ok: true, emailsSent, errors: errors.length ? errors : undefined }),
+      { headers: { 'Content-Type': 'application/json' } },
+    )
+  } catch (err) {
+    console.error('loan-reminders error:', err)
+    return new Response(JSON.stringify({ error: String(err) }), { status: 500 })
+  }
 })

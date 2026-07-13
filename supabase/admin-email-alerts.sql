@@ -1,20 +1,25 @@
 -- Email alerts for new loan applications and contact enquiries.
 -- In-app admin notifications are unchanged; this queues Brevo emails via the
--- admin-alerts Edge Function (ondiweni@ + tnkile@ by default).
+-- Email-notifications Edge Function (ondiweni@ + tnkile@ by default).
 --
 -- Prerequisites (Supabase Dashboard → Database → Extensions):
 --   1. Enable pg_net
 --   2. Enable vault (usually on by default)
 --
--- Edge function (same Brevo secrets as loan-reminders):
---   supabase functions deploy admin-alerts --no-verify-jwt
---   supabase secrets set CRON_SECRET=...  (reuse existing value if set)
+-- Edge function name in Supabase: Email-notifications
+-- Reminder function name in Supabase: Reminder
 --
--- Vault secret for trigger auth (run once; use the SAME value as CRON_SECRET):
+-- Secrets (Edge Functions → Secrets):
+--   BREVO_API_KEY       - Brevo v3 API key (xkeysib-...) — NOT the SMTP key
+--   BREVO_SENDER_EMAIL  - verified sender in Brevo
+--   CRON_SECRET         - must match vault secret below
+-- Optional: BREVO_SENDER_NAME, ADMIN_ALERT_EMAILS
+--
+-- Vault (SQL Editor, run once):
 --   SELECT vault.create_secret('<CRON_SECRET>', 'admin_alerts_cron_secret');
 --
--- If you already stored reminders_cron_secret with the same value, the helper
--- falls back to that name automatically.
+-- If JWT verification is ON for Email-notifications, also store service role:
+--   SELECT vault.create_secret('<SERVICE_ROLE_KEY>', 'service_role_key');
 
 CREATE OR REPLACE FUNCTION public.queue_admin_alert_email(p_type TEXT, p_payload JSONB)
 RETURNS void
@@ -22,6 +27,8 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
   project_url TEXT := 'https://pwcootcdrbnadsbwduxi.supabase.co';
   cron_secret TEXT;
+  service_role TEXT;
+  headers JSONB;
 BEGIN
   IF p_type IS NULL OR p_payload IS NULL THEN
     RETURN;
@@ -52,12 +59,30 @@ BEGIN
     RETURN;
   END IF;
 
+  headers := jsonb_build_object(
+    'Content-Type', 'application/json',
+    'x-cron-secret', cron_secret
+  );
+
+  BEGIN
+    SELECT decrypted_secret INTO service_role
+    FROM vault.decrypted_secrets
+    WHERE name = 'service_role_key'
+    LIMIT 1;
+  EXCEPTION WHEN OTHERS THEN
+    service_role := NULL;
+  END;
+
+  IF service_role IS NOT NULL THEN
+    headers := headers || jsonb_build_object(
+      'Authorization', 'Bearer ' || service_role,
+      'apikey', service_role
+    );
+  END IF;
+
   PERFORM net.http_post(
-    url := project_url || '/functions/v1/admin-alerts',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'x-cron-secret', cron_secret
-    ),
+    url := project_url || '/functions/v1/Email-notifications',
+    headers := headers,
     body := jsonb_build_object('type', p_type, 'data', p_payload)
   );
 EXCEPTION

@@ -40,6 +40,11 @@ export const en = {
   'common.continueWithGoogle': 'Continue with Google',
   'common.backToOptions': 'Back to options',
   'common.noThanks': 'No thanks, continue browsing',
+  'common.notFound.title': 'Page not found',
+  'common.notFound.body':
+    "We couldn't find the page you're looking for. It may have been moved, removed, or the link might be incorrect.",
+  'common.notFound.home': 'Back to home',
+  'common.notFound.contact': 'Contact support',
   'popup.exit.title': 'Leaving so soon?',
   'popup.exit.body': `Need short-term relief for a financial shortfall? ${COMPANY.shortName} makes it quick and easy — apply online or chat with us on WhatsApp before you go.`,
 } as const
@@ -84,6 +89,11 @@ export const tn: Record<keyof typeof en, string> = {
   'common.continueWithGoogle': 'Tswela pele ka Google',
   'common.backToOptions': 'Boela dikgethong',
   'common.noThanks': 'Nnyaa ke a lebisa, ke tswela pele',
+  'common.notFound.title': 'Tsebe ga e a bonwa',
+  'common.notFound.body':
+    'Ga re kgone go bona tsebe e o e batlang. E ka ba e tsamaile, e phimotswe, kgotsa link e ka nna e fošagetse.',
+  'common.notFound.home': 'Boela gae',
+  'common.notFound.contact': 'Ikopanye le rena',
   'popup.exit.title': 'O tlogetse ka bonako?',
   'popup.exit.body': `O tlhoka thuso ya nakwana ya madi? ${COMPANY.shortName} e go dira gore e nne bonolo — kopa mo inthanetseng kgotsa o bule WhatsApp pele o tsamaya.`,
 }

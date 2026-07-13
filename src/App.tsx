@@ -24,6 +24,7 @@ import { RecoveryHandler } from '@/components/RecoveryHandler'
 import { ScrollToTop } from '@/components/ScrollToTop'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { AdminPage } from '@/pages/AdminPage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
 
 export default function App() {
   return (
@@ -74,6 +75,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
                   </Routes>
                 </LanguageProvider>

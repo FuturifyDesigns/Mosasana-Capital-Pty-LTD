@@ -134,14 +134,19 @@ If the database was created before the P10,000 cap, run `supabase/fix-loan-cap.s
 When someone applies for a loan or sends a contact enquiry, admins still get **in-app notifications** and also receive an **email** at `ondiweni@mosasanacapital.com` and `tnkile@mosasanacapital.com`.
 
 1. Enable **pg_net** in Supabase → Database → Extensions
-2. Deploy the Edge Function (uses the same Brevo SMTP secrets as loan reminders):
+2. Deploy the Edge Function as **`Email-notifications`** (uses the same Brevo SMTP secrets as **Reminder**):
    ```bash
-   supabase functions deploy admin-alerts --no-verify-jwt
+   supabase functions deploy Email-notifications --no-verify-jwt
    ```
-3. Set `CRON_SECRET` if not already set (`supabase secrets set CRON_SECRET=...`)
+   Or create it in the Supabase Dashboard with that exact name.
+3. Set `CRON_SECRET` in Edge Function secrets (must match Vault below)
 4. Store the same secret in Vault (SQL Editor, run once):
    ```sql
    SELECT vault.create_secret('<CRON_SECRET>', 'admin_alerts_cron_secret');
+   ```
+   If JWT verification is enabled on the function, also store your service role key:
+   ```sql
+   SELECT vault.create_secret('<SERVICE_ROLE_KEY>', 'service_role_key');
    ```
 5. Run `supabase/admin-email-alerts.sql` in the SQL Editor
 

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Page not found | Mosasana Capital</title>
+    <meta name="robots" content="noindex" />
+    <meta name="description" content="The page you requested could not be found on Mosasana Capital." />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      ;(function () {
+        var path = window.location.pathname || '/'
+        var search = window.location.search || ''
+        var hash = window.location.hash || ''
+        if (path !== '/' && path !== '/index.html' && path !== '/404.html') {
+          var route = path.replace(/^\/+/, '')
+          window.location.replace('/#/' + route + search + hash)
+        }
+      })()
+    </script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        font-family: Manrope, Arial, Helvetica, sans-serif;
+        background: linear-gradient(180deg, #eef6fb 0%, #ffffff 55%, #eef6fb 100%);
+        color: #1f3f57;
+      }
+      .card {
+        max-width: 28rem;
+        width: 100%;
+        text-align: center;
+        background: #ffffff;
+        border-radius: 1.25rem;
+        padding: 2.5rem 2rem;
+        box-shadow: 0 10px 32px rgba(31, 63, 87, 0.08);
+        border: 1px solid #dbe8f0;
+      }
+      .logo {
+        width: 4.5rem;
+        height: auto;
+        margin: 0 auto 1rem;
+        display: block;
+      }
+      .code {
+        font-size: 4rem;
+        font-weight: 800;
+        color: #2f6d9a;
+        line-height: 1;
+      }
+      h1 {
+        margin-top: 0.75rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+      }
+      p {
+        margin-top: 0.75rem;
+        color: #64748b;
+        line-height: 1.6;
+        font-size: 0.95rem;
+      }
+      a {
+        display: inline-block;
+        margin-top: 1.5rem;
+        background: #2f6d9a;
+        color: #ffffff;
+        text-decoration: none;
+        padding: 0.75rem 1.35rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+      a:hover {
+        background: #255a7d;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <img class="logo" src="/logo-transparent.png" alt="Mosasana Capital" width="72" height="72" />
+      <div class="code">404</div>
+      <h1>Page not found</h1>
+      <p>The page you are looking for does not exist or may have moved.</p>
+      <a href="/">Return to Mosasana Capital</a>
+    </div>
+  </body>
+</html>
