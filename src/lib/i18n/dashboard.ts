@@ -9,6 +9,8 @@ export const en = {
   'dashboard.paidOf': 'Paid {paid} of {total}',
   'dashboard.due': 'Due {date}',
   'dashboard.appliedAmount': 'Applied {amount}',
+  'dashboard.disbursedAmount': 'Disbursed {amount}',
+  'dashboard.disbursedOfRequested': '{disbursed} disbursed from {requested} requested',
   'dashboard.paymentsNote':
     'Payments are recorded by our team when received (e.g. via WhatsApp or bank transfer). Your balance updates here automatically.',
   'dashboard.repaymentReminder': 'Repayment reminder',
@@ -84,6 +86,8 @@ export const tn: Record<keyof typeof en, string> = {
   'dashboard.paidOf': 'E lefišitšwe {paid} go tswa mo {total}',
   'dashboard.due': 'Letsatsi la tefo: {date}',
   'dashboard.appliedAmount': 'Kopo ya {amount}',
+  'dashboard.disbursedAmount': 'Go neilwe {amount}',
+  'dashboard.disbursedOfRequested': '{disbursed} e neilwe go tswa mo go {requested} go go kopilweng',
   'dashboard.paymentsNote':
     'Re ngwala ditefelo fa di amogetšwe (ka WhatsApp kgotsa transfer). Palomoka ya gago e mpshafatswa fano ka boya.',
   'dashboard.repaymentReminder': 'Segopotšo sa go busetsa madi',

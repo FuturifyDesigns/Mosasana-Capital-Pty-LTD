@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Mail,
@@ -16,7 +17,7 @@ import { RepaymentEditor } from '@/components/admin/RepaymentEditor'
 import { AdminWorkflowStepper } from '@/components/admin/AdminWorkflowStepper'
 import { DisbursementDetails } from '@/components/admin/DisbursementDetails'
 import { formatPula } from '@/lib/format'
-import { getRepaymentReminder } from '@/lib/loans'
+import { getEffectivePrincipal, getRepaymentReminder } from '@/lib/loans'
 import { useLanguage } from '@/context/LanguageContext'
 import type { TranslationKey } from '@/lib/i18n'
 import {
@@ -48,10 +49,11 @@ interface LoanRequestCardProps {
   expanded: boolean
   onToggle: () => void
   onPreviewDoc: (name: string, url: string) => void
-  onStatusChange: (id: string, status: string) => void
+  onStatusChange: (id: string, status: string, adminNotes?: string | null) => void
   onSaveTerms: (
     id: string,
     fields: {
+      disbursed_amount: number | null
       total_repayable: number | null
       due_date: string | null
       interest_rate: number | null
@@ -79,12 +81,18 @@ export function LoanRequestCard({
   onDelete,
 }: LoanRequestCardProps) {
   const { t } = useLanguage()
+  const [decisionNote, setDecisionNote] = useState(loan.admin_notes ?? '')
   const canDiscontinue = !isClosedLoanStatus(loan.status)
   const canDeleteEarly = ['pending', 'reviewing'].includes(loan.status)
   const canDeleteArchived = archiveMode && isClosedLoanStatus(loan.status)
 
   const reminder = getRepaymentReminder(loan)
   const sent = remindersByLoan.get(loan.id) ?? []
+  const effectivePrincipal = getEffectivePrincipal(loan)
+
+  useEffect(() => {
+    setDecisionNote(loan.admin_notes ?? '')
+  }, [loan.id, loan.admin_notes])
 
   const reminderKindKeys: Record<string, TranslationKey> = {
     'd-7': 'admin.reminder.d7',
@@ -125,6 +133,14 @@ export function LoanRequestCard({
           <p className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
             {formatPula(loan.loan_amount)}
           </p>
+          {loan.disbursed_amount != null && loan.disbursed_amount !== loan.loan_amount && (
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-brand-50">
+              {t('admin.loan.disbursedOfRequested', {
+                disbursed: formatPula(loan.disbursed_amount),
+                requested: formatPula(loan.loan_amount),
+              })}
+            </p>
+          )}
           <p className="mt-0.5 text-sm text-brand-100">{loan.loan_purpose}</p>
           {!expanded && (
             <p className="mt-2 text-xs text-brand-100/90">
@@ -188,6 +204,17 @@ export function LoanRequestCard({
                     {' · '}
                     {new Date(loan.created_at).toLocaleString()}
                   </p>
+                  <p className="text-xs text-brand-500">
+                    {t('admin.loan.requestedAmountLabel')} {formatPula(loan.loan_amount)}
+                    {' · '}
+                    {t('admin.loan.disbursedAmountLabel')} {formatPula(effectivePrincipal)}
+                  </p>
+                  {loan.admin_notes && (
+                    <p className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700">
+                      <span className="font-semibold">{t('admin.loan.decisionNoteLabel')}</span>{' '}
+                      {loan.admin_notes}
+                    </p>
+                  )}
                   {reminder && reminder.level !== 'ok' && (
                     <span
                       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -250,6 +277,17 @@ export function LoanRequestCard({
                 <div className="w-full shrink-0 space-y-3 sm:w-52">
                   {canAdminChangeStatus(loan) ? (
                     <>
+                      <label className="block text-xs font-medium text-brand-600">
+                        {t('admin.loan.decisionNote')}
+                        <textarea
+                          value={decisionNote}
+                          onChange={(e) => setDecisionNote(e.target.value)}
+                          rows={3}
+                          maxLength={1000}
+                          placeholder={t('admin.loan.decisionNotePlaceholder')}
+                          className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                        />
+                      </label>
                       <Select
                         label={t(getAdminStatusPanelTitleKey(loan))}
                         hidePlaceholder
@@ -258,7 +296,7 @@ export function LoanRequestCard({
                           label: t(option.labelKey),
                         }))}
                         value={loan.status}
-                        onChange={(e) => onStatusChange(loan.id, e.target.value)}
+                        onChange={(e) => onStatusChange(loan.id, e.target.value, decisionNote)}
                         hint={
                           loan.status === 'approved' && !canMarkDisbursed(loan)
                             ? t('admin.statusHint.disburseLocked')

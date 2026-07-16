@@ -24,6 +24,7 @@ import { ACTIVE_LOAN_STATUSES } from '@/lib/constants'
 import type { TranslationKey } from '@/lib/i18n'
 import {
   formatDueDate,
+  getEffectivePrincipal,
   getEstimatedTotalRepayable,
   getInterestAndFeesAmount,
   getOutstandingBalance,
@@ -141,6 +142,7 @@ export function DashboardPage() {
   }
 
   const outstanding = activeLoan ? getOutstandingBalance(activeLoan) : null
+  const activePrincipal = activeLoan ? getEffectivePrincipal(activeLoan) : null
   const estimatedTotal = activeLoan ? getEstimatedTotalRepayable(activeLoan) : null
   const displayTotal =
     activeLoan?.total_repayable != null ? toNumber(activeLoan.total_repayable) : estimatedTotal
@@ -168,7 +170,9 @@ export function DashboardPage() {
               <div>
                 <p className="text-sm font-medium text-brand-100">{t('dashboard.activeLoan')}</p>
                 <p className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
-                  {outstanding != null ? formatPula(outstanding) : formatPula(activeLoan.loan_amount)}
+                  {outstanding != null
+                    ? formatPula(outstanding)
+                    : formatPula(activePrincipal ?? activeLoan.loan_amount)}
                 </p>
                 <p className="mt-1 text-sm text-brand-100">
                   {outstanding != null
@@ -215,6 +219,14 @@ export function DashboardPage() {
                 <Wallet className="h-4 w-4" />
                 {t('dashboard.appliedAmount', { amount: formatPula(activeLoan.loan_amount) })}
               </span>
+              {activeLoan.disbursed_amount != null &&
+                activePrincipal != null &&
+                activePrincipal !== activeLoan.loan_amount && (
+                  <span className="flex items-center gap-1.5">
+                    <Wallet className="h-4 w-4" />
+                    {t('dashboard.disbursedAmount', { amount: formatPula(activePrincipal) })}
+                  </span>
+                )}
             </div>
 
             <p className="mt-4 rounded-xl bg-white/10 px-3 py-2 text-xs text-brand-50">
@@ -420,10 +432,18 @@ function LoanFileCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-xl font-bold text-brand-900 sm:text-2xl">
-              {formatPula(loan.loan_amount)}
+              {formatPula(getEffectivePrincipal(loan))}
             </p>
             <StatusBadge status={loan.status} />
           </div>
+          {loan.disbursed_amount != null && loan.disbursed_amount !== loan.loan_amount && (
+            <p className="mt-1 text-xs font-medium text-brand-500">
+              {t('dashboard.disbursedOfRequested', {
+                disbursed: formatPula(loan.disbursed_amount),
+                requested: formatPula(loan.loan_amount),
+              })}
+            </p>
+          )}
           <p className="mt-1 text-sm text-brand-600">
             {loan.loan_purpose}
             {loan.term_months
@@ -539,6 +559,7 @@ function RepaymentSummary({
   payments: LoanPayment[]
 }) {
   const { t } = useLanguage()
+  const principal = getEffectivePrincipal(loan)
   const total =
     loan.total_repayable != null ? toNumber(loan.total_repayable) : getEstimatedTotalRepayable(loan)
   const paid = toNumber(loan.amount_paid)
@@ -573,6 +594,14 @@ function RepaymentSummary({
             {fees != null && fees > 0 && (
               <p className="text-xs text-amber-700">
                 {t('dashboard.includesFees', { amount: formatPula(fees) })}
+              </p>
+            )}
+            {loan.disbursed_amount != null && principal !== loan.loan_amount && (
+              <p className="text-xs text-brand-500">
+                {t('dashboard.disbursedOfRequested', {
+                  disbursed: formatPula(principal),
+                  requested: formatPula(loan.loan_amount),
+                })}
               </p>
             )}
           </div>

@@ -40,6 +40,7 @@ import {
   subscribeAdminTables,
 } from '@/lib/realtime'
 import { useScrollToId } from '@/lib/useNotificationDeepLink'
+import { sanitizeText } from '@/lib/validation'
 
 type Tab = 'loans' | 'records' | 'enquiries' | 'users'
 
@@ -251,7 +252,7 @@ export function AdminPage() {
     }
   }
 
-  const updateLoanStatus = async (id: string, status: string) => {
+  const updateLoanStatus = async (id: string, status: string, adminNotes?: string | null) => {
     const loan = loans.find((l) => l.id === id)
     if (!loan) return
 
@@ -262,17 +263,24 @@ export function AdminPage() {
     }
 
     const previousStatus = loan.status
-    setLoans((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)))
+    const previousNotes = loan.admin_notes
+    const sanitizedNotes =
+      adminNotes && adminNotes.trim() ? sanitizeText(adminNotes).slice(0, 1000) : null
+    setLoans((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, status, admin_notes: sanitizedNotes ?? l.admin_notes } : l)),
+    )
     const { data, error } = await supabase
       .from('loan_requests')
-      .update({ status })
+      .update({ status, ...(sanitizedNotes !== null ? { admin_notes: sanitizedNotes } : {}) })
       .eq('id', id)
       .select()
       .single()
 
     if (error) {
       setLoans((prev) =>
-        prev.map((l) => (l.id === id ? { ...l, status: previousStatus } : l)),
+        prev.map((l) =>
+          l.id === id ? { ...l, status: previousStatus, admin_notes: previousNotes } : l,
+        ),
       )
       showToast(error.message || 'Could not update loan status.', 'error')
       return
@@ -362,6 +370,7 @@ export function AdminPage() {
   const saveRepaymentTerms = async (
     id: string,
     fields: {
+      disbursed_amount: number | null
       total_repayable: number | null
       due_date: string | null
       interest_rate: number | null

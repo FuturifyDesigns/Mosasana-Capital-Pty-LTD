@@ -60,6 +60,7 @@ export interface LoanRequest {
   bank_branch_code: string | null
   bank_branch_name: string | null
   status: string
+  disbursed_amount: number | null
   interest_rate: number | null
   total_repayable: number | null
   amount_paid: number | null

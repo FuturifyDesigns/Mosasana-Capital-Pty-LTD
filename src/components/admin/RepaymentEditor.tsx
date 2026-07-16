@@ -8,6 +8,7 @@ import {
   calculateTotalRepayable,
   canRecordPayments,
   formatDueDate,
+  getEffectivePrincipal,
   getDueDate,
   getOutstandingBalance,
   parseInterestRateInput,
@@ -25,6 +26,7 @@ interface RepaymentEditorProps {
   onSaveTerms: (
     id: string,
     fields: {
+      disbursed_amount: number | null
       total_repayable: number | null
       due_date: string | null
       interest_rate: number | null
@@ -55,11 +57,15 @@ export function RepaymentEditor({
 }: RepaymentEditorProps) {
   const { showToast } = useToast()
   const { t } = useLanguage()
-  const principal = toNumber(loan.loan_amount)
+  const requestedAmount = toNumber(loan.loan_amount)
+  const principal = getEffectivePrincipal(loan)
   const term = loan.term_months ?? 1
   const suggestedRate = resolveInterestRate(loan.interest_rate)
   const estimatedTotal = calculateTotalRepayable(principal, term, suggestedRate)
 
+  const [disbursedAmount, setDisbursedAmount] = useState(
+    loan.disbursed_amount != null ? String(loan.disbursed_amount) : String(principal),
+  )
   const [rate, setRate] = useState(storedRateLabel(loan))
   const [total, setTotal] = useState(
     loan.total_repayable != null ? String(loan.total_repayable) : String(estimatedTotal),
@@ -77,6 +83,10 @@ export function RepaymentEditor({
 
   useEffect(() => {
     const r = resolveInterestRate(loan.interest_rate)
+    const nextPrincipal = getEffectivePrincipal(loan)
+    setDisbursedAmount(
+      loan.disbursed_amount != null ? String(loan.disbursed_amount) : String(nextPrincipal),
+    )
     setRate(
       loan.interest_rate !== null && loan.interest_rate !== undefined
         ? String(loan.interest_rate)
@@ -85,7 +95,7 @@ export function RepaymentEditor({
     setTotal(
       loan.total_repayable != null
         ? String(loan.total_repayable)
-        : String(calculateTotalRepayable(principal, term, r)),
+        : String(calculateTotalRepayable(nextPrincipal, term, r)),
     )
     setTotalEdited(false)
     if (loan.due_date) setDue(loan.due_date)
@@ -93,48 +103,67 @@ export function RepaymentEditor({
       const d = getDueDate(loan)
       setDue(d ? toDateInputValue(d) : '')
     }
-  }, [loan.id, loan.total_repayable, loan.interest_rate, loan.due_date, principal, term])
+  }, [loan.id, loan.disbursed_amount, loan.total_repayable, loan.interest_rate, loan.due_date, term])
 
+  const disbursedNum = disbursedAmount === '' ? null : Number(disbursedAmount)
   const rateNum = parseInterestRateInput(rate) ?? DEFAULT_MONTHLY_INTEREST_RATE
-  const previewInterest = calculateInterestAmount(principal, term, rateNum)
-  const previewTotal = calculateTotalRepayable(principal, term, rateNum)
+  const previewPrincipal =
+    disbursedNum != null && Number.isFinite(disbursedNum) && disbursedNum > 0 ? disbursedNum : principal
+  const previewInterest = calculateInterestAmount(previewPrincipal, term, rateNum)
+  const previewTotal = calculateTotalRepayable(previewPrincipal, term, rateNum)
 
   const totalNum = total === '' ? null : Number(total)
   const paidNum = toNumber(loan.amount_paid)
   const hasPayments = paidNum > 0
-  const minTotal = Math.max(principal, paidNum)
   const savedTotal = loan.total_repayable != null ? toNumber(loan.total_repayable) : null
   const balance =
     getOutstandingBalance(loan) ?? (totalNum != null ? Math.max(totalNum - paidNum, 0) : null)
   const pct = totalNum && totalNum > 0 ? Math.min(Math.round((paidNum / totalNum) * 100), 100) : 0
 
   const termsDirty = useMemo(() => {
+    const savedDisbursed =
+      loan.disbursed_amount != null ? String(loan.disbursed_amount) : String(principal)
     const savedRate = storedRateLabel(loan)
     const savedDue = loan.due_date ?? ''
     const expectedTotal =
       loan.total_repayable != null ? String(loan.total_repayable) : String(estimatedTotal)
-    return total !== expectedTotal || rate !== savedRate || due !== savedDue
-  }, [total, rate, due, loan, estimatedTotal])
+    return (
+      disbursedAmount !== savedDisbursed ||
+      total !== expectedTotal ||
+      rate !== savedRate ||
+      due !== savedDue
+    )
+  }, [disbursedAmount, total, rate, due, loan, estimatedTotal, principal])
 
-  const autoTotalFromRate = (parsedRate: number): number => {
+  const autoTotalFromRate = (basePrincipal: number, parsedRate: number): number => {
     // If payments already exist, applying a new rate should add extra charges to the current total.
     if (hasPayments && savedTotal != null) {
-      const extra = parsedRate > 0 ? calculateInterestAmount(principal, term, parsedRate) : 0
-      return Math.round((savedTotal + extra) * 100) / 100
+      return Math.max(calculateTotalRepayable(basePrincipal, term, parsedRate), paidNum)
     }
-    return calculateTotalRepayable(principal, term, parsedRate)
+    return calculateTotalRepayable(basePrincipal, term, parsedRate)
   }
 
-  const validateTerms = (candidateTotal: number | null, parsedRate: number | null): string | null => {
+  const validateTerms = (
+    candidatePrincipal: number | null,
+    candidateTotal: number | null,
+    parsedRate: number | null,
+  ): string | null => {
+    if (candidatePrincipal == null || !Number.isFinite(candidatePrincipal) || candidatePrincipal <= 0) {
+      return t('admin.repayment.disbursedAmountPositive')
+    }
+    if (candidatePrincipal > requestedAmount) {
+      return t('admin.repayment.disbursedAmountTooHigh', { amount: formatPula(requestedAmount) })
+    }
     if (parsedRate === null) return t('admin.repayment.invalidInterestRate')
     if (candidateTotal == null || candidateTotal <= 0) {
       return t('admin.repayment.totalMustBePositive')
     }
+    const minTotal = Math.max(candidatePrincipal, paidNum)
     if (candidateTotal < minTotal) {
       return t('admin.repayment.totalTooLow', { min: formatPula(minTotal) })
     }
-    if (parsedRate === 0 && !hasPayments && candidateTotal !== principal) {
-      return t('admin.repayment.zeroInterestTotalMismatch', { principal: formatPula(principal) })
+    if (parsedRate === 0 && !hasPayments && candidateTotal !== candidatePrincipal) {
+      return t('admin.repayment.zeroInterestTotalMismatch', { principal: formatPula(candidatePrincipal) })
     }
     if (due === '') return t('admin.repayment.dueDateRequired')
     return null
@@ -144,16 +173,21 @@ export function RepaymentEditor({
     const parsedRate = parseInterestRateInput(rate)
     const previousRate = parseInterestRateInput(storedRateLabel(loan))
     const rateChanged = parsedRate !== previousRate
+    const savedDisbursed =
+      loan.disbursed_amount != null ? String(loan.disbursed_amount) : String(principal)
+    const principalChanged = disbursedAmount !== savedDisbursed
+    const candidatePrincipal =
+      disbursedNum != null && Number.isFinite(disbursedNum) && disbursedNum > 0 ? disbursedNum : null
 
     let candidateTotal = totalNum
 
-    // If admin changed interest rate but didn't type total manually, apply rate automatically.
-    if (!totalEdited && rateChanged && parsedRate != null) {
-      candidateTotal = autoTotalFromRate(parsedRate)
+    // If admin changed interest rate or payout amount but didn't type total manually, apply it automatically.
+    if (!totalEdited && (rateChanged || principalChanged) && parsedRate != null && candidatePrincipal != null) {
+      candidateTotal = autoTotalFromRate(candidatePrincipal, parsedRate)
       setTotal(String(candidateTotal))
     }
 
-    const err = validateTerms(candidateTotal, parsedRate)
+    const err = validateTerms(candidatePrincipal, candidateTotal, parsedRate)
     if (err) {
       showToast(err, 'error')
       return
@@ -161,6 +195,7 @@ export function RepaymentEditor({
 
     setSavingTerms(true)
     await onSaveTerms(loan.id, {
+      disbursed_amount: candidatePrincipal,
       total_repayable: candidateTotal,
       due_date: due,
       interest_rate: parsedRate,
@@ -233,14 +268,14 @@ export function RepaymentEditor({
       )}
       <div className="mb-3 grid grid-cols-3 gap-2 text-center text-xs">
         <div className="rounded-xl bg-white p-2.5 ring-1 ring-brand-100">
-          <p className="text-brand-500">{t('admin.repayment.principal')}</p>
-          <p className="mt-1 font-bold text-brand-900">{formatPula(principal)}</p>
+          <p className="text-brand-500">{t('admin.repayment.requestedAmount')}</p>
+          <p className="mt-1 font-bold text-brand-900">{formatPula(requestedAmount)}</p>
         </div>
         <div className="rounded-xl bg-white p-2.5 ring-1 ring-brand-100">
           <p className="text-brand-500">{t('admin.repayment.interestFees')}</p>
           <p className="mt-1 font-bold text-amber-700">
-            {totalNum != null && totalNum > principal
-              ? formatPula(totalNum - principal)
+            {totalNum != null && totalNum > previewPrincipal
+              ? formatPula(totalNum - previewPrincipal)
               : rateNum === 0
                 ? t('admin.repayment.none')
                 : formatPula(previewInterest)}
@@ -251,7 +286,20 @@ export function RepaymentEditor({
           <p className="mt-1 font-bold text-brand-900">{formatPula(totalNum ?? previewTotal)}</p>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+        <label className="text-xs font-medium text-brand-600">
+          {t('admin.repayment.disbursedAmount')}
+          <input
+            type="number"
+            min="0"
+            max={requestedAmount}
+            step="0.01"
+            value={disbursedAmount}
+            onChange={(e) => setDisbursedAmount(e.target.value)}
+            onWheel={(e) => e.currentTarget.blur()}
+            className="mt-1 w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+          />
+        </label>
         <label className="text-xs font-medium text-brand-600">
           {t('admin.repayment.monthlyInterest')}
           <input
@@ -270,7 +318,7 @@ export function RepaymentEditor({
           {t('admin.repayment.totalRepayable')}
           <input
             type="number"
-            min={minTotal}
+            min={Math.max(previewPrincipal, paidNum)}
             value={total}
             onChange={(e) => {
               setTotal(e.target.value)
@@ -329,7 +377,7 @@ export function RepaymentEditor({
           <p className="mt-1">
             {t('admin.repayment.fullyRepaidBody', {
               paid: formatPula(paidNum),
-              total: formatPula(loan.total_repayable ?? principal),
+              total: formatPula(loan.total_repayable ?? getEffectivePrincipal(loan)),
             })}
           </p>
         </div>
@@ -357,6 +405,12 @@ export function RepaymentEditor({
               <p className="text-2xl font-bold text-emerald-900">{formatPula(balance ?? 0)}</p>
             </div>
             <div className="text-right text-sm text-emerald-800">
+              <p>
+                {t('admin.repayment.disbursedOfRequested', {
+                  disbursed: formatPula(getEffectivePrincipal(loan)),
+                  requested: formatPula(requestedAmount),
+                })}
+              </p>
               <p>
                 {t('admin.repayment.paidOf', {
                   paid: formatPula(paidNum),

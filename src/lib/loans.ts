@@ -75,6 +75,12 @@ export function isActiveLoan(loan: LoanRequest): boolean {
   return (ACTIVE_LOAN_STATUSES as unknown as string[]).includes(loan.status)
 }
 
+export function getEffectivePrincipal(loan: LoanRequest): number {
+  const disbursed = loan.disbursed_amount != null ? toNumber(loan.disbursed_amount) : null
+  if (disbursed != null && disbursed > 0) return disbursed
+  return toNumber(loan.loan_amount)
+}
+
 export function getOutstandingBalance(loan: LoanRequest): number | null {
   const total = loan.total_repayable != null ? toNumber(loan.total_repayable) : null
   if (total == null) return null
@@ -83,16 +89,16 @@ export function getOutstandingBalance(loan: LoanRequest): number | null {
 
 export function getInterestAndFeesAmount(loan: LoanRequest): number | null {
   if (loan.total_repayable == null) return null
-  return Math.max(toNumber(loan.total_repayable) - toNumber(loan.loan_amount), 0)
+  return Math.max(toNumber(loan.total_repayable) - getEffectivePrincipal(loan), 0)
 }
 
 export function getMinimumRepayableTotal(loan: LoanRequest): number {
-  return Math.max(toNumber(loan.loan_amount), toNumber(loan.amount_paid))
+  return Math.max(getEffectivePrincipal(loan), toNumber(loan.amount_paid))
 }
 
 export function getEstimatedTotalRepayable(loan: LoanRequest): number {
   const rate = resolveInterestRate(loan.interest_rate)
-  return calculateTotalRepayable(toNumber(loan.loan_amount), loan.term_months ?? 1, rate)
+  return calculateTotalRepayable(getEffectivePrincipal(loan), loan.term_months ?? 1, rate)
 }
 
 export function formatDueDate(date: Date | string | null): string {

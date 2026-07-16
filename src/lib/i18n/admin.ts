@@ -128,6 +128,13 @@ export const en = {
   'admin.loan.enlargeId': 'Click to enlarge ID document',
   'admin.loan.remindersSent': '{count} reminder sent',
   'admin.loan.remindersSentPlural': '{count} reminders sent',
+  'admin.loan.requestedAmountLabel': 'Requested:',
+  'admin.loan.disbursedAmountLabel': 'Disbursed:',
+  'admin.loan.disbursedOfRequested': '{disbursed} disbursed from {requested} requested',
+  'admin.loan.decisionNote': 'Approval / rejection comment',
+  'admin.loan.decisionNotePlaceholder':
+    'Optional note shown to the client when you approve or reject this request.',
+  'admin.loan.decisionNoteLabel': 'Team note:',
   'admin.records.clients': 'Clients',
   'admin.records.totalLoans': 'Total loans',
   'admin.records.totalRepaid': 'Total repaid',
@@ -146,6 +153,9 @@ export const en = {
   'admin.repayment.paymentsRecorded':
     '{amount} already recorded. You can add late fees or additional interest for delayed payments — increase the total below, then save. The customer will be notified automatically.',
   'admin.repayment.principal': 'Principal',
+  'admin.repayment.requestedAmount': 'Requested',
+  'admin.repayment.disbursedAmount': 'Amount disbursed',
+  'admin.repayment.disbursedOfRequested': '{disbursed} disbursed from {requested} requested',
   'admin.repayment.interestFees': 'Interest / fees',
   'admin.repayment.totalDue': 'Total due',
   'admin.repayment.none': 'None',
@@ -184,6 +194,9 @@ export const en = {
   'admin.repayment.totalMustBePositive': 'Total repayable must be greater than zero.',
   'admin.repayment.totalTooLow':
     'Total cannot be less than {min} (principal or amount already paid).',
+  'admin.repayment.disbursedAmountPositive': 'Enter a valid disbursed amount greater than zero.',
+  'admin.repayment.disbursedAmountTooHigh':
+    'Disbursed amount cannot be more than the requested amount of {amount}.',
   'admin.repayment.zeroInterestTotalMismatch':
     'With 0% interest and no payments yet, total must equal the principal ({principal}).',
   'admin.repayment.dueDateRequired': 'Set a due date before saving repayment terms.',
@@ -326,6 +339,13 @@ export const tn: Record<keyof typeof en, string> = {
   'admin.loan.enlargeId': 'Tobetsa go godisa setšoantšho sa ID',
   'admin.loan.remindersSent': 'segopotšo se le {count} se rometswe',
   'admin.loan.remindersSentPlural': 'dikgopotšo di le {count} di rometswe',
+  'admin.loan.requestedAmountLabel': 'Se se kopilweng:',
+  'admin.loan.disbursedAmountLabel': 'Se se neilweng:',
+  'admin.loan.disbursedOfRequested': '{disbursed} e neilwe go tswa mo go {requested} go go kopilweng',
+  'admin.loan.decisionNote': 'Maikutlo a go amogela kgotsa go gana',
+  'admin.loan.decisionNotePlaceholder':
+    'Temoso ya boikgethelo e e tla bontshiwang moreki fa o amogela kgotsa o gana kopo eno.',
+  'admin.loan.decisionNoteLabel': 'Temoso ya setlhopha:',
   'admin.records.clients': 'Bareki',
   'admin.records.totalLoans': 'Dikoloto ka botlalo',
   'admin.records.totalRepaid': 'Palomoka e lefšitsweng',
@@ -344,6 +364,9 @@ export const tn: Record<keyof typeof en, string> = {
   'admin.repayment.paymentsRecorded':
     '{amount} e ngwadilwe. O ka oketsa ditefelo tsa go fetwa ke nako kgotsa tshomišo e e oketsegileng — oketsa palomoka e e tlase, o bo o boloka. Moreki o tla itsisišwa ka boyona.',
   'admin.repayment.principal': 'Motheo',
+  'admin.repayment.requestedAmount': 'Se se kopilweng',
+  'admin.repayment.disbursedAmount': 'Palomoka e e neilweng',
+  'admin.repayment.disbursedOfRequested': '{disbursed} e neilwe go tswa mo go {requested} go go kopilweng',
   'admin.repayment.interestFees': 'Tshomišo / mefuta',
   'admin.repayment.totalDue': 'Palomoka e e lefšwang',
   'admin.repayment.none': 'Ga go na',
@@ -383,6 +406,10 @@ export const tn: Record<keyof typeof en, string> = {
   'admin.repayment.totalMustBePositive': 'Palomoka e e lefšwang e tshwanetše go feta zero.',
   'admin.repayment.totalTooLow':
     'Palomoka e ka se nne e kwa tlase ga {min} (motheo kgotsa madi a se a lefišitsweng).',
+  'admin.repayment.disbursedAmountPositive':
+    'Tsenya palomoka e e neilweng e e siameng e e fetang zero.',
+  'admin.repayment.disbursedAmountTooHigh':
+    'Palomoka e e neilweng e ka se fete e e kopilweng ya {amount}.',
   'admin.repayment.zeroInterestTotalMismatch':
     'Ka tshomišo ya 0% le ga go na ditefelo, palomoka e tshwanetše go lekana le motheo ({principal}).',
   'admin.repayment.dueDateRequired': 'Bea letsatsi la tefo pele ga go boloka melawana ya go busetsa madi.',

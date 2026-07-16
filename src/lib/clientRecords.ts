@@ -1,6 +1,6 @@
 import { ACTIVE_LOAN_STATUSES } from './constants'
 import { toNumber } from './format'
-import { getOutstandingBalance } from './loans'
+import { getEffectivePrincipal, getOutstandingBalance } from './loans'
 import type { AdminUser, LoanRequest } from './supabase'
 
 export type ClientRecordsFilter = 'all' | 'funded' | 'active' | 'settled' | 'rejected'
@@ -65,7 +65,7 @@ export function buildClientRecords(loans: LoanRequest[], users: AdminUser[] = []
 
     const totalPrincipal = sorted
       .filter((l) => !['rejected', 'discontinued'].includes(l.status))
-      .reduce((sum, l) => sum + toNumber(l.loan_amount), 0)
+      .reduce((sum, l) => sum + getEffectivePrincipal(l), 0)
 
     const totalRepaid = sorted.reduce((sum, l) => sum + toNumber(l.amount_paid), 0)
 

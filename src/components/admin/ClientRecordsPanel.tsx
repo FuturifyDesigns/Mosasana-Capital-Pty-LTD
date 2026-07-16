@@ -19,6 +19,7 @@ import {
   type ClientRecordsFilter,
   type ClientRecord,
 } from '@/lib/clientRecords'
+import { getEffectivePrincipal } from '@/lib/loans'
 import { getLoanStatusLabelKey, statusBadgeClass } from '@/lib/loanStatus'
 import { DisbursementDetails } from '@/components/admin/DisbursementDetails'
 import { useLanguage } from '@/context/LanguageContext'
@@ -365,7 +366,7 @@ function LoanFileGroup({
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="font-semibold text-brand-900">
-                                {formatPula(loan.loan_amount)} · {loan.loan_purpose}
+                                {formatPula(getEffectivePrincipal(loan))} · {loan.loan_purpose}
                               </p>
                               <span
                                 className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${statusBadgeClass(loan.status)}`}
@@ -434,6 +435,15 @@ function LoanFileGroup({
                                     <strong>Balance:</strong>{' '}
                                     {balance != null ? formatPula(balance) : '—'}
                                   </p>
+                                  <p>
+                                    <strong>Requested:</strong> {formatPula(loan.loan_amount)} ·{' '}
+                                    <strong>Disbursed:</strong> {formatPula(getEffectivePrincipal(loan))}
+                                  </p>
+                                  {loan.admin_notes && (
+                                    <p>
+                                      <strong>Team note:</strong> {loan.admin_notes}
+                                    </p>
+                                  )}
                                 </div>
 
                                 {idUrl && (
